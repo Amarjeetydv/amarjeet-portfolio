@@ -79,7 +79,7 @@ function App() {
                 email: form.email.value,
                 message: form.message.value,
               };
-              const res = await fetch('http://localhost:5000/api/contact', {
+              const res = await fetch('https://amarjeet-portfolio.onrender.com/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
