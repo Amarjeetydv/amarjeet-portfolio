@@ -152,3 +152,44 @@
 .contact-form button:hover {
   background: #4a4e69;
 }
+
+.social-links {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem auto 0 auto;
+  justify-content: center;
+  align-items: center;
+  max-width: 240px;
+}
+.social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f4f4f4;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.social-links a svg {
+  width: 24px;
+  height: 24px;
+  transition: color 0.2s;
+}
+.social-links a[aria-label="GitHub"] svg { color: #181717; }
+.social-links a[aria-label="LinkedIn"] svg { color: #0077b5; }
+.social-links a[aria-label="Facebook"] svg { color: #1877f3; }
+.social-links a[aria-label="Twitter"] svg { color: #1da1f2; }
+.social-links a[aria-label="Instagram"] svg { color: #e4405f; }
+.social-links a[aria-label="YouTube"] svg { color: #ff0000; }
+.social-links a:hover {
+  background: #e0e0e0;
+  transform: translateY(-4px) scale(1.08);
+}
+.social-links a:hover[aria-label="GitHub"] svg { color: #333; }
+.social-links a:hover[aria-label="LinkedIn"] svg { color: #005983; }
+.social-links a:hover[aria-label="Facebook"] svg { color: #145db2; }
+.social-links a:hover[aria-label="Twitter"] svg { color: #0d8ddb; }
+.social-links a:hover[aria-label="Instagram"] svg { color: #c13584; }
+.social-links a:hover[aria-label="YouTube"] svg { color: #c4302b; }
