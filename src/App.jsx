@@ -19,7 +19,15 @@ function App() {
         <div className="profile">
           {/* Replace with your actual photo */}
           <img src={myphoto} alt="Amarjeet Yadav" className="profile-photo" />
-          <h2>Amarjeet Yadav</h2>
+          <div className="intro-block" style={{ margin: '0.5rem 0' }}>
+            <span className="intro-text" style={{ display: 'block', textAlign: 'center' }}>
+              hey I'm<br />
+              <span>
+                <span className="animated-name" style={{ fontWeight: 'bold', fontSize: '2.5rem', color: '#a259ff', marginBottom: '0.5rem', display: 'inline-block' }}>amarjeet yadav</span>  a,
+              </span><br />
+              <span className="role-subheading typewriter" style={{ display: 'inline-block', wordBreak: 'normal', maxWidth: '100%', whiteSpace: 'nowrap', overflowWrap: 'normal', letterSpacing: 'normal', color: '#a259ff' }}>Full Stack Developer</span>
+            </span>
+          </div>
           <div className="social-links">
             <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub" onClick={() => console.log('GitHub link clicked')}>
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.74-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.7.42.36.79 1.09.79 2.2 0 1.59-.01 2.87-.01 3.26 0 .31.21.67.8.56C20.71 21.39 24 17.08 24 12c0-6.27-5.23-11.5-12-11.5z"/></svg>
