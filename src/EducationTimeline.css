@@ -1,0 +1,112 @@
+.education-timeline {
+  padding: 2rem 1rem;
+  background: #f9f9f9;
+  border-radius: 12px;
+  max-width: 700px;
+  margin: 2rem auto;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.education-timeline h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #222;
+}
+.timeline {
+  position: relative;
+  margin-left: 20px;
+}
+.timeline:before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #0073b1;
+  border-radius: 2px;
+}
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  position: relative;
+  opacity: 0;
+  transform: translateY(40px) scale(0.96) skewY(2deg);
+  filter: blur(4px);
+  animation: fadeScaleIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+.timeline-item:nth-child(4) { animation-delay: 0.4s; }
+.timeline-item:nth-child(5) { animation-delay: 0.5s; }
+.timeline-item:nth-child(6) { animation-delay: 0.6s; }
+.timeline-item:nth-child(7) { animation-delay: 0.7s; }
+.timeline-item:nth-child(8) { animation-delay: 0.8s; }
+
+@keyframes fadeScaleIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) skewY(0deg);
+    filter: blur(0);
+  }
+}
+
+.timeline-item:hover {
+  box-shadow: 0 6px 24px rgba(0,115,177,0.13), 0 1.5px 8px rgba(0,0,0,0.08);
+  transform: translateY(-6px) scale(1.03) skewY(-1deg) !important;
+  filter: blur(0) !important;
+  transition: box-shadow 0.3s, transform 0.3s;
+  z-index: 2;
+}
+}
+.timeline-dot {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border: 3px solid #0073b1;
+  border-radius: 50%;
+  position: absolute;
+  left: -19px;
+  top: 8px;
+  z-index: 1;
+}
+.timeline-content {
+  background: #fff;
+  padding: 1.2rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  margin-left: 30px;
+  flex: 1;
+  color: #222;
+}
+.timeline-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #0073b1;
+  font-size: 1.15rem;
+}
+.institution {
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 0.2rem;
+}
+.duration, .grade, .description, .issued, .credential-id, .skills {
+  color: #222;
+  font-size: 0.97rem;
+  margin-bottom: 0.2rem;
+}
+.credential-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 1.1rem;
+  background: #0073b1;
+  color: #fff;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.credential-btn:hover {
+  background: #005983;
+}

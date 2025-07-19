@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import myphoto from './assets/myphoto.jpg'
 import coreldrawIcon from './assets/coreldraw.svg';
+import EducationTimeline from './EducationTimeline';
 
 const sections = [
   { id: 'about', label: 'About' },
@@ -115,7 +116,13 @@ function App() {
         {activeSection === 'about' && (
           <section id="about">
             <h1>About Me</h1>
-            <p>I am a passionate student and web developer. Welcome to my portfolio!</p>
+            <p style={{ color: '#232323' }}>
+              I’m <span style={{ fontWeight: 600, color: '#a259ff' }}>Amarjeet Yadav</span>, a passionate <span style={{ fontWeight: 600 }}>Full Stack Developer</span> and MCA student at LPU.<br /><br />
+              <span style={{ background: '#e0e7ff', color: '#222', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>Top Skills:</span> <span style={{ fontWeight: 500, color: '#0073b1' }}>React</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>Node.js</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>JavaScript</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>MySQL</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>UI/UX Design</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>PHP</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>C++</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>Python</span><br /><br />
+              I thrive on building digital solutions that blend <span style={{ fontWeight: 500, color: '#a259ff' }}>creativity</span> with <span style={{ fontWeight: 500, color: '#a259ff' }}>robust engineering</span>. My journey includes hands-on experience with modern web technologies, a keen interest in global affairs, and a commitment to <span style={{ fontWeight: 500, color: '#a259ff' }}>continuous learning</span>.<br /><br />
+              Curious by nature, I enjoy exploring new tech, reading about world events, and collaborating on projects that make a real impact.<br /><br />
+              <span style={{ fontWeight: 600 }}>Let’s connect and create something meaningful together!</span>
+            </p>
             <div style={{ marginTop: '1.5rem' }}>
               <a href="https://www.canva.com/design/DAGrJ6qnMgA/6rqBNKVqnm4mnzqRpN6oDQ/view?utm_content=DAGrJ6qnMgA&utm_campaign=designshare&utm_medium=link&utm_source=editor" target="_blank" rel="noopener noreferrer">
                 <button type="button">View/Download Resume</button>
@@ -158,8 +165,7 @@ function App() {
         )}
         {activeSection === 'education' && (
           <section id="education">
-            <h1>Education</h1>
-            <p>Education details will be listed here.</p>
+            <EducationTimeline />
           </section>
         )}
         {activeSection === 'contact' && (
