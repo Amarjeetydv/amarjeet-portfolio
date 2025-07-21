@@ -60,7 +60,7 @@
   transition: box-shadow 0.3s, transform 0.3s;
   z-index: 2;
 }
-}
+
 .timeline-dot {
   width: 18px;
   height: 18px;

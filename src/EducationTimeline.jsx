@@ -8,7 +8,7 @@ const educationData = [
     institution: "Global Information Technology Council",
     issued: "Mar 2024",
     credentialId: "DV-92051091",
-    credentialUrl: "#", // Replace with actual credential link if available
+    credentialUrl: "https://drive.google.com/file/d/1at2h5V0bNFg_l9gtnmJid8sACv8k4kou/view", // Updated with actual credential link
     skills: [
       "Node.js",
       "Python (Programming Language)",
@@ -26,14 +26,14 @@ const educationData = [
     degree: "Certificate of Workshop on Python",
     institution: "UptoSkills",
     issued: "Sep 2023",
-    credentialUrl: "#", // Replace with actual credential link if available
+    credentialUrl: "https://drive.google.com/file/d/1aevQ1Svw57vjvP8_Qnfg0V2xauxb6KZ_/view", // Updated with actual credential link
     type: "certification"
   },
   {
     degree: "Debate Competition Participation Certificate",
     institution: "Doon Institute of Engineering & Technology",
     issued: "Sep 2023",
-    credentialUrl: "#", // Replace with actual credential link if available
+    credentialUrl: "https://drive.google.com/file/d/1i98dT-02E7mCtK0crRdFJ6FF_LA3U2_L/view", // Updated with actual credential link
     type: "certification"
   },
   // Education (no credential button)
