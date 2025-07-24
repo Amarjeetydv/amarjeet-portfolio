@@ -712,3 +712,104 @@
   transition: box-shadow 0.22s, transform 0.22s, background 0.22s;
   z-index: 2;
 }
+
+.my-work-section {
+  background: #fff; /* Match your main content background */
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  margin: 2rem auto;
+  max-width: 700px;
+  box-shadow: 0 4px 24px #0003;
+  color: #22223b;
+  text-align: center;
+}
+.work-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #22223b;
+}
+.work-desc {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+.work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.work-card {
+  display: flex;
+  align-items: flex-start;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 12px #a259ff11;
+  position: relative;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.work-card:hover {
+  box-shadow: 0 6px 24px #a259ff33;
+  transform: translateY(-4px) scale(1.01);
+}
+.work-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin-right: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+.work-content {
+  flex: 1;
+  text-align: left;
+}
+.work-project-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.3rem 0;
+  color: #22223b;
+}
+.work-project-title a {
+  color: #a259ff;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.work-project-title a:hover {
+  color: #43e97b;
+}
+.work-project-desc {
+  color: #555;
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+}
+.work-lang-badge {
+  background: #a259ff22;
+  color: #a259ff;
+  padding: 0.2rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.work-link {
+  color: #a259ff;
+  background: #f8f9fa;
+  border: 1.5px solid #a259ff44;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+  font-size: 1.2rem;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+}
+.work-link:hover {
+  background: #a259ff;
+  color: #fff;
+}

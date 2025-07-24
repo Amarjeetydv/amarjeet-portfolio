@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import myphoto from './assets/myphoto.jpg'
 import coreldrawIcon from './assets/coreldraw.svg';
 import EducationTimeline from './EducationTimeline';
+import { FaCode, FaJs, FaHtml5, FaCss3Alt, FaDatabase } from "react-icons/fa";
 
 const sections = [
   { id: 'about', label: 'About' },
@@ -65,8 +66,66 @@ const skillsData = [
   },
 ];
 
+const languageIcons = {
+  JavaScript: <FaJs color="#f7df1e" />,
+  HTML: <FaHtml5 color="#e34c26" />,
+  CSS: <FaCss3Alt color="#2965f1" />,
+  SCSS: <FaCss3Alt color="#c6538c" />,
+  "C++": <FaCode color="#00599C" />,
+  default: <FaDatabase color="#a259ff" />,
+};
+
+// Custom project data with stack/tech for each project
+const myProjects = [
+  {
+    name: "cafe-frontend",
+    description: "A responsive Angular web app for cafe management. Features include user authentication, dashboard analytics, product/category/bill management, and a modern UI with a mobile-first approach.",
+    url: "https://github.com/Amarjeetydv/cafe-frontend",
+    stack: ["Angular", "SCSS", "REST API"],
+  },
+  {
+    name: "cafe-backend",
+    description: "A RESTful Node.js/Express backend for the Cafe Management System. Handles user authentication, product/category/bill CRUD operations, and dashboard analytics.",
+    url: "https://github.com/Amarjeetydv/cafe-backend",
+    stack: ["Node.js", "Express", "MySQL"], // Updated to MySQL
+  },
+  {
+    name: "DSA-Practice",
+    description: "Collection of C++ programs for practicing data structures, algorithms, and coding patterns.",
+    url: "https://github.com/Amarjeetydv/DSA-Practice",
+    stack: ["C++"],
+  },
+  {
+    name: "amarjeet-css-project",
+    description: "A collection of modern HTML and CSS UI components, including sliders, footers, and input forms. Features responsive design, Font Awesome icons, and demo pages for each component.",
+    url: "https://github.com/Amarjeetydv/amarjeet-css-project",
+    stack: ["HTML", "CSS", "UI Components"],
+  },
+  {
+    name: "amarjeet-bootstrap-frontend",
+    description: "A modern, responsive frontend template for logistics or business websites, built with Bootstrap 4 and Font Awesome. Features multiple HTML templates, custom styles, interactive carousels, and a professional layout.",
+    url: "https://github.com/Amarjeetydv/amarjeet-bootstrap-frontend",
+    stack: ["HTML", "Bootstrap", "CSS", "Font Awesome"],
+  },
+];
+
 function App() {
-  const [activeSection, setActiveSection] = useState('about')
+  // Set default activeSection to 'about' so About section opens by default
+  const [activeSection, setActiveSection] = useState('about');
+
+  // State for GitHub projects
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    fetch("https://api.github.com/users/Amarjeetydv/repos")
+      .then((res) => res.json())
+      .then((data) => {
+        const filtered = data.filter(
+          (repo) => repo.name !== "amarjeet-portfolio"
+        );
+        setProjects(filtered);
+      });
+  }, []);
 
   return (
     <div className="portfolio-container">
@@ -134,14 +193,38 @@ function App() {
           </section>
         )}
         {activeSection === 'projects' && (
-          <section id="projects">
-            <h1>Projects</h1>
-            <p>Project details will be listed here.</p>
+          <section className="my-work-section">
+            <h2 className="work-title" style={{ textAlign: 'center' }}>My Work</h2>
+            <p className="work-desc">
+              Explore a curated collection of my digital creations. From web applications to coding experiments, this is where I bring ideas to life.
+            </p>
+            <div className="work-list">
+              {myProjects.map((project) => (
+                <div className="work-card" key={project.name}>
+                  <div className="work-content">
+                    <h3 className="work-project-title">
+                      <a href={project.url} target="_blank" rel="noopener noreferrer">
+                        {project.name}
+                      </a>
+                    </h3>
+                    <p className="work-project-desc">{project.description}</p>
+                    <div style={{ marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {project.stack.map((tech) => (
+                        <span key={tech} className="work-lang-badge">{tech}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <a className="work-link" href={project.url} target="_blank" rel="noopener noreferrer">
+                    &#8599;
+                  </a>
+                </div>
+              ))}
+            </div>
           </section>
         )}
         {activeSection === 'skills' && (
           <section id="skills">
-            <h1>Skills</h1>
+            <h1 style={{ textAlign: 'center' }}>Skills</h1>
             <div className="skills-carousel">
               {skillsData.map((cat) => (
                 <div className="skills-category" key={cat.category}>
