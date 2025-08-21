@@ -113,6 +113,9 @@ function App() {
   // Set default activeSection to 'about' so About section opens by default
   const [activeSection, setActiveSection] = useState('about');
 
+  // State for selected skill category
+  const [selectedCategory, setSelectedCategory] = useState(skillsData[0].category);
+
   // State for GitHub projects
   const [projects, setProjects] = useState([]);
 
@@ -158,8 +161,14 @@ function App() {
             <a href="https://www.instagram.com/ay043590?igsh=MWxncjMzNGMxZWlxcQ==" target="_blank" rel="noopener noreferrer" aria-label="Instagram" onClick={() => console.log('Instagram link clicked')}>
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.241 1.308 3.608.058 1.266.069 1.646.069 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.241 1.246-3.608 1.308-1.266.058-1.646.069-4.85.069s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.241-1.308-3.608-.058-1.266-.069-1.646-.069-4.85s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608.974-.974 2.241-1.246 3.608-1.308 1.266-.058 1.688-.07 4.85-.07zm0-2.163c-3.259 0-3.667.012-4.947.07-1.276.058-2.687.334-3.678 1.325-.991.991-1.267 2.402-1.325 3.678-.058 1.28-.07 1.688-.07 4.947s.012 3.667.07 4.947c.058 1.276.334 2.687 1.325 3.678.991.991 2.402 1.267 3.678 1.325 1.28.058 1.688.07 4.947.07s3.667-.012 4.947-.07c1.276-.058 2.687-.334 3.678-1.325.991-.991 1.267-2.402 1.325-3.678.058-1.28.07-1.688.07-4.947s-.012-3.667-.07-4.947c-.058-1.276-.334-2.687-1.325-3.678-.991-.991-2.402-1.267-3.678-1.325-1.28-.058-1.688-.07-4.947-.07zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
             </a>
-            <a href="https://www.youtube.com/@amarjeetcomposer8339" target="_blank" rel="noopener noreferrer" aria-label="YouTube" onClick={() => console.log('YouTube link clicked')}>
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a2.994 2.994 0 0 0-2.107-2.117C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.391.569A2.994 2.994 0 0 0 .502 6.186C0 8.08 0 12 0 12s0 3.92.502 5.814a2.994 2.994 0 0 0 2.107 2.117C4.5 20.5 12 20.5 12 20.5s7.5 0 9.391-.569a2.994 2.994 0 0 0 2.107-2.117C24 15.92 24 12 24 12s0-3.92-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            <a href="https://leetcode.com/u/Amarjeet__Yadav/" target="_blank" rel="noopener noreferrer" aria-label="LeetCode" onClick={() => console.log('LeetCode link clicked')}>
+              <svg width="24" height="24" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <rect width="50" height="50" rx="10" fill="#fff"/>
+                  <path d="M36.7 36.1c-1.1 1.1-2.9 1.1-4 0l-9.2-9.2c-.5-.5-.5-1.3 0-1.8l9.2-9.2c1.1-1.1 2.9-1.1 4 0 1.1 1.1 1.1 2.9 0 4l-7.3 7.3 7.3 7.3c1.1 1.1 1.1 2.9 0 4z" fill="#FFA116"/>
+                  <path d="M25 45c-11 0-20-9-20-20S14 5 25 5c5.5 0 10.5 2.1 14.3 5.9.6.6.6 1.5 0 2.1-.6.6-1.5.6-2.1 0C34.2 10.1 29.8 8.2 25 8.2c-9.3 0-16.8 7.5-16.8 16.8S15.7 41.8 25 41.8c4.8 0 9.2-1.9 12.7-5.4.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1C35.5 42.9 30.5 45 25 45z" fill="#070707"/>
+                </g>
+              </svg>
             </a>
           </div>
         </div>
@@ -224,25 +233,34 @@ function App() {
         )}
         {activeSection === 'skills' && (
           <section id="skills">
-            <h1 style={{ textAlign: 'center' }}>Skills</h1>
-            <div className="skills-carousel">
-              {skillsData.map((cat) => (
-                <div className="skills-category" key={cat.category}>
-                  <h2>{cat.category}</h2>
-                  <ul>
-                    {cat.items.map((skill) => (
-                      <li key={skill.name} className="skill-item">
-                        <img src={skill.icon} alt={skill.name} className="skill-icon" />
-                        <span>{skill.name}</span>
-                        <div className="proficiency-bar">
-                          <div className="proficiency-fill" style={{ width: `${skill.proficiency}%` }}></div>
-                        </div>
-                        <span className="proficiency-label">{skill.proficiency}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <div className="section-card">
+              <h1 style={{ textAlign: 'left' }}>Skills</h1>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', margin: '1.2rem 0 1.5rem 0' }}>
+                <select
+                  className="skills-category-dropdown"
+                  value={selectedCategory}
+                  onChange={e => setSelectedCategory(e.target.value)}
+                  style={{ fontSize: '1.08rem', padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #a259ff', color: '#232323', background: '#f8f9fa', fontWeight: 500 }}
+                >
+                  {skillsData.map(cat => (
+                    <option key={cat.category} value={cat.category}>{cat.category}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="skills-grid">
+                {skillsData.find(cat => cat.category === selectedCategory)?.items.map(skill => (
+                  <div className="skill-card" key={skill.name}>
+                    <div className="skill-card-icon">
+                      <img src={skill.icon} alt={skill.name} />
+                    </div>
+                    <div className="skill-card-name">{skill.name}</div>
+                    <div className="skill-card-bar">
+                      <div className="skill-card-bar-fill" style={{ width: `${skill.proficiency}%` }}></div>
+                    </div>
+                    <div className="skill-card-percent">{skill.proficiency}%</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}
@@ -253,41 +271,43 @@ function App() {
         )}
         {activeSection === 'contact' && (
           <section id="contact">
-            <h1>Contact</h1>
-            <form className="contact-form" onSubmit={async (e) => {
-              e.preventDefault();
-              const form = e.target;
-              const data = {
-                name: form.name.value,
-                email: form.email.value,
-                message: form.message.value,
-              };
-              const res = await fetch('https://amarjeet-portfolio.onrender.com/api/contact', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-              });
-              if (res.ok) {
-                alert('Message sent!');
-                form.reset();
-              } else {
-                alert('Failed to send message.');
-              }
-            }}>
-              <label>
-                Name:
-                <input type="text" name="name" required />
-              </label>
-              <label>
-                Email:
-                <input type="email" name="email" required />
-              </label>
-              <label>
-                Message:
-                <textarea name="message" required />
-              </label>
-              <button type="submit">Send</button>
-            </form>
+            <div className="section-card">
+              <h1>Contact</h1>
+              <form className="contact-form" onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const data = {
+                  name: form.name.value,
+                  email: form.email.value,
+                  message: form.message.value,
+                };
+                const res = await fetch('https://amarjeet-portfolio.onrender.com/api/contact', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data),
+                });
+                if (res.ok) {
+                  alert('Message sent!');
+                  form.reset();
+                } else {
+                  alert('Failed to send message.');
+                }
+              }}>
+                <label>
+                  Name:
+                  <input type="text" name="name" required />
+                </label>
+                <label>
+                  Email:
+                  <input type="email" name="email" required />
+                </label>
+                <label>
+                  Message:
+                  <textarea name="message" required />
+                </label>
+                <button type="submit">Send</button>
+              </form>
+            </div>
           </section>
         )}
       </main>
