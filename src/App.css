@@ -1,3 +1,33 @@
+/* --- Centering and Responsive Fixes for Skills & Contact Sections --- */
+.centered-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 500px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  padding: 2rem 1rem 1.5rem 1rem;
+}
+
+@media (max-width: 900px) {
+  .centered-card {
+    max-width: 95vw;
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+  }
+}
+@media (max-width: 600px) {
+  .centered-card {
+    max-width: 99vw;
+    padding: 0.7rem 0.1rem 0.7rem 0.1rem;
+    box-shadow: none;
+    border-radius: 8px;
+  }
+}
 @media (max-width: 600px) {
   .skills-category-dropdown {
     display: block;
@@ -8,20 +38,23 @@
 /* --- Skills Grid Modern Layout --- */
 .skills-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 1.2rem;
-  margin: 2rem 0 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0 0 0;
+  justify-items: center;
 }
 .skill-card {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  padding: 1.2rem 1rem 1rem 1rem;
+  padding: 1rem 0.7rem 0.7rem 0.7rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   transition: transform 0.18s, box-shadow 0.18s;
   min-width: 0;
+  width: 100%;
+  max-width: 250px;
 }
 .skill-card:hover {
   transform: translateY(-6px) scale(1.04);
@@ -408,14 +441,17 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
   max-width: 400px;
-  margin: 2rem 0;
+  margin: 1.5rem auto 1rem auto;
+  align-items: center;
 }
 .contact-form label {
   display: flex;
   flex-direction: column;
   font-weight: 500;
   color: #22223b;
+  width: 100%;
 }
 .contact-form input,
 .contact-form textarea {
@@ -424,6 +460,7 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+  width: 100%;
 }
 .contact-form button {
   background: #22223b;
@@ -434,6 +471,7 @@
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  width: 100%;
 }
 .contact-form button:hover {
   background: #4a4e69;
@@ -820,7 +858,7 @@
   border-radius: 12px;
   padding: 2.5rem 1.5rem;
   margin: 2rem auto;
-  max-width: 700px;
+  max-width: 800px; /* Increased max-width for better centering */
   box-shadow: 0 4px 24px #0003;
   color: #22223b;
   text-align: center;
@@ -840,6 +878,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  align-items: center; /* Center the cards */
+  max-width: 100%;
 }
 .work-card {
   display: flex;
@@ -850,6 +890,8 @@
   box-shadow: 0 2px 12px #a259ff11;
   position: relative;
   transition: box-shadow 0.2s, transform 0.2s;
+  width: 100%; /* Full width within the container */
+  max-width: 700px; /* Maximum width for each card */
 }
 .work-card:hover {
   box-shadow: 0 6px 24px #a259ff33;

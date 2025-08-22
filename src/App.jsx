@@ -75,37 +75,37 @@ const languageIcons = {
   default: <FaDatabase color="#a259ff" />,
 };
 
-// Custom project data with stack/tech for each project
+// Custom project data with stack/tech for each project - Updated to match current GitHub profile
 const myProjects = [
   {
-    name: "cafe-frontend",
-    description: "A responsive Angular web app for cafe management. Features include user authentication, dashboard analytics, product/category/bill management, and a modern UI with a mobile-first approach.",
-    url: "https://github.com/Amarjeetydv/cafe-frontend",
-    stack: ["Angular", "SCSS", "REST API"],
+    name: "amarjeet-portfolio",
+    description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Includes dynamic project fetching and modern UI components.",
+    url: "https://github.com/Amarjeetydv/amarjeet-portfolio",
+    stack: ["React", "JavaScript", "CSS", "Vite", "GitHub API"],
   },
   {
-    name: "cafe-backend",
-    description: "A RESTful Node.js/Express backend for the Cafe Management System. Handles user authentication, product/category/bill CRUD operations, and dashboard analytics.",
-    url: "https://github.com/Amarjeetydv/cafe-backend",
-    stack: ["Node.js", "Express", "MySQL"], // Updated to MySQL
-  },
-  {
-    name: "DSA-Practice",
+    name: "cpp practice",
     description: "Collection of C++ programs for practicing data structures, algorithms, and coding patterns.",
-    url: "https://github.com/Amarjeetydv/DSA-Practice",
+    url: "https://github.com/Amarjeetydv/cpp-practice",
     stack: ["C++"],
+  },
+  {
+    name: "cafe management system",
+    description: "A comprehensive cafe management system with frontend and backend functionality. Features user authentication, menu management, order processing, and administrative controls.",
+    url: "https://github.com/Amarjeetydv/cafe-management-system",
+    stack: ["HTML", "CSS", "JavaScript", "PHP", "MySQL"],
+  },
+  {
+    name: "amarjeet bootstrap project",
+    description: "A modern, responsive frontend template for logistics or business websites, built with Bootstrap 4 and Font Awesome. Features multiple HTML templates, custom styles, interactive carousels, and a professional layout.",
+    url: "https://github.com/Amarjeetydv/amarjeet-bootstrap-frontend",
+    stack: ["HTML"],
   },
   {
     name: "amarjeet-css-project",
     description: "A collection of modern HTML and CSS UI components, including sliders, footers, and input forms. Features responsive design, Font Awesome icons, and demo pages for each component.",
     url: "https://github.com/Amarjeetydv/amarjeet-css-project",
-    stack: ["HTML", "CSS", "UI Components"],
-  },
-  {
-    name: "amarjeet-bootstrap-frontend",
-    description: "A modern, responsive frontend template for logistics or business websites, built with Bootstrap 4 and Font Awesome. Features multiple HTML templates, custom styles, interactive carousels, and a professional layout.",
-    url: "https://github.com/Amarjeetydv/amarjeet-bootstrap-frontend",
-    stack: ["HTML", "Bootstrap", "CSS", "Font Awesome"],
+    stack: ["HTML"],
   },
 ];
 
