@@ -397,6 +397,148 @@
     border-radius: 0;
   }
 }
+/* Tablet-specific layout: 601px - 1024px */
+@media (min-width: 601px) and (max-width: 1024px) {
+  /* Narrow the sidebar to give more room to content */
+  .menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 180px;
+    height: 100vh;
+    padding: 1rem 0.4rem;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+  }
+
+  .profile-photo {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 0.6rem;
+  }
+
+  .intro-block {
+    margin: 0.25rem 0;
+    text-align: center;
+  }
+
+  .animated-name { font-size: 1.6rem !important; }
+
+  .menu ul { margin-top: 0.6rem; }
+  .menu li { margin: 0.4rem 0; }
+  .menu button { padding: 0.35rem 0; font-size: 0.95rem; }
+
+  /* Give content the remaining width */
+  .content {
+    margin-left: 180px;
+    padding: 2rem 3vw;
+  }
+
+  .content section { max-width: 880px; }
+
+  /* Tighter container paddings on tablet */
+  .contact-form, .skills-container, .work-list {
+    padding: 1.25rem;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: calc(100% - 40px);
+  }
+
+  .skill-item, .skill-card, .work-card {
+    padding: 1rem;
+  }
+
+  .contact-form input, .contact-form textarea {
+    padding: 1rem;
+  }
+
+  /* keep social icons compact */
+  .social-links { gap: 0.4rem; max-width: 180px; }
+}
+/* Tablet specific styles: 601px - 1024px */
+@media (min-width: 601px) and (max-width: 1024px) {
+  /* Slightly narrower left menu to give more room for content */
+  .menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    padding: 1rem 0.5rem;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+  }
+
+  .profile-photo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 0.6rem;
+  }
+
+  .menu ul {
+    padding: 0.4rem 0;
+  }
+
+  /* Give the content area the remaining space */
+  .content {
+    margin-left: 200px;
+    padding: 2rem 3vw;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.04);
+  }
+
+  .content section {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
+
+  /* Scale down large cards and reduce paddings to fit tablet */
+  .skills-container {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem 1rem;
+    padding: 1.25rem;
+    margin: 2rem 1rem;
+    border-radius: 14px;
+  }
+
+  .skill-item, .skill-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .work-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  .work-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Contact form adjustments for tablet */
+  .contact-form {
+    padding: 1.25rem;
+    margin: 2rem auto;
+    max-width: 900px;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+  }
+
+  .contact-form button {
+    padding: 0.9rem 1.6rem;
+    font-size: 1rem;
+  }
+
+  /* Reduce header sizes slightly */
+  .content h1 { font-size: 1.6rem; }
+  .work-title, .work-desc, .work-project-title { font-size: 1rem; }
+}
 .content section {
   max-width: 1100px;
   margin: 0 auto;
@@ -406,16 +548,31 @@
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
   width: 100%;
-  margin: 4rem 0 3rem 0;
-  align-items: flex-start;
-  padding: 3rem 3rem;
-  background: rgba(248, 249, 250, 0.9);
-  border-radius: 25px;
-  margin-left: 2rem;
-  margin-right: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin: 3.5rem auto;
+  align-items: stretch;
+  padding: 2rem;
+  background: rgba(248, 249, 250, 0.95);
+  border-radius: 18px;
+  max-width: 960px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+/* Defensive rules to prevent inputs from overflowing their container */
+.content, .portfolio-container {
+  /* prevent horizontal overflow caused by large inner elements */
+  overflow-x: hidden;
+}
+
+.contact-form {
+  /* ensure the card never exceeds the available content width */
+  max-width: min(960px, calc(100% - 64px));
+}
+
+.contact-form input,
+.contact-form textarea {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .content h1 {
   color: #22223b;
@@ -450,8 +607,7 @@
 .contact-form textarea:focus {
   outline: none;
   border-color: #a259ff;
-  box-shadow: 0 0 0 4px rgba(162, 89, 255, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 4px rgba(162, 89, 255, 0.12);
 }
 .contact-form button {
   background: #22223b;
@@ -471,8 +627,29 @@
 
 .contact-form button:hover {
   background: #a259ff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(162, 89, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(162, 89, 255, 0.28);
+}
+
+/* Stabilize textarea and responsive paddings */
+.contact-form textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .contact-form {
+    padding: 1rem;
+    margin: 1.5rem 0;
+  }
+  .contact-form input,
+  .contact-form textarea {
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+  }
+  .contact-form button {
+    padding: 0.85rem 1.6rem;
+    font-size: 1rem;
+  }
 }
 
 .social-links {
@@ -1097,4 +1274,58 @@
   background: linear-gradient(90deg, #a259ff 0%, #0073b1 100%);
   border-radius: 4px;
   transition: width 0.8s ease;
+}
+
+/* Tablet-specific adjustments (between phone and desktop) */
+@media (min-width: 601px) and (max-width: 1024px) {
+  /* Narrow the left sidebar so the content has more room */
+  .menu {
+    width: 200px;
+    padding: 1rem 0.6rem;
+  }
+  .profile-photo {
+    width: 80px;
+    height: 80px;
+  }
+  .menu button {
+    font-size: 0.95rem;
+    padding: 0.35rem 0;
+  }
+
+  /* Give content slightly less left margin and tighter padding */
+  .content {
+    margin-left: 200px;
+    padding: 2rem 3vw;
+  }
+
+  /* Scale down large inner containers so they fit without horizontal scroll */
+  .skills-container, .contact-form, .my-work-section {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    max-width: calc(100% - 48px);
+  }
+
+  /* Make skill cards slightly smaller */
+  .skill-item {
+    padding: 1rem;
+    min-height: 100px;
+  }
+
+  /* Tweak work cards to fit tablet */
+  .work-card {
+    padding: 1rem;
+    max-width: 680px;
+  }
+
+  /* Contact form inputs padding reduction for tablet */
+  .contact-form input,
+  .contact-form textarea {
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+  }
+
+  /* Ensure no unexpected horizontal scroll */
+  .portfolio-container, .content { overflow-x: hidden; }
 }
