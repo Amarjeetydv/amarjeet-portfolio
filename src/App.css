@@ -1,33 +1,4 @@
-/* --- Centering and Responsive Fixes for Skills & Contact Sections --- */
-.centered-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  max-width: 500px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  padding: 2rem 1rem 1.5rem 1rem;
-}
-
-@media (max-width: 900px) {
-  .centered-card {
-    max-width: 95vw;
-    padding: 1.2rem 0.5rem 1rem 0.5rem;
-  }
-}
-@media (max-width: 600px) {
-  .centered-card {
-    max-width: 99vw;
-    padding: 0.7rem 0.1rem 0.7rem 0.1rem;
-    box-shadow: none;
-    border-radius: 8px;
-  }
-}
+/* Skills dropdown responsive styles */
 @media (max-width: 600px) {
   .skills-category-dropdown {
     display: block;
@@ -38,10 +9,12 @@
 /* --- Skills Grid Modern Layout --- */
 .skills-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
-  margin: 1.2rem 0 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0 0 0;
   justify-items: center;
+  width: 100%;
+  max-width: 100%;
 }
 .skill-card {
   background: #fff;
@@ -54,7 +27,7 @@
   transition: transform 0.18s, box-shadow 0.18s;
   min-width: 0;
   width: 100%;
-  max-width: 250px;
+  max-width: 300px;
 }
 .skill-card:hover {
   transform: translateY(-6px) scale(1.04);
@@ -265,14 +238,14 @@
     font-size: 0.85rem;
   }
   .contact-form {
-    max-width: 100%;
-    padding: 0;
+    width: 100%;
     margin: 1rem 0;
   }
   .contact-form input,
   .contact-form textarea {
     font-size: 0.95rem;
     padding: 0.4rem;
+    width: 100%;
   }
   .contact-form button {
     font-size: 0.95rem;
@@ -429,6 +402,21 @@
   margin: 0 auto;
   text-align: left;
 }
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  width: 100%;
+  margin: 4rem 0 3rem 0;
+  align-items: flex-start;
+  padding: 3rem 3rem;
+  background: rgba(248, 249, 250, 0.9);
+  border-radius: 25px;
+  margin-left: 2rem;
+  margin-right: 2rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
 .content h1 {
   color: #22223b;
   margin-bottom: 1rem;
@@ -437,15 +425,6 @@
   padding-left: 1.2rem;
 }
 
-.contact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  max-width: 400px;
-  margin: 1.5rem auto 1rem auto;
-  align-items: center;
-}
 .contact-form label {
   display: flex;
   flex-direction: column;
@@ -455,26 +434,45 @@
 }
 .contact-form input,
 .contact-form textarea {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
+  margin-top: 1rem;
+  padding: 1.5rem 2rem;
+  border: 2px solid #e9ecef;
+  border-radius: 15px;
+  font-size: 1.1rem;
   width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #a259ff;
+  box-shadow: 0 0 0 4px rgba(162, 89, 255, 0.15);
+  transform: translateY(-2px);
 }
 .contact-form button {
   background: #22223b;
   color: #fff;
   border: none;
-  padding: 0.7rem;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 1.5rem 3rem;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
-  width: 100%;
+  transition: all 0.3s ease;
+  width: auto;
+  align-self: flex-start;
+  margin-top: 1.5rem;
+  box-shadow: 0 6px 20px rgba(34, 34, 59, 0.25);
 }
+
 .contact-form button:hover {
-  background: #4a4e69;
+  background: #a259ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(162, 89, 255, 0.3);
 }
 
 .social-links {
@@ -958,74 +956,145 @@
   color: #fff;
 }
 
-/* Section Card Styles for Skills and Contact */
-.section-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 2.5rem 2rem;
-  margin: 2rem auto;
-  max-width: 800px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-  color: #22223b;
-  text-align: center;
-}
-
-.section-card h1 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: #22223b;
-  text-align: center;
-}
-
 /* Skills Section Specific Styles */
-#skills .section-card {
-  text-align: left;
-}
-
-#skills .section-card h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
 #skills .skills-category-dropdown {
   margin: 0 auto 1.5rem auto;
   display: block;
 }
 
-/* Contact Section Specific Styles */
-#contact .section-card {
-  text-align: left;
+#skills {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
-#contact .section-card h1 {
-  text-align: center;
-  margin-bottom: 2rem;
+.skills-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 3rem 0 4rem 0;
+  justify-content: center;
+  max-width: 100%;
+  padding: 2rem 3rem;
+  background: rgba(162, 89, 255, 0.08);
+  border-radius: 20px;
+  margin-left: 2rem;
+  margin-right: 2rem;
+  box-shadow: 0 4px 20px rgba(162, 89, 255, 0.1);
 }
 
-/* Mobile Responsive for Section Cards */
-@media (max-width: 768px) {
-  .section-card {
-    padding: 2rem 1.5rem;
-    margin: 1.5rem auto;
-    max-width: 95vw;
-  }
-  
-  .section-card h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1.2rem;
-  }
+.skill-tab {
+  padding: 1.2rem 2.5rem;
+  border: 2px solid #a259ff;
+  background: transparent;
+  color: #a259ff;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  margin: 0.3rem;
+  box-shadow: 0 2px 10px rgba(162, 89, 255, 0.1);
 }
 
-@media (max-width: 480px) {
-  .section-card {
-    padding: 1.5rem 1rem;
-    margin: 1rem auto;
-    max-width: 98vw;
-  }
-  
-  .section-card h1 {
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
-  }
+.skill-tab:hover {
+  background: #a259ff;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.skill-tab.active {
+  background: #a259ff;
+  color: white;
+  box-shadow: 0 4px 15px rgba(162, 89, 255, 0.3);
+}
+
+.skills-container {
+  display: grid;
+  /* allow narrower columns so more cards fit on small screens */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  background: rgba(248, 249, 250, 0.95);
+  border-radius: 18px;
+  /* remove large left/right margins that caused overflow */
+  margin-left: 0;
+  margin-right: 0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.skill-item {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  border-left: 5px solid #a259ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+  /* remove per-item margins (grid gap handles spacing) */
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.skill-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.skill-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.skill-icon {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.skill-name {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  /* allow wrapping instead of forcing ellipsis to avoid overflow */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.skill-percentage {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #a259ff;
+  flex-shrink: 0;
+}
+
+.skill-progress {
+  width: 100%;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.skill-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a259ff 0%, #0073b1 100%);
+  border-radius: 4px;
+  transition: width 0.8s ease;
 }

@@ -158,7 +158,7 @@ function App() {
             <a href="https://x.com/YadavPrade66061?t=YaB_XMLECI7jmVnaloxduQ&s=09" target="_blank" rel="noopener noreferrer" aria-label="Twitter" onClick={() => console.log('Twitter link clicked')}>
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557a9.83 9.83 0 0 1-2.828.775 4.932 4.932 0 0 0 2.165-2.724c-.951.564-2.005.974-3.127 1.195a4.916 4.916 0 0 0-8.38 4.482c-4.083-.205-7.697-2.162-10.125-5.134a4.822 4.822 0 0 0-.664 2.475c0 1.708.87 3.216 2.188 4.099a4.904 4.904 0 0 1-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.936 4.936 0 0 1-2.224.084c.627 1.956 2.444 3.377 4.6 3.417a9.867 9.867 0 0 1-6.102 2.104c-.396 0-.787-.023-1.175-.069a13.945 13.945 0 0 0 7.548 2.212c9.057 0 14.009-7.513 14.009-14.009 0-.213-.005-.425-.014-.636a10.012 10.012 0 0 0 2.457-2.548z"/></svg>
             </a>
-            <a href="https://www.instagram.com/ay043590?igsh=MWxncjMzNGMxZWlxcQ==" target="_blank" rel="noopener noreferrer" aria-label="Instagram" onClick={() => console.log('Instagram link clicked')}>
+            <a href="https://www.instagram.com/_amarjeet_30/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" onClick={() => console.log('Instagram link clicked')}>
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.241 1.308 3.608.058 1.266.069 1.646.069 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.241 1.246-3.608 1.308-1.266.058-1.646.069-4.85.069s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.241-1.308-3.608-.058-1.266-.069-1.646-.069-4.85s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608.974-.974 2.241-1.246 3.608-1.308 1.266-.058 1.688-.07 4.85-.07zm0-2.163c-3.259 0-3.667.012-4.947.07-1.276.058-2.687.334-3.678 1.325-.991.991-1.267 2.402-1.325 3.678-.058 1.28-.07 1.688-.07 4.947s.012 3.667.07 4.947c.058 1.276.334 2.687 1.325 3.678.991.991 2.402 1.267 3.678 1.325 1.28.058 1.688.07 4.947.07s3.667-.012 4.947-.07c1.276-.058 2.687-.334 3.678-1.325.991-.991 1.267-2.402 1.325-3.678.058-1.28.07-1.688.07-4.947s-.012-3.667-.07-4.947c-.058-1.276-.334-2.687-1.325-3.678-.991-.991-2.402-1.267-3.678-1.325-1.28-.058-1.688-.07-4.947-.07zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
             </a>
             <a href="https://leetcode.com/u/Amarjeet__Yadav/" target="_blank" rel="noopener noreferrer" aria-label="LeetCode" onClick={() => console.log('LeetCode link clicked')}>
@@ -232,35 +232,38 @@ function App() {
           </section>
         )}
         {activeSection === 'skills' && (
-          <section id="skills">
-            <div className="section-card">
-              <h1 style={{ textAlign: 'left' }}>Skills</h1>
-              <div style={{ display: 'flex', justifyContent: 'flex-start', margin: '1.2rem 0 1.5rem 0' }}>
-                <select
-                  className="skills-category-dropdown"
-                  value={selectedCategory}
-                  onChange={e => setSelectedCategory(e.target.value)}
-                  style={{ fontSize: '1.08rem', padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #a259ff', color: '#232323', background: '#f8f9fa', fontWeight: 500 }}
+          <section className="my-work-section" id="skills">
+            <h2 className="work-title" style={{ textAlign: 'center' }}>Skills</h2>
+            <p className="work-desc">
+              Explore my technical expertise across different domains. From frontend frameworks to backend technologies, here's what I bring to the table.
+            </p>
+            <div className="skills-tabs">
+              {skillsData.map(cat => (
+                <button
+                  key={cat.category}
+                  className={`skill-tab ${selectedCategory === cat.category ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory(cat.category)}
                 >
-                  {skillsData.map(cat => (
-                    <option key={cat.category} value={cat.category}>{cat.category}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="skills-grid">
-                {skillsData.find(cat => cat.category === selectedCategory)?.items.map(skill => (
-                  <div className="skill-card" key={skill.name}>
-                    <div className="skill-card-icon">
-                      <img src={skill.icon} alt={skill.name} />
-                    </div>
-                    <div className="skill-card-name">{skill.name}</div>
-                    <div className="skill-card-bar">
-                      <div className="skill-card-bar-fill" style={{ width: `${skill.proficiency}%` }}></div>
-                    </div>
-                    <div className="skill-card-percent">{skill.proficiency}%</div>
+                  {cat.category}
+                </button>
+              ))}
+            </div>
+            <div className="skills-container">
+              {skillsData.find(cat => cat.category === selectedCategory)?.items.map(skill => (
+                <div className="skill-item" key={skill.name}>
+                  <div className="skill-header">
+                    <img src={skill.icon} alt={skill.name} className="skill-icon" />
+                    <span className="skill-name">{skill.name}</span>
+                    <span className="skill-percentage">{skill.proficiency}%</span>
                   </div>
-                ))}
-              </div>
+                  <div className="skill-progress">
+                    <div 
+                      className="skill-progress-fill" 
+                      style={{ width: `${skill.proficiency}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
@@ -270,44 +273,45 @@ function App() {
           </section>
         )}
         {activeSection === 'contact' && (
-          <section id="contact">
-            <div className="section-card">
-              <h1>Contact</h1>
-              <form className="contact-form" onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.target;
-                const data = {
-                  name: form.name.value,
-                  email: form.email.value,
-                  message: form.message.value,
-                };
-                const res = await fetch('https://amarjeet-portfolio.onrender.com/api/contact', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(data),
-                });
-                if (res.ok) {
-                  alert('Message sent!');
-                  form.reset();
-                } else {
-                  alert('Failed to send message.');
-                }
-              }}>
-                <label>
-                  Name:
-                  <input type="text" name="name" required />
-                </label>
-                <label>
-                  Email:
-                  <input type="email" name="email" required />
-                </label>
-                <label>
-                  Message:
-                  <textarea name="message" required />
-                </label>
-                <button type="submit">Send</button>
-              </form>
-            </div>
+          <section className="my-work-section" id="contact">
+            <h2 className="work-title" style={{ textAlign: 'center' }}>Contact</h2>
+            <p className="work-desc">
+              Get in touch with me! I'm always interested in new opportunities and collaborations. Let's discuss how we can work together.
+            </p>
+            <form className="contact-form" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target;
+              const data = {
+                name: form.name.value,
+                email: form.email.value,
+                message: form.message.value,
+              };
+              const res = await fetch('https://amarjeet-portfolio.onrender.com/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              });
+              if (res.ok) {
+                alert('Message sent!');
+                form.reset();
+              } else {
+                alert('Failed to send message.');
+              }
+            }}>
+              <label>
+                Name:
+                <input type="text" name="name" required />
+              </label>
+              <label>
+                Email:
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                Message:
+                <textarea name="message" required />
+              </label>
+              <button type="submit">Send</button>
+            </form>
           </section>
         )}
       </main>
