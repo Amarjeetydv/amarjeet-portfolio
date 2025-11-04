@@ -13,6 +13,37 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+  @keyframes colorChange {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes glowPulse {
+    /* smaller glow */
+    0% {
+      text-shadow:
+        0 0 4px rgba(0,0,0,0.2),
+        0 0 8px rgba(0,0,0,0.12),
+        0 0 6px rgba(0,229,255,0.6),
+        0 0 12px rgba(0,229,255,0.35);
+      transform: translateY(0);
+      filter: saturate(1);
+    }
+    /* larger/brighter glow */
+    100% {
+      text-shadow:
+        0 0 10px rgba(0,255,244,1),
+        0 0 20px rgba(0,255,244,0.8),
+        0 0 36px rgba(0,229,255,0.6),
+        0 0 72px rgba(0,200,255,0.35);
+      transform: translateY(-1px);
+      filter: saturate(1.08);
+    }
+  }
+
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -66,3 +97,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+

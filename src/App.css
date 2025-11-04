@@ -328,11 +328,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 .profile-photo {
-  width: 100px;
-  height: 100px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #4a4e69;
@@ -1031,7 +1031,7 @@
 .my-work-section {
   background: #fff; /* Match your main content background */
   border-radius: 12px;
-  padding: 2.5rem 1.5rem;
+  padding: 0.2rem 1.5rem !important;
   margin: 2rem auto;
   max-width: 800px; /* Increased max-width for better centering */
   box-shadow: 0 4px 24px #0003;
@@ -1284,8 +1284,8 @@
     padding: 1rem 0.6rem;
   }
   .profile-photo {
-    width: 80px;
-    height: 80px;
+    width: 150px;
+    height: 150px;
   }
   .menu button {
     font-size: 0.95rem;
@@ -1328,4 +1328,32 @@
 
   /* Ensure no unexpected horizontal scroll */
   .portfolio-container, .content { overflow-x: hidden; }
+}
+
+@media (min-width: 0px) and (max-width: 600px) {
+  .name-block h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .name-block h2 {
+    font-size: 1rem;
+  }
+  .profile-photo {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1024px) {
+  .name-block h2 {
+    font-size: 1.6rem;
+  }
+}
+
+@media (min-width: 1025px){
+  .name-block h2 {
+    font-size: 2rem;
+  }
 }
