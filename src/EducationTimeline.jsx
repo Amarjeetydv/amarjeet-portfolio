@@ -3,39 +3,6 @@ import "./EducationTimeline.css";
 
 const educationData = [
   // Certifications (with credential button)
-  {
-    degree: "Advance Diploma In Full Stack Developer",
-    institution: "Global Information Technology Council",
-    issued: "Mar 2024",
-    credentialId: "DV-92051091",
-    credentialUrl: "https://drive.google.com/file/d/1at2h5V0bNFg_l9gtnmJid8sACv8k4kou/view", // Updated with actual credential link
-    skills: [
-      "Node.js",
-      "Python (Programming Language)",
-      "Laravel",
-      "Php",
-      "React.js",
-      "Lean Software Development",
-      "Git",
-      "SQL",
-      "MySQL"
-    ],
-    type: "certification"
-  },
-  {
-    degree: "Certificate of Workshop on Python",
-    institution: "UptoSkills",
-    issued: "Sep 2023",
-    credentialUrl: "https://drive.google.com/file/d/1aevQ1Svw57vjvP8_Qnfg0V2xauxb6KZ_/view", // Updated with actual credential link
-    type: "certification"
-  },
-  {
-    degree: "Debate Competition Participation Certificate",
-    institution: "Doon Institute of Engineering & Technology",
-    issued: "Sep 2023",
-    credentialUrl: "https://drive.google.com/file/d/1i98dT-02E7mCtK0crRdFJ6FF_LA3U2_L/view", // Updated with actual credential link
-    type: "certification"
-  },
   // Education (no credential button)
   {
     degree: "Master of Computer Applications (MCA)",
@@ -70,6 +37,39 @@ const educationData = [
       "Php"
     ],
     type: "education"
+  },
+  {
+    degree: "Advance Diploma In Full Stack Developer",
+    institution: "Global Information Technology Council",
+    issued: "Mar 2024",
+    credentialId: "DV-92051091",
+    credentialUrl: "https://drive.google.com/file/d/1at2h5V0bNFg_l9gtnmJid8sACv8k4kou/view", // Updated with actual credential link
+    skills: [
+      "Node.js",
+      "Python (Programming Language)",
+      "Laravel",
+      "Php",
+      "React.js",
+      "Lean Software Development",
+      "Git",
+      "SQL",
+      "MySQL"
+    ],
+    type: "certification"
+  },
+  {
+    degree: "Certificate of Workshop on Python",
+    institution: "UptoSkills",
+    issued: "Sep 2023",
+    credentialUrl: "https://drive.google.com/file/d/1aevQ1Svw57vjvP8_Qnfg0V2xauxb6KZ_/view", // Updated with actual credential link
+    type: "certification"
+  },
+  {
+    degree: "Debate Competition Participation Certificate",
+    institution: "Doon Institute of Engineering & Technology",
+    issued: "Sep 2023",
+    credentialUrl: "https://drive.google.com/file/d/1i98dT-02E7mCtK0crRdFJ6FF_LA3U2_L/view", // Updated with actual credential link
+    type: "certification"
   },
   {
     degree: "Senior School Certificate (Class XII, Science, PCM with Physical Education)",
