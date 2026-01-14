@@ -13,7 +13,6 @@ const sections = [
   { id: 'contact', label: 'Contact' },
 ]
 
-// Data-driven skills array
 const skillsData = [
   {
     category: 'Frontend',
@@ -25,7 +24,6 @@ const skillsData = [
       { name: 'Bootstrap', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg', proficiency: 80 },
       { name: 'Laravel', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg', proficiency: 70 },
       { name: 'jQuery', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jquery/jquery-original.svg', proficiency: 75 },
-      { name: 'AJAX', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jquery/jquery-original.svg', proficiency: 70 },
     ],
   },
   {
@@ -35,7 +33,6 @@ const skillsData = [
       { name: 'Express.js', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg', proficiency: 70 },
       { name: 'PHP', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg', proficiency: 75 },
       { name: 'MySQL', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg', proficiency: 70 },
-      { name: '.NET', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg', proficiency: 60 },
     ],
   },
   {
@@ -45,7 +42,6 @@ const skillsData = [
       { name: 'C++', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg', proficiency: 75 },
       { name: 'Python', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg', proficiency: 70 },
       { name: 'Visual Basic', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/40/VB.NET_Logo.svg', proficiency: 60 },
-      { name: 'C#', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg', proficiency: 65 },
     ],
   },
   {
@@ -64,17 +60,6 @@ const skillsData = [
       { name: 'Vite', icon: 'https://vitejs.dev/logo.svg', proficiency: 65 },
     ],
   },
-  {
-    category: 'Soft Skills',
-    items: [
-      { name: 'Communication', icon: 'https://cdn-icons-png.flaticon.com/512/3050/3050159.png', proficiency: 90 },
-      { name: 'Teamwork', icon: 'https://cdn-icons-png.flaticon.com/512/1534/1534938.png', proficiency: 90 },
-      { name: 'Leadership', icon: 'https://cdn-icons-png.flaticon.com/512/1233/1233836.png', proficiency: 85 },
-      { name: 'Time Management', icon: 'https://cdn-icons-png.flaticon.com/512/2382/2382533.png', proficiency: 88 },
-      { name: 'Problem-Solving', icon: 'https://cdn-icons-png.flaticon.com/512/1169/1169237.png', proficiency: 92 },
-      { name: 'Adaptability', icon: 'https://cdn-icons-png.flaticon.com/512/3079/3079162.png', proficiency: 88 },
-    ],
-  },
 ];
 
 const languageIcons = {
@@ -86,19 +71,12 @@ const languageIcons = {
   default: <FaDatabase color="#a259ff" />,
 };
 
-// Custom project data with stack/tech for each project - Updated to match current GitHub profile
 const myProjects = [
   {
     name: "amarjeet-portfolio",
     description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Includes dynamic project fetching and modern UI components.",
     url: "https://github.com/Amarjeetydv/amarjeet-portfolio",
     stack: ["React", "JavaScript", "CSS", "Vite", "GitHub API"],
-  },
-  {
-    name: "cpp practice",
-    description: "Collection of C++ programs for practicing data structures, algorithms, and coding patterns.",
-    url: "https://github.com/Amarjeetydv/cpp-practice",
-    stack: ["C++"],
   },
   {
     name: "cafe management system",
@@ -121,13 +99,8 @@ const myProjects = [
 ];
 
 function App() {
-  // Set default activeSection to 'about' so About section opens by default
   const [activeSection, setActiveSection] = useState('about');
-
-  // State for selected skill category
   const [selectedCategory, setSelectedCategory] = useState(skillsData[0].category);
-
-  // State for GitHub projects
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
@@ -145,25 +118,15 @@ function App() {
     <div className="portfolio-container">
       <nav className="menu">
         <div className="profile">
-          {/* Replace with your actual photo */}
           <img src={myphoto} alt="Amarjeet Yadav" className="profile-photo" />
-          {/* <div className="intro-block" style={{ margin: '0.5rem 0' }}>
-            <span className="intro-text" style={{ display: 'block', textAlign: 'center' }}>
-              hey I'm<br />
-              <span>
-                <span className="animated-name" style={{ fontWeight: 'bold', fontSize: '2.5rem', color: '#a259ff', marginBottom: '0.5rem', display: 'inline-block' }}>amarjeet yadav</span>  a,
-              </span><br />
-              <span className="role-subheading typewriter" style={{ display: 'inline-block', wordBreak: 'normal', maxWidth: '100%', whiteSpace: 'nowrap', overflowWrap: 'normal', letterSpacing: 'normal', color: '#a259ff' }}>Full Stack Developer</span>
-            </span>
-          </div> */}
           <div className="name-block">
             <h2>Amarjeet Yadav</h2>
           </div>
           <div className="social-links">
-            <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub" onClick={() => console.log('GitHub link clicked')}>
+            <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.11-.75.41-1.27.74-1.56-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.7.42.36.79 1.09.79 2.2 0 1.59-.01 2.87-.01 3.26 0 .31.21.67.8.56C20.71 21.39 24 17.08 24 12c0-6.27-5.23-11.5-12-11.5z"/></svg>
             </a>
-            <a href="https://linkedin.com/in/amarjeet-yadav-978820291" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" onClick={() => console.log('LinkedIn link clicked')}>
+            <a href="https://linkedin.com/in/amarjeet-yadav-978820291" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm13.5 11.28h-3v-5.6c0-1.34-.03-3.07-1.87-3.07-1.87 0-2.16 1.46-2.16 2.97v5.7h-3v-10h2.89v1.36h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v5.59z"/></svg>
             </a>
             {/* <a href="https://www.facebook.com/profile.php?id=100083695459596" target="_blank" rel="noopener noreferrer" aria-label="Facebook" onClick={() => console.log('Facebook link clicked')}>
@@ -206,10 +169,10 @@ function App() {
               <span style={{ fontWeight: 600 }}>Let’s connect and create something meaningful together!</span>
             </p>
             <div style={{ marginTop: '1.5rem' }}>
-              <a href="https://www.canva.com/design/DAGrJ6qnMgA/6rqBNKVqnm4mnzqRpN6oDQ/view?utm_content=DAGrJ6qnMgA&utm_campaign=designshare&utm_medium=link&utm_source=editor" target="_blank" rel="noopener noreferrer">
+              <a href="https://drive.google.com/file/d/1duGuRp6joowM3oQdeoLTyLjq2PRWHACW/view?usp=sharing" target="_blank" rel="noopener noreferrer">
                 <button type="button">View/Download Resume</button>
               </a>
-              <a href="https://www.canva.com/design/DAGrpAyB_Do/vFAYFDcvZSMK2EaCBwwyNQ/view?utm_content=DAGrpAyB_Do&utm_campaign=designshare&utm_medium=link&utm_source=editor" target="_blank" rel="noopener noreferrer" style={{ marginLeft: '1rem' }}>
+              <a href="https://drive.google.com/file/d/1duGuRp6joowM3oQdeoLTyLjq2PRWHACW/view?usp=sharing" target="_blank" rel="noopener noreferrer" style={{ marginLeft: '1rem' }}>
                 <button type="button">View/Download CV</button>
               </a>
             </div>
