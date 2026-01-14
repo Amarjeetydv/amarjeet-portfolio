@@ -73,6 +73,12 @@ const languageIcons = {
 
 const myProjects = [
   {
+    name: "auto-theft-guard",
+    description: "A real-time fuel theft detection and vehicle lock management system with automated alerts and comprehensive monitoring. Features automatic vehicle locking on theft detection, continuous fuel monitoring, interactive dashboard, real-time statistics, and fleet management with MySQL triggers for instant detection.",
+    url: "https://github.com/Amarjeetydv/auto-theft-guard",
+    stack: ["React", "Bootstrap", "Node.js", "Express.js", "MySQL"],
+  },
+  {
     name: "amarjeet-portfolio",
     description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Includes dynamic project fetching and modern UI components.",
     url: "https://github.com/Amarjeetydv/amarjeet-portfolio",
