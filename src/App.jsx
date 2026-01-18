@@ -166,7 +166,7 @@ function App() {
       <main className="content">
         <section id="about">
           <h1 className="work-title" style={{ textAlign: 'center' }}>About Me</h1>
-          <p style={{ color: '#232323',textAlign:'left', maxWidth: '800px', margin: '0 auto' }}>
+          <p style={{ color: '#232323',textAlign:'left', maxWidth: '100%', margin: '0 auto', padding: '0 0.5rem' }}>
               I’m <span style={{ fontWeight: 600, color: '#a259ff' }}>Amarjeet Yadav</span>, a passionate <span style={{ fontWeight: 600 }}>Full Stack Developer</span> and MCA student at LPU.<br /><br />
               <span style={{ background: '#e0e7ff', color: '#222', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>Top Skills:</span> <span style={{ fontWeight: 500, color: '#0073b1' }}>React</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>Node.js</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>JavaScript</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>MySQL</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>UI/UX Design</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>PHP</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>C++</span>, <span style={{ fontWeight: 500, color: '#0073b1' }}>Python</span><br /><br />
               I thrive on building digital solutions that blend <span style={{ fontWeight: 500, color: '#a259ff' }}>creativity</span> with <span style={{ fontWeight: 500, color: '#a259ff' }}>robust engineering</span>. My journey includes hands-on experience with modern web technologies, a keen interest in global affairs, and a commitment to <span style={{ fontWeight: 500, color: '#a259ff' }}>continuous learning</span>.<br /><br />
@@ -278,15 +278,15 @@ function App() {
             }}>
               <label>
                 Name:
-                <input type="text" name="name" required />
+                <input type="text" name="name" placeholder="Enter your full name" required />
               </label>
               <label>
                 Email:
-                <input type="email" name="email" required />
+                <input type="email" name="email" placeholder="Enter your email address" required  />
               </label>
               <label>
                 Message:
-                <textarea name="message" required />
+                <textarea name="message" placeholder="Write your message here..." required  />
               </label>
               <button type="submit">Send</button>
             </form>

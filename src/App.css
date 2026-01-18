@@ -155,7 +155,7 @@ section button[type="button"]:active {
   transition: transform 0.18s, box-shadow 0.18s;
   min-width: 0;
   width: 100%;
-  max-width: 300px;
+  /* max-width: 300px; */
 }
 .skill-card:hover {
   transform: translateY(-6px) scale(1.04);
@@ -224,7 +224,7 @@ section button[type="button"]:active {
   .menu ul {
     flex-direction: row;
     display: flex;
-    width: 100vw;
+    width: 100%;
     overflow-x: auto;
     white-space: nowrap;
     justify-content: flex-start;
@@ -278,8 +278,10 @@ section button[type="button"]:active {
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: center;
-    padding: 0.5rem 0.2rem;
+    padding: 0.45rem 0.36rem;
     box-shadow: none;
+    overflow-x: hidden; /* prevent any horizontal scroll */
+    box-sizing: border-box;
     z-index: 100;
   }
   .profile {
@@ -288,6 +290,7 @@ section button[type="button"]:active {
     margin-bottom: 0.5rem;
     width: 100%;
     justify-content: flex-start;
+    padding: 0.4rem 0.3rem;
   }
   .profile-photo {
     width: 48px;
@@ -295,15 +298,23 @@ section button[type="button"]:active {
     margin-bottom: 0;
     margin-right: 0.5rem;
     border-width: 2px;
+    flex-shrink: 0;
   }
   .intro-block {
     margin: 0 0 0.5rem 0;
     font-size: 1rem;
+    flex: 1;
+    min-width: 0;
   }
   .animated-intro {
-    font-size: 1rem;
-    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.2rem 0.3rem;
     color: #f2e9e4;
+    display: block;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.2;
   }
   .animated-name-inline {
     font-size: 1.2em;
@@ -331,29 +342,82 @@ section button[type="button"]:active {
     height: 18px;
   }
   .menu ul {
-    flex-direction: row;
-    display: flex;
+    display: grid;
+    /* allow many buttons to fit by using a smaller minimum, and let columns grow */
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.35rem;
     width: 100%;
-    justify-content: center;
-    margin: 0.1rem 0;
-    padding: 0;
+    justify-items: center;
+    margin: 0.28rem 0;
+    padding: 0.18rem 0;
+    overflow: hidden; /* ensure no internal scrollbar */
+    box-sizing: border-box;
   }
   .menu li {
-    margin: 0 0.2rem;
+    margin: 0;
+    list-style: none;
+    width: 100%;
   }
   .menu button {
-    font-size: 0.95rem;
-    padding: 0.3rem 0.5rem;
+    width: 100%;
+    font-size: 0.92rem;
+    padding: 0.42rem 0.45rem;
+    white-space: normal;
+    text-align: center;
+    display: inline-block;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: rgba(74, 78, 105, 0.24);
+    backdrop-filter: blur(3px);
+    line-height: 1.05;
   }
   .content {
     margin-left: 0;
-    padding: 0.7rem 0.2rem;
+    padding: 1.2rem 1.2rem;
     border-radius: 0;
     box-shadow: none;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
   .content section {
-    max-width: 100vw;
-    padding: 0;
+    max-width: 100%;
+    padding: 0 0.8rem;
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .content section p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+  }
+  .my-work-section,
+  .contact-form {
+    padding: 1.5rem 1.2rem;
+    margin: 1.5rem auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .work-card {
+    padding: 1rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .contact-form input,
+  .contact-form textarea {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  section button[type="button"] {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.95rem;
   }
   .content h1 {
     font-size: 1.3rem;
@@ -439,6 +503,7 @@ section button[type="button"]:active {
   display: flex;
   min-height: 100vh;
   background: #f8f9fa;
+  overflow-x: hidden;
 }
 .menu {
   position: fixed;
@@ -447,15 +512,17 @@ section button[type="button"]:active {
   width: 260px;
   height: 100vh;
   max-height: 100vh;
-  overflow-y: auto;
-  background: #22223b;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #1a1f35 0%, #22223b 50%, #2d2e47 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.2rem 0.5rem;
+  padding: 0.6rem 0.4rem;
   z-index: 100;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+  box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+  border-right: 1px solid rgba(162, 89, 255, 0.1);
 }
 @media (max-width: 900px) {
   .menu {
@@ -467,44 +534,73 @@ section button[type="button"]:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 0;
+  margin-bottom: 0.2rem;
+  padding: 0.5rem 0.3rem;
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.1) 0%, rgba(67, 233, 123, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(162, 89, 255, 0.2);
+  width: 100%;
+  max-width: 240px;
+  box-sizing: border-box;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .profile-photo {
-  width: 180px;
-  height: 180px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #4a4e69;
-  margin-bottom: 1rem;
+  border: 3px solid #a259ff;
+  margin-bottom: 0.2rem;
+  box-shadow: 0 0 15px rgba(162, 89, 255, 0.3), 0 0 30px rgba(162, 89, 255, 0.15);
+  transition: all var(--anim-medium) var(--ease-smooth);
+  animation: profileGlow 3s ease-in-out infinite;
+}
+
+.profile-photo:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(162, 89, 255, 0.6), 0 0 60px rgba(162, 89, 255, 0.3);
+}
+
+@keyframes profileGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(162, 89, 255, 0.4), 0 0 40px rgba(162, 89, 255, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(162, 89, 255, 0.6), 0 0 50px rgba(162, 89, 255, 0.3); }
 }
 .menu h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   color: #f2e9e4;
 }
 .menu ul {
   list-style: none;
-  padding: 0;
+  padding: 0.2rem 0;
   width: 100%;
-  margin-bottom: 0.5rem;
-  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid rgba(162, 89, 255, 0.2);
+  border-bottom: 1px solid rgba(162, 89, 255, 0.2);
 }
 .menu li {
-  margin: 0.5rem 0;
+  margin: 0.15rem 0.15rem;
+  position: relative;
 }
 .menu button {
-  width: 100%;
-  background: none;
-  border: none;
+  width: calc(100% - 0.3rem);
+  background: rgba(74, 78, 105, 0.3);
+  border: 1px solid rgba(162, 89, 255, 0.2);
   color: #fff;
-  font-size: 1rem;
-  padding: 0.4rem 0;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.4rem;
   cursor: pointer;
-  transition: all var(--anim-fast) var(--ease-smooth);
+  transition: all var(--anim-medium) var(--ease-smooth);
   position: relative;
   overflow: hidden;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   animation: fadeInUp var(--anim-medium) var(--ease-smooth) both;
-}
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}}}
 
 .menu button::before {
   content: '';
@@ -522,23 +618,25 @@ section button[type="button"]:active {
 }
 .menu li.active button,
 .menu button:hover {
-  background: #4a4e69;
-  border-radius: 6px;
-  transform: translateX(5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #a259ff 0%, #8c3ff2 100%);
+  border-color: #a259ff;
+  color: #fff;
+  transform: translateX(4px);
+  box-shadow: 0 6px 20px rgba(162, 89, 255, 0.4);
+  border-radius: 8px;
 }
 .content {
   flex: 1;
   margin-left: 260px;
-  padding: 3rem 4vw;
+  padding: 3rem 2rem;
   background: #fff;
   border-radius: 0 12px 12px 0;
   box-shadow: 0 0 16px rgba(0,0,0,0.05);
-  max-width: 1500px;
   min-width: 0;
-  margin-right: auto;
   margin-top: 0;
   margin-bottom: 0;
+  margin-right: 0;
+  overflow-x: hidden;
 }
 
 @media (max-width: 900px) {
@@ -579,11 +677,19 @@ section button[type="button"]:active {
   .intro-block {
     margin: 0.25rem 0 0.75rem 0;
     text-align: center;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .animated-intro {
     font-size: 1.15rem;
     padding: 0.4rem 0.8rem;
+    display: block;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
   }
   .animated-name-inline {
     font-size: 1.3em;
@@ -1005,26 +1111,34 @@ section button[type="button"]:active {
 
 .intro-block {
   text-align: center;
-  margin-bottom: 0.75rem;
-  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+  margin-top: 0.1rem;
+  width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .animated-intro {
-  font-size: 1.3rem;
+  font-size: 0.95rem;
   font-family: 'Montserrat', 'Fira Code', sans-serif;
   font-weight: 600;
   color: #f2e9e4;
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.3;
   animation: fadeInUp var(--anim-slower) var(--ease-smooth);
-  display: inline-block;
-  padding: 0.3rem 0.8rem;
+  display: block;
+  padding: 0.2rem 0.3rem;
   margin: 0;
-}
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
+}}
 
 .animated-name-inline {
   font-family: 'Caveat', 'Bebas Neue', cursive;
-  font-size: 1.4em;
+  font-size: 1.1em;
   background: linear-gradient(270deg, #43e97b 0%, #38f9d7 25%, #fa8bff 50%, #f9d423 75%, #ff4e50 100%);
   background-size: 600% 600%;
   background-clip: text;
@@ -1349,7 +1463,7 @@ section button[type="button"]:active {
 .my-work-section {
   background: #fff; /* Match your main content background */
   border-radius: 12px;
-  padding: 0.2rem 1.5rem !important;
+  padding: 0.2rem 1.5rem;
   margin: 2rem auto;
   max-width: 800px; /* Increased max-width for better centering */
   box-shadow: 0 4px 24px #0003;
@@ -1363,24 +1477,6 @@ section button[type="button"]:active {
   color: #22223b;
   animation: fadeInUp var(--anim-medium) var(--ease-smooth) 0.2s both;
   position: relative;
-}
-
-.work-title::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #a259ff, #43e97b);
-  animation: expandWidth var(--anim-medium) var(--ease-smooth) 0.5s forwards;
-}
-
-@keyframes expandWidth {
-  to {
-    width: 80px;
-  }
 }
 .work-desc {
   color: #555;
@@ -1792,6 +1888,17 @@ section button[type="button"]:active {
 
   /* Ensure no unexpected horizontal scroll */
   .portfolio-container, .content { overflow-x: hidden; }
+  
+  /* Ensure all text elements wrap properly on small screens */
+  .content p,
+  .content span,
+  .work-desc,
+  .work-project-desc {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+  }
 }
 
 
@@ -1812,6 +1919,10 @@ section button[type="button"]:active {
   margin: 0 0 0.75rem 0;
   font-weight: 600;
   letter-spacing: 0.2px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .back-to-top-btn {
@@ -1879,6 +1990,17 @@ section button[type="button"]:active {
   .site-footer {
     margin: 2rem auto 0 auto;
     padding: 1.2rem 1rem;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .footer-copy {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+    font-size: 0.9rem;
   }
 
   .back-to-top-btn {
@@ -1912,3 +2034,41 @@ section button[type="button"]:active {
   }
 }
 
+/* Mobile nav: allow wrapping to 2 rows with proper spacing */
+@media (max-width: 600px) {
+  .menu {
+    position: static;
+    width: 100%;
+    padding: 0.35rem 0.3rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+  .menu ul {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    margin: 0.2rem 0 !important;
+    padding: 0.15rem 0.1rem !important;
+    box-sizing: border-box;
+    overflow: hidden !important;
+  }
+  .menu li {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    list-style: none;
+  }
+  .menu button {
+    display: inline-block !important;
+    width: auto !important;
+    padding: 0.45rem 0.55rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+    box-sizing: border-box !important;
+  }
+}
