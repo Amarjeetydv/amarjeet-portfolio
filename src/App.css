@@ -395,8 +395,8 @@ section button[type="button"]:active {
   }
   .my-work-section,
   .contact-form {
-    padding: 1.5rem 1.2rem;
-    margin: 1.5rem auto;
+    padding: 1.2rem 1rem;
+    margin: 1.2rem auto;
     max-width: 100%;
     box-sizing: border-box;
     width: 100%;
@@ -842,7 +842,9 @@ section button[type="button"]:active {
 
 .contact-form {
   /* ensure the card never exceeds the available content width */
-  max-width: min(960px, calc(100% - 64px));
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .contact-form input,
