@@ -1,111 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* 
+    Modern Color Palette (Dark-Mode First)
+    - --bg-color: Main background
+    - --surface-color: For cards and elevated elements
+    - --primary-color: The main accent for highlights and buttons
+    - --text-color: Primary text color
+    - --text-muted-color: Secondary, less prominent text
+    - --border-color: For subtle borders and dividers
+  */
+  --bg-color: #1a1a1a;
+  --surface-color: #242424;
+  --primary-color: #a259ff;
+  --primary-hover-color: #b375ff;
+  --text-color: #f0f0f0;
+  --glow-color: rgba(162, 89, 255, 0.5);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --glass-bg: rgba(36, 36, 36, 0.5);
+  --text-muted-color: #a0a0a0;
+  --border-color: #333333;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* Typography & Layout */
+  --font-family: 'Poppins', sans-serif;
+  --spacing-unit: 1rem;
+  --border-radius: 8px;
 }
 
-
-  @keyframes colorChange {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  @keyframes glowPulse {
-    /* smaller glow */
-    0% {
-      text-shadow:
-        0 0 4px rgba(0,0,0,0.2),
-        0 0 8px rgba(0,0,0,0.12),
-        0 0 6px rgba(0,229,255,0.6),
-        0 0 12px rgba(0,229,255,0.35);
-      transform: translateY(0);
-      filter: saturate(1);
-    }
-    /* larger/brighter glow */
-    100% {
-      text-shadow:
-        0 0 10px rgba(0,255,244,1),
-        0 0 20px rgba(0,255,244,0.8),
-        0 0 36px rgba(0,229,255,0.6),
-        0 0 72px rgba(0,200,255,0.35);
-      transform: translateY(-1px);
-      filter: saturate(1.08);
-    }
-  }
-
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+[data-theme="light"] {
+  --bg-color: #f8f9fa;
+  --surface-color: #ffffff;
+  --primary-color: #7b3fe4;
+  --primary-hover-color: #9e54ff;
+  --text-color: #212529;
+  --glow-color: rgba(123, 63, 228, 0.3);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --text-muted-color: #6c757d;
+  --border-color: #dee2e6;
 }
-a:hover {
-  color: #535bf2;
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  overflow-x: hidden;
-  width: 100%;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   box-sizing: border-box;
+  /* Subtle fade-in animation on page load */
+  animation: pageFadeIn 0.7s ease-out;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#root {
-  width: 100%;
-  overflow-x: hidden;
-  box-sizing: border-box;
+*, *::before, *::after {
+  box-sizing: inherit;
 }
 
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Keyframe for the page load animation */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-

@@ -98,22 +98,22 @@ const EducationTimeline = () => {
           <div className="timeline-item" key={idx}>
             <div className="timeline-dot" />
             <div className="timeline-content">
-              <h3 style={{ color: '#a259ff', fontWeight: 700 }}>{item.degree}</h3>
-              <p className="institution" style={{ fontWeight: 500, color: '#0073b1' }}>{item.institution}</p>
-              {item.duration && <p className="duration" style={{ color: '#232323', fontWeight: 500 }}>{item.duration}</p>}
-              {item.grade && <p className="grade" style={{ background: '#e0e7ff', color: '#222', display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontWeight: 600, margin: '0.2rem 0' }}>Grade: {item.grade}</p>}
-              {item.issued && <p className="issued" style={{ color: '#232323', fontWeight: 500 }}>Issued {item.issued}</p>}
+              <h3 className="timeline-content__degree">{item.degree}</h3>
+              <p className="timeline-content__institution">{item.institution}</p>
+              {item.duration && <p className="timeline-content__meta">{item.duration}</p>}
+              {item.grade && <p className="timeline-content__grade">Grade: {item.grade}</p>}
+              {item.issued && <p className="timeline-content__meta">Issued {item.issued}</p>}
               {item.credentialId && (
-                <p className="credential-id" style={{ color: '#232323', fontWeight: 500 }}>Credential ID: {item.credentialId}</p>
+                <p className="timeline-content__meta">Credential ID: {item.credentialId}</p>
               )}
-              {item.description && <p className="description" style={{ color: '#232323' }}>{item.description}</p>}
+              {item.description && <p className="timeline-content__description">{item.description}</p>}
               {item.skills && (
-                <p className="skills" style={{ color: '#0073b1', fontWeight: 500 }}>
-                  <span style={{ background: '#e0e7ff', color: '#222', padding: '2px 6px', borderRadius: '4px', fontWeight: 500 }}>Skills:</span> {item.skills.join(" · ")}
+                <p className="timeline-content__skills">
+                  <span className="timeline-content__skills-label">Skills:</span> {item.skills.join(" · ")}
                 </p>
               )}
               {/* Only show credential button for certifications */}
-              {item.type === "certification" && (
+              {item.type === "certification" && item.credentialUrl && (
                 <a
                   href={item.credentialUrl}
                   className="credential-btn"
