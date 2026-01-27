@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import './Theme.css'
 import myphoto from './assets/myphoto.jpg'
 import coreldrawIcon from './assets/coreldraw.svg';
-import EducationTimeline from './EducationTimeline';
+import EducationTimeline, { Certifications } from './EducationTimeline';
 import { FaCode, FaJs, FaHtml5, FaCss3Alt, FaDatabase, FaGithub, FaExternalLinkAlt, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaSun, FaMoon, FaLaptop } from "react-icons/fa";
 import { SiLeetcode } from "react-icons/si";
 
@@ -11,6 +12,7 @@ const sections = [
   { id: 'projects', label: 'Projects' },
   { id: 'skills', label: 'Skills' },
   { id: 'education', label: 'Education' },
+  { id: 'certifications', label: 'Certifications' },
   { id: 'contact', label: 'Contact' },
 ]
 
@@ -79,7 +81,6 @@ const myProjects = [
     repoUrl: "https://github.com/Amarjeetydv/auto-theft-guard",
     liveUrl: null, // No live URL provided
     stack: ["React", "Bootstrap", "Node.js", "Express.js", "MySQL"],
-    featured: true, // Highlight this project
   },
   {
     name: "amarjeet-portfolio",
@@ -117,27 +118,48 @@ const scrollToSection = (id) => {
 };
 
 function App() {
-  const [activeSection, setActiveSection] = useState('about');
+  const [activeSection, setActiveSection] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(skillsData[0].category);
   const [projects, setProjects] = useState([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [attachment, setAttachment] = useState(null);
-  // Simplified theme state to only handle light/dark, defaulting to dark.
+  
+  // Advanced theme state with system preference detection
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved === 'light' ? 'light' : 'dark';
+    if (saved) return saved;
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
   });
 
   useEffect(() => {
-    const root = document.documentElement;
-    // Simplified theme application logic
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
-    } else {
-      root.removeAttribute('data-theme'); // Default is dark theme
-    }
+    document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Scroll Spy to update active section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.2, rootMargin: "-40% 0px -40% 0px" } 
+    );
+
+    sections.forEach((section) => {
+      const element = document.getElementById(section.id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     fetch("https://api.github.com/users/Amarjeetydv/repos")
@@ -187,6 +209,10 @@ function App() {
     setAttachment(file);
   };
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   return (
     <>
       <div className="portfolio-container">
@@ -200,7 +226,12 @@ function App() {
           <ul>
             {sections.map((section) => (
               <li key={section.id}>
-                <button onClick={() => scrollToSection(section.id)}>{section.label}</button>
+                <button 
+                  className={activeSection === section.id ? 'active' : ''}
+                  onClick={() => scrollToSection(section.id)}
+                >
+                  {section.label}
+                </button>
               </li>
             ))}
           </ul>
@@ -315,7 +346,13 @@ function App() {
           </section>
 
         <section id="education">
+            <h2 className="work-title">Education</h2>
             <EducationTimeline />
+        </section>
+
+        <section id="certifications">
+            <h2 className="work-title">Certifications & Participation</h2>
+            <Certifications />
         </section>
 
         <section className="my-work-section" id="contact">
@@ -333,7 +370,7 @@ function App() {
 
               try {
                 // Use local server for development, production server for deployment
-                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const isLocal = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
                 const apiUrl = isLocal ? 'http://localhost:3001/api/contact' : 'https://amarjeet-portfolio.onrender.com/api/contact';
 
                 const res = await fetch(apiUrl, {
@@ -346,7 +383,9 @@ function App() {
                   e.target.reset();
                   setAttachment(null);
                 } else {
-                  alert('Failed to send message. Please try again.');
+                  const errorData = await res.json().catch(() => null);
+                  const errorMessage = errorData?.message || 'Failed to send message. Please try again.';
+                  alert(errorMessage);
                 }
               } catch (error) {
                 console.error('Error submitting form:', error);
@@ -420,10 +459,15 @@ function App() {
         )}
       </main>
     </div>
-    <div className="theme-toggle">
-      <button className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')} aria-label="Light Mode"><FaSun /></button>
-      <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')} aria-label="Dark Mode"><FaMoon /></button>
-    </div>
+    
+    <button 
+      className="theme-toggle-btn" 
+      onClick={toggleTheme} 
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    >
+      <FaSun className="theme-toggle-icon sun" />
+      <FaMoon className="theme-toggle-icon moon" />
+    </button>
     </>
   )
 }

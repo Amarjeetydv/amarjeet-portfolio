@@ -1,13 +1,7 @@
-.education-timeline {
-  padding: calc(var(--spacing-unit) * 2) 0;
-}
-
-.education-timeline h2 {
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: calc(var(--spacing-unit) * 3);
-  color: var(--text-color);
-}
+/* 
+  Note: Section containers and titles are now handled in App.jsx/App.css 
+  to ensure consistency across all sections.
+*/
 
 .timeline {
   position: relative;
@@ -20,16 +14,16 @@
 .timeline::after {
   content: '';
   position: absolute;
-  width: 3px;
+  width: 2px;
   background-color: var(--border-color);
   top: 0;
   bottom: 0;
   left: 20px;
-  margin-left: -1.5px;
+  margin-left: -1px;
 }
 
 .timeline-item {
-  padding: var(--spacing-unit) 0 var(--spacing-unit) 50px;
+  padding: 0 0 calc(var(--spacing-unit) * 2) 50px;
   position: relative;
 }
 
@@ -38,12 +32,12 @@
   content: '';
   position: absolute;
   left: 20px;
-  top: 22px;
-  width: 16px;
-  height: 16px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background-color: var(--surface-color);
-  border: 3px solid var(--primary-color);
+  border: 2px solid var(--primary-color);
   transform: translateX(-50%);
   z-index: 1;
 }
@@ -52,79 +46,137 @@
   padding: calc(var(--spacing-unit) * 1.5);
   background-color: var(--surface-color);
   border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
   position: relative;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .timeline-item:hover .timeline-content {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px var(--shadow-color);
 }
 
 .timeline-content__degree {
   color: var(--primary-color);
-  font-weight: 700;
+  font-weight: 600;
   margin: 0 0 0.5rem;
+  font-size: 1.2rem;
 }
 
 .timeline-content__institution {
   font-weight: 500;
-  color: var(--text-muted-color);
+  color: var(--text-color);
   margin: 0 0 0.5rem;
-  font-style: italic;
 }
 
 .timeline-content__meta {
   color: var(--text-muted-color);
-  font-weight: 500;
-  margin: 0.5rem 0;
+  margin-bottom: 0.5rem;
   font-size: 0.9rem;
 }
 
 .timeline-content__grade {
-  background: rgba(162, 89, 255, 0.1);
-  color: var(--primary-color);
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-weight: 600;
-  margin: 0.5rem 0;
-  font-size: 0.85rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
 }
 
 .timeline-content__description {
-  color: var(--text-color);
-  line-height: 1.6;
-  margin: 1rem 0;
-}
-
-.timeline-content__skills {
   color: var(--text-muted-color);
-  font-weight: 500;
-  margin-top: 1rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
 }
 
-.timeline-content__skills-label {
-  background: rgba(162, 89, 255, 0.1);
+
+.cert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+.cert-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: calc(var(--spacing-unit) * 1.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.cert-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px var(--shadow-color);
+  border-color: var(--primary-color);
+}
+
+.cert-content {
+  margin-bottom: 1.5rem;
+}
+
+.cert-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
+.cert-issuer {
   color: var(--primary-color);
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
   font-weight: 500;
-  margin-right: 0.5rem;
 }
 
-.credential-btn {
-  display: inline-block;
+.cert-meta {
+  color: var(--text-muted-color);
+  font-size: 0.85rem;
+  margin: 0 0 0.25rem;
+}
+
+.cert-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-top: 1rem;
-  padding: 10px 20px;
-  background-color: var(--primary-color);
-  color: white;
+}
+
+.cert-skill-tag {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.cert-view-btn {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
   text-decoration: none;
   border-radius: var(--border-radius);
   font-weight: 600;
-  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
 }
 
-.credential-btn:hover {
-  background-color: var(--primary-hover-color);
+.cert-view-btn:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .cert-grid {
+    grid-template-columns: 1fr;
+  }
 }

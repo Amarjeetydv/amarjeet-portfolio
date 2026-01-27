@@ -11,12 +11,17 @@
   height: 100vh;
   width: 280px; /* Reduced width for a sleeker look */
   flex-shrink: 0;
-  padding: calc(var(--spacing-unit) * 2);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border-color);
   background: linear-gradient(180deg, var(--surface-color) 0%, var(--bg-color) 100%); /* Subtle gradient background */
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
 }
+
+.menu::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
 .content {
   flex-grow: 1;
@@ -51,16 +56,16 @@ section:last-of-type {
 /* --- Navigation Menu --- */
 .profile {
   text-align: center;
-  margin-bottom: calc(var(--spacing-unit) * 2);
+  margin-bottom: 1.5rem;
 }
 
 .profile-photo {
-  width: 120px;
-  height: 120px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   border: 4px solid var(--primary-color);
   object-fit: cover;
-  margin-bottom: var(--spacing-unit);
+  margin-bottom: 0.75rem;
   /* Floating and glowing animation for profile photo */
   animation: float 6s ease-in-out infinite, glow 3s ease-in-out infinite alternate;
 }
@@ -86,13 +91,13 @@ section:last-of-type {
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: column; 
+  gap: 0.25rem;
 }
 
 .menu button {
   width: 100%;
-  padding: 12px 20px;
+  padding: 10px 16px;
   background: none;
   border: 1px solid transparent;
   color: var(--text-muted-color);
@@ -100,52 +105,35 @@ section:last-of-type {
   font-size: 1rem;
   font-family: var(--font-family);
   font-weight: 500;
+  border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.3s ease;
-  border-radius: var(--border-radius);
+  position: relative;
 }
 
 .menu button:hover {
-  background-color: var(--surface-color);
+  color: var(--primary-color);
+  background-color: rgba(162, 89, 255, 0.05);
+}
+
+/* Active State Styling */
+.menu button.active {
   color: var(--text-color);
-}
-
-/* --- Theme Toggle --- */
-.theme-toggle {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  z-index: 1000;
-  display: flex;
-  gap: 0.5rem;
   background-color: var(--surface-color);
-  padding: 0.5rem;
-  border-radius: 2rem;
-  box-shadow: 0 4px 12px var(--shadow-color);
-  border: 1px solid var(--border-color);
+  font-weight: 600;
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
-.theme-toggle button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  color: var(--text-muted-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.theme-toggle button.active {
+.menu button.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
   background-color: var(--primary-color);
-  color: white;
-}
-
-.theme-toggle button:hover {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  border-radius: 0 4px 4px 0;
 }
 
 /* --- About Section --- */
@@ -456,11 +444,11 @@ section:last-of-type {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem; /* Reduced gap */
   /* Glassmorphism effect for the form */
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
-  padding: calc(var(--spacing-unit) * 2);
+  padding: 1.5rem; /* Reduced padding */
   border-radius: var(--border-radius);
   box-shadow: 0 8px 32px 0 var(--shadow-color);
 }
@@ -475,21 +463,22 @@ section:last-of-type {
 
 .contact-form input,
 .contact-form textarea {
-  padding: 14px;
+  padding: 12px; /* Balanced padding */
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   color: var(--text-color);
   font-family: var(--font-family);
-  font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
 .contact-form input:focus,
 .contact-form textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px var(--glow-color);
+  box-shadow: 0 0 0 4px var(--glow-color);
+  transform: scale(1.01);
 }
 
 .contact-form input[type="file"] {
@@ -520,7 +509,7 @@ section:last-of-type {
 }
 
 .contact-form textarea {
-  min-height: 150px;
+  min-height: 120px; /* Reduced height */
   resize: vertical;
 }
 

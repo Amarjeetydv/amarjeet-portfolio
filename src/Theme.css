@@ -1,0 +1,138 @@
+:root {
+  /* Light Mode Variables */
+  --bg-color: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --card-bg: #f3f4f6;
+  --accent-color: #2563eb;
+  --border-color: #e5e7eb;
+  --nav-bg: rgba(255, 255, 255, 0.85);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  /* Dark Mode Variables (Telegram-inspired) */
+  --bg-color: #0f0f0f;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --card-bg: #18181b;
+  --accent-color: #60a5fa;
+  --border-color: #27272a;
+  --nav-bg: rgba(15, 15, 15, 0.85);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* Global Transitions */
+body, .content, .menu, .work-card, .skill-item, input, textarea, footer {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+/* Apply variables to existing components */
+.menu {
+  background-color: var(--nav-bg) !important;
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+}
+
+.menu button {
+  color: var(--text-secondary);
+}
+
+.menu button:hover {
+  color: var(--accent-color);
+}
+
+.work-card, .skill-item {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.work-project-title a {
+  color: var(--text-primary);
+}
+
+.work-project-desc {
+  color: var(--text-secondary);
+}
+
+.contact-form input, .contact-form textarea {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.contact-form input:focus, .contact-form textarea:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+.site-footer {
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Floating Toggle Button */
+.theme-toggle-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  font-size: 1.25rem;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* Icon Animation Logic (Telegram-style) */
+.theme-toggle-icon {
+  position: absolute;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease;
+}
+
+/* Light Mode State */
+:root[data-theme='light'] .theme-toggle-icon.sun {
+  transform: scale(1);
+  opacity: 1;
+  color: #f59e0b; /* Sun color */
+}
+
+:root[data-theme='light'] .theme-toggle-icon.moon {
+  transform: scale(0.5);
+  opacity: 0;
+}
+
+/* Dark Mode State */
+:root[data-theme='dark'] .theme-toggle-icon.sun {
+  transform: scale(0.5);
+  opacity: 0;
+}
+
+:root[data-theme='dark'] .theme-toggle-icon.moon {
+  transform: scale(1);
+  opacity: 1;
+  color: #60a5fa; /* Moon color */
+}
