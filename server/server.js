@@ -3,9 +3,8 @@ import cors from 'cors';
 import multer from 'multer';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import { v2 as cloudinary } from 'cloudinary'; // Import Cloudinary
+import { v2 as cloudinary } from 'cloudinary';
 
-dotenv.config({ path: './server/.env' });
 dotenv.config(); // Loads .env from the current directory (server/)
 
 // --- Cloudinary Config with Debugging & Trimming ---
@@ -28,7 +27,6 @@ cloudinary.config({
 });
 
 const app = express();
-const port = 3001;
 const port = process.env.PORT || 3001; // Use Render's port, fallback to 3001 for local dev
 
 // Enable CORS to allow requests from your frontend
@@ -240,6 +238,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-  console.log(`Backend server running at http://localhost:${port}`);
   console.log(`Backend server running on port ${port}`);
 });
