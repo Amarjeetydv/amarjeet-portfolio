@@ -18,6 +18,9 @@ console.log('--- Cloudinary Config ---');
 console.log('Cloud Name:', cloudName || 'MISSING');
 console.log('API Key:', apiKey ? 'Loaded' : 'MISSING');
 console.log('API Secret:', apiSecret ? 'Loaded' : 'MISSING');
+console.log('--- Telegram Config ---');
+console.log('Bot Token:', telegramBotToken ? 'Loaded' : 'MISSING');
+console.log('Chat ID:', telegramChatId ? 'Loaded' : 'MISSING');
 
 // Configure Cloudinary
 cloudinary.config({
