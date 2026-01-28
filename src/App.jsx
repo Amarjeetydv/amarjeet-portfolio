@@ -374,6 +374,8 @@ function App() {
                   ? `${import.meta.env.VITE_API_URL}/api/contact`
                   : 'http://localhost:3001/api/contact';
 
+                console.log('Attempting to send message to API at:', apiUrl);
+
                 const res = await fetch(apiUrl, {
                   method: 'POST',
                   body: formData,
