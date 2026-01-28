@@ -4,6 +4,7 @@ import multer from 'multer';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import { v2 as cloudinary } from 'cloudinary';
+import fetch from 'node-fetch';
 
 dotenv.config(); // Loads .env from the current directory (server/)
 
@@ -126,6 +127,8 @@ const sendTelegramNotification = async (name, email, message, attachmentUrl) => 
     console.warn('Telegram credentials missing, skipping notification.');
     return;
   }
+
+  console.log(`Attempting to send Telegram notification to Chat ID: ${telegramChatId}`);
 
   // Escape HTML characters to prevent broken formatting
   const escapeHtml = (str) => (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
