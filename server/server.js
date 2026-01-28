@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { v2 as cloudinary } from 'cloudinary'; // Import Cloudinary
 
 dotenv.config({ path: './server/.env' });
+dotenv.config(); // Loads .env from the current directory (server/)
 
 // --- Cloudinary Config with Debugging & Trimming ---
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
@@ -28,6 +29,7 @@ cloudinary.config({
 
 const app = express();
 const port = 3001;
+const port = process.env.PORT || 3001; // Use Render's port, fallback to 3001 for local dev
 
 // Enable CORS to allow requests from your frontend
 app.use(cors());
@@ -239,4 +241,5 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
   console.log(`Backend server running at http://localhost:${port}`);
+  console.log(`Backend server running on port ${port}`);
 });

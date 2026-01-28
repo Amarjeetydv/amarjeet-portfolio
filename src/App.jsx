@@ -369,9 +369,10 @@ function App() {
               }
 
               try {
-                // Use local server for development, production server for deployment
-                const isLocal = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
-                const apiUrl = isLocal ? 'http://localhost:3001/api/contact' : 'https://amarjeet-portfolio.onrender.com/api/contact';
+                // Use environment variable for API URL, fallback to localhost for dev
+                const apiUrl = import.meta.env.VITE_API_URL 
+                  ? `${import.meta.env.VITE_API_URL}/api/contact`
+                  : 'http://localhost:3001/api/contact';
 
                 const res = await fetch(apiUrl, {
                   method: 'POST',
