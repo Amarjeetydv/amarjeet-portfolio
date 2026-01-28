@@ -369,10 +369,18 @@ function App() {
               }
 
               try {
-                // Use environment variable for API URL, fallback to localhost for dev
-                const apiUrl = import.meta.env.VITE_API_URL 
-                  ? `${import.meta.env.VITE_API_URL}/api/contact`
-                  : 'http://localhost:3001/api/contact';
+                // Dynamically determine the API URL for robustness
+                let baseUrl = import.meta.env.VITE_API_URL;
+
+                if (!baseUrl) {
+                  // If the env var is missing, decide based on the hostname
+                  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    baseUrl = 'http://localhost:3001'; // Development
+                  } else {
+                    baseUrl = 'https://amarjeet-portfolio.onrender.com'; // Production fallback
+                  }
+                }
+                const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/contact`;
 
                 console.log('Attempting to send message to API at:', apiUrl);
 
