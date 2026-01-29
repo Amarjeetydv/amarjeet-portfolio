@@ -3,10 +3,18 @@ import cors from 'cors';
 import multer from 'multer';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { v2 as cloudinary } from 'cloudinary';
-import fetch from 'node-fetch';
 
-dotenv.config(); // Loads .env from the current directory (server/)
+// --- Robust .env loading ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Loads .env from the project root
+dotenv.config({ 
+  path: path.resolve(__dirname, '..', '.env'),
+  override: true // Force override of any existing environment variables
+});
 
 // --- Cloudinary Config with Debugging & Trimming ---
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();

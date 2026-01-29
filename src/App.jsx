@@ -375,7 +375,7 @@ function App() {
                 if (!baseUrl) {
                   // If the env var is missing, decide based on the hostname
                   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    baseUrl = 'http://localhost:3001'; // Development
+                    baseUrl = 'http://localhost:5000'; // Development fallback
                   } else {
                     baseUrl = 'https://amarjeet-portfolio.onrender.com'; // Production fallback
                   }

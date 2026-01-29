@@ -1,7 +1,12 @@
 import { spawn } from 'child_process';
 import net from 'net';
+import path from 'path';
+import dotenv from 'dotenv';
 
-const BACKEND_PORT = 3001;
+// Load environment variables from .env file
+dotenv.config({ override: true });
+
+const BACKEND_PORT = process.env.PORT || 3001;
 const FRONTEND_PORT = 5170;
 
 // Helper to check if a port is in use
@@ -24,7 +29,8 @@ const checkPort = (port) => new Promise((resolve) => {
 
   if (!isBackendRunning) {
     console.log(`Port ${BACKEND_PORT} is free. Starting backend server...`);
-    const backend = spawn('node', ['server.js'], { stdio: 'inherit' });
+    // Correcting the path to point to the 'server' directory.
+    const backend = spawn('node', [path.join('server', 'server.js')], { stdio: 'inherit' });
     backend.on('error', (err) => console.error('Failed to start backend:', err));
   } else {
     console.log(`Backend server is already running on port ${BACKEND_PORT}.`);
