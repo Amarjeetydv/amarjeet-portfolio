@@ -79,9 +79,6 @@ body {
 
 /* Floating Toggle Button */
 .theme-toggle-btn {
-  position: fixed;
-  top: 24px;
-  right: 24px;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -92,8 +89,6 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
   font-size: 1.25rem;
   overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
