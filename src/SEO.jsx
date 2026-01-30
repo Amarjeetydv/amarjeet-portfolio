@@ -1,13 +1,8 @@
-import React, { useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import React from 'react';
 
 const SEO = ({ title, description }) => {
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
-
   return (
-    <Helmet>
+    <>
       <title>{title}</title>
       <meta name="description" content={description} />
       
@@ -20,7 +15,7 @@ const SEO = ({ title, description }) => {
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-    </Helmet>
+    </>
   );
 };
 
