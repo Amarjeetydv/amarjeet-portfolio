@@ -63,7 +63,7 @@ export const Certifications = () => {
   return (
     <div className="cert-grid">
       {certificationList.map((cert, idx) => (
-        <div className="cert-card" key={idx}>
+        <article className="cert-card" key={idx}>
           <div className="cert-content">
             <h3 className="cert-title">{cert.title}</h3>
             <p className="cert-issuer">{cert.issuer}</p>
@@ -78,7 +78,7 @@ export const Certifications = () => {
           <a href={cert.link} target="_blank" rel="noopener noreferrer" className="cert-view-btn">
             View Certificate
           </a>
-        </div>
+        </article>
       ))}
     </div>
   );
@@ -88,7 +88,7 @@ const EducationTimeline = () => {
   return (
     <div className="timeline">
       {educationList.map((item, idx) => (
-        <div className="timeline-item" key={idx}>
+        <article className="timeline-item" key={idx}>
           <div className="timeline-dot" />
           <div className="timeline-content">
             <h3 className="timeline-content__degree">{item.degree}</h3>
@@ -97,7 +97,7 @@ const EducationTimeline = () => {
             {item.Score && <p className="timeline-content__grade">Score: {item.Score}</p>}
             {item.description && <p className="timeline-content__description">{item.description}</p>}
           </div>
-        </div>
+        </article>
       ))}
     </div>
   );

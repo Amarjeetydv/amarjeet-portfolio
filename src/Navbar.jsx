@@ -42,7 +42,7 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
           <FaMoon className="theme-toggle-icon moon" />
         </button>
       </div>
-      <nav className={`navbar-menu ${isOpen ? 'open' : ''}`} aria-hidden={!isOpen}>
+      <nav className={`navbar-menu ${isOpen ? 'open' : ''}`} aria-hidden={!isOpen} inert={!isOpen ? true : undefined}>
         <ul>
           {sections.map((section) => (
             <li key={section.id}>

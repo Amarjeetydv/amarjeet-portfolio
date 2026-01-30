@@ -55,23 +55,35 @@ const Skills = () => {
 
   return (
     <section className="my-work-section" id="skills">
-      <h2 className="work-title">Skills</h2>
+      <h1 className="work-title">Skills</h1>
       <p className="work-desc">
         Explore my technical expertise across different domains. From frontend frameworks to backend technologies, here's what I bring to the table.
       </p>
-      <div className="skills-tabs">
-        {skillsData.map(cat => (<button key={cat.category} className={`skill-tab ${selectedCategory === cat.category ? 'active' : ''}`} onClick={() => setSelectedCategory(cat.category)}>{cat.category}</button>))}
+      <div className="skills-tabs" role="tablist" aria-label="Skill categories">
+        {skillsData.map(cat => (
+          <button 
+            key={cat.category} 
+            className={`skill-tab ${selectedCategory === cat.category ? 'active' : ''}`} 
+            onClick={() => setSelectedCategory(cat.category)}
+            role="tab"
+            aria-selected={selectedCategory === cat.category}
+          >
+            {cat.category}
+          </button>
+        ))}
       </div>
       <div className="skills-container">
         {skillsData.find(cat => cat.category === selectedCategory)?.items.map(skill => (
-          <div className="skill-item" key={skill.name}>
+          <article className="skill-item" key={skill.name}>
             <div className="skill-header">
-              <img src={skill.icon} alt={skill.name} className="skill-icon" />
-              <span className="skill-name">{skill.name}</span>
+              <img src={skill.icon} alt={`${skill.name} logo`} className="skill-icon" />
+              <h3 className="skill-name">{skill.name}</h3>
               <span className="skill-percentage">{skill.proficiency}%</span>
             </div>
-            <div className="skill-progress"><div className="skill-progress-fill" style={{ width: `${skill.proficiency}%` }}></div></div>
-          </div>
+            <div className="skill-progress" role="progressbar" aria-valuenow={skill.proficiency} aria-valuemin="0" aria-valuemax="100" aria-label={`${skill.name} proficiency`}>
+              <div className="skill-progress-fill" style={{ width: `${skill.proficiency}%` }}></div>
+            </div>
+          </article>
         ))}
       </div>
     </section>

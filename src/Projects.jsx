@@ -41,13 +41,13 @@ const myProjects = [
 const Projects = () => {
   return (
     <section className="my-work-section" id="projects">
-      <h2 className="work-title">My Work</h2>
+      <h1 className="work-title">My Work</h1>
       <p className="work-desc">
         Explore a curated collection of my digital creations. From web applications to coding experiments, this is where I bring ideas to life.
       </p>
       <div className="work-list">
         {myProjects.map((project) => (
-          <div className={`work-card ${project.featured ? 'featured' : ''}`} key={project.name}>
+          <article className={`work-card ${project.featured ? 'featured' : ''}`} key={project.name}>
             <div className="work-content">
               <h3 className="work-project-title"><a href={project.repoUrl} target="_blank" rel="noopener noreferrer">{project.name}</a></h3>
               <p className="work-project-desc">{project.description}</p>
@@ -57,7 +57,7 @@ const Projects = () => {
               <a href={project.repoUrl} className="project-link-btn" target="_blank" rel="noopener noreferrer"><FaGithub /> GitHub</a>
               {project.liveUrl && (<a href={project.liveUrl} className="project-link-btn" target="_blank" rel="noopener noreferrer"><FaExternalLinkAlt /> Live Demo</a>)}
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </section>

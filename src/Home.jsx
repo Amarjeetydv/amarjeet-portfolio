@@ -43,21 +43,21 @@ const Home = () => {
     <section id="home" className="home-container">
       <div className="home-content">
         <div className="profile-img-wrapper">
-          <img src={myphoto} alt="Amarjeet Yadav" className="hero-photo" />
+          <img src={myphoto} alt="Portrait of Amarjeet Yadav" className="hero-photo" />
         </div>
         
         <div className="intro-text">
           <h1 className="hero-title">Amarjeet Yadav</h1>
           <h2 className="hero-role">
             {text}
-            <span className="hero-cursor"></span>
+            <span className="hero-cursor" aria-hidden="true"></span>
           </h2>
           <p className="hero-tagline">
             Building scalable, user-centric web applications with modern technologies.
           </p>
         </div>
 
-        <div className="hero-cta-group">
+        <nav className="hero-cta-group" aria-label="Quick access">
           <a 
             href="https://drive.google.com/file/d/1duGuRp6joowM3oQdeoLTyLjq2PRWHACW/view?usp=sharing" 
             target="_blank" 
@@ -69,7 +69,7 @@ const Home = () => {
           <Link to="/projects" className="cta-button">Projects</Link>
           <Link to="/skills" className="cta-button">Skills</Link>
           <Link to="/contact" className="cta-button">Contact</Link>
-      </div>
+        </nav>
       </div>
     </section>
   );

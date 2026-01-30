@@ -11,6 +11,8 @@ import Skills from './Skills.jsx';
 import EducationPage from './EducationPage.jsx';
 import CertificationsPage from './CertificationsPage.jsx';
 import Contact from './Contact.jsx';
+import SEO from './SEO.jsx';
+import { seoConfig } from './seoConfig.js';
 
 const sections = [
   { id: 'home', path: '/', label: 'Home' },
@@ -43,12 +45,42 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout sections={sections} theme={theme} toggleTheme={toggleTheme} />}>
-        <Route index element={<Home />} />
-        <Route path="projects" element={<Projects />} />
-        <Route path="skills" element={<Skills />} />
-        <Route path="education" element={<EducationPage />} />
-        <Route path="certifications" element={<CertificationsPage />} />
-        <Route path="contact" element={<Contact />} />
+        <Route index element={
+          <>
+            <SEO {...seoConfig.home} />
+            <Home />
+          </>
+        } />
+        <Route path="projects" element={
+          <>
+            <SEO {...seoConfig.projects} />
+            <Projects />
+          </>
+        } />
+        <Route path="skills" element={
+          <>
+            <SEO {...seoConfig.skills} />
+            <Skills />
+          </>
+        } />
+        <Route path="education" element={
+          <>
+            <SEO {...seoConfig.education} />
+            <EducationPage />
+          </>
+        } />
+        <Route path="certifications" element={
+          <>
+            <SEO {...seoConfig.certifications} />
+            <CertificationsPage />
+          </>
+        } />
+        <Route path="contact" element={
+          <>
+            <SEO {...seoConfig.contact} />
+            <Contact />
+          </>
+        } />
       </Route>
     </Routes>
   )
