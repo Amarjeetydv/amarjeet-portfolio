@@ -26,14 +26,14 @@ const myProjects = [
     name: "amarjeet bootstrap project",
     description: "A modern, responsive frontend template for logistics or business websites, built with Bootstrap 4 and Font Awesome. Features multiple HTML templates, custom styles, interactive carousels, and a professional layout.",
     repoUrl: "https://github.com/Amarjeetydv/amarjeet-bootstrap-frontend",
-    liveUrl: "https://amarjeetydv.github.io/amarjeet-bootstrap-frontend/",
+    liveUrl: "https://amarjeet-bootstrap-ui.netlify.app/",
     stack: ["HTML"],
   },
   {
     name: "amarjeet-css-project",
     description: "A collection of modern HTML and CSS UI components, including sliders, footers, and input forms. Features responsive design, Font Awesome icons, and demo pages for each component.",
     repoUrl: "https://github.com/Amarjeetydv/amarjeet-css-project",
-    liveUrl: "https://amarjeetydv.github.io/amarjeet-css-project/",
+    liveUrl: " https://amarjeet-css-ui.netlify.app/",
     stack: ["HTML"],
   },
 ];
