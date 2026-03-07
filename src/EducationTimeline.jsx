@@ -31,6 +31,15 @@ const educationList = [
 
 const certificationList = [
   {
+    title: "WEB-A-THON 2.0 – Certificate of Participation",
+    issuer: "ARENA, Lovely Professional University Punjab",
+    issued: "February 2026",
+    link: "https://certificate.givemycertificate.com/c/4309b773-4b85-42c9-931c-3af89f3c3e8f",
+    description: "For participating in WEB-A-THON 2.0, a University-Level Hackathon organised by Student Organisation ARENA at LPU from 13th February 2026 to 14th February 2026, exhibiting outstanding performance in design, development, and strategic thinking.",
+    credentialId: "4309b773-4b85-42c9-931c-3af89f3c3e8f",
+    type: "Hackathon"
+  },
+  {
     title: "Tech Blitz 2025 – Hackathon Participation",
     issuer: "Coding Ninjas LPU",
     link: "https://credsverse.com/credentials/cc1a04b2-c940-4c58-9ae9-131cada99a59",
