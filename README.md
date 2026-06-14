@@ -15,14 +15,29 @@ The website is built from the ground up using modern web technologies, emphasizi
 
 ## ✨ Features
 
--   **Home Page:** A welcoming landing page with a brief introduction and a call-to-action.
+-   **Home Page:** A professionally designed landing page with centered typography, animated role text (Full Stack Developer / React Developer / MERN Developer), and a polished glass-morphism hero card. The page is fully scrollable with accessible footer.
+-   **Responsive Portrait:** A circular profile photo with proper framing, positioned in the hero section with smooth floating animations.
+-   **Centered Hero Layout:** Desktop view features a balanced two-column layout with centered name and role, while mobile adapts to single-column for optimal readability.
 -   **About Me Section:** A detailed section about my background, passion for technology, and career aspirations.
 -   **Skills Showcase:** A visually organized display of my technical skills.
 -   **Project Gallery:** A collection of my best projects with descriptions, tech stacks, and links to live demos and source code.
 -   **Downloadable Resume:** Easy access for recruiters to download my resume in PDF format.
 -   **Contact Form:** A functional contact form for easy communication (can be integrated with a backend service like EmailJS or a custom Node.js API).
--   **Fully Responsive:** Adapts seamlessly to all devices, from mobile phones to desktops.
--   **Modern UI/UX:** Clean, modern design with smooth animations and transitions.
+-   **Fully Responsive:** Adapts seamlessly to all devices, from mobile phones to desktops, with proper spacing and visibility.
+-   **Modern UI/UX:** Clean, modern design with smooth animations, transitions, and glass-morphism effects.
+
+---
+
+## 🎨 Recent Updates
+
+**Home Page Redesign (Latest)**
+- ✅ Fixed and restored portrait image with proper circular framing
+- ✅ Centered hero layout on desktop with balanced two-column design
+- ✅ Implemented animated role text (typewriter effect) with roles rotating: "Full Stack Developer" → "React Developer" → "MERN Developer"
+- ✅ Added glass-morphism effect to hero card with subtle gradient background
+- ✅ Enabled smooth scrolling on home page for full footer accessibility
+- ✅ Improved spacing and visual hierarchy for professional appearance
+- ✅ Mobile-responsive adjustments with single-column layout on smaller screens
 
 ---
 
