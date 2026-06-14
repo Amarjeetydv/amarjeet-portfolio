@@ -1,39 +1,21 @@
-import { useState, useCallback } from 'react';
-import { FaSearch, FaPlay } from 'react-icons/fa';
+import { useState, useCallback, useEffect } from 'react';
+import { FaSearch, FaPlay, FaHistory, FaClock } from 'react-icons/fa';
 import { getApiBaseUrl } from './utils/api';
+import {
+  loadWatchHistory,
+  loadSearchHistory,
+  loadLastVideo,
+  addToWatchHistory,
+  addToSearchHistory,
+  updateWatchProgress,
+  saveLastVideo,
+  clearWatchHistory,
+  clearSearchHistory,
+  extractVideoIdFromInput,
+  formatWatchTime,
+} from './utils/safeYouTubeHistory';
+import YouTubePlayer from './YouTubePlayer';
 import './SafeYouTube.css';
-
-const YOUTUBE_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
-
-const extractVideoId = (input) => {
-  const trimmed = input.trim();
-  if (YOUTUBE_ID_RE.test(trimmed)) return trimmed;
-
-  try {
-    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
-    const host = url.hostname.replace(/^www\./, '');
-
-    if (host === 'youtu.be') {
-      const id = url.pathname.slice(1).split('/')[0];
-      return YOUTUBE_ID_RE.test(id) ? id : null;
-    }
-
-    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
-      const v = url.searchParams.get('v');
-      if (v && YOUTUBE_ID_RE.test(v)) return v;
-
-      const embedMatch = url.pathname.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
-      if (embedMatch) return embedMatch[1];
-
-      const shortsMatch = url.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
-      if (shortsMatch) return shortsMatch[1];
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
 
 const formatPublishedDate = (isoDate) => {
   if (!isoDate) return '';
@@ -48,22 +30,66 @@ const SafeYouTube = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [activeVideo, setActiveVideo] = useState(null);
+  const [startSeconds, setStartSeconds] = useState(0);
   const [pageToken, setPageToken] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const [watchHistory, setWatchHistory] = useState([]);
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [continueVideo, setContinueVideo] = useState(null);
 
-  const playVideo = useCallback((video) => {
+  useEffect(() => {
+    setWatchHistory(loadWatchHistory());
+    setSearchHistory(loadSearchHistory());
+
+    const last = loadLastVideo();
+    if (last?.id) {
+      setContinueVideo(last);
+      setActiveVideo(last);
+      setStartSeconds(last.progressSeconds || 0);
+    }
+  }, []);
+
+  const playVideo = useCallback((video, resumeAt = 0) => {
+    const resumeSeconds = Math.max(0, Math.floor(resumeAt || 0));
     setActiveVideo(video);
+    setStartSeconds(resumeSeconds);
+    setContinueVideo({ ...video, progressSeconds: resumeSeconds });
+    setWatchHistory(addToWatchHistory(video, resumeSeconds));
+    saveLastVideo(video, resumeSeconds);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const handleProgress = useCallback((videoId, currentSeconds) => {
+    if (!videoId || currentSeconds < 1) return;
+    updateWatchProgress(videoId, currentSeconds);
+    saveLastVideo(
+      activeVideo?.id === videoId ? activeVideo : { id: videoId, title: 'YouTube Video' },
+      currentSeconds
+    );
+    setContinueVideo((prev) =>
+      prev?.id === videoId ? { ...prev, progressSeconds: Math.floor(currentSeconds) } : prev
+    );
+    setWatchHistory((prev) =>
+      prev.map((item) =>
+        item.id === videoId
+          ? { ...item, progressSeconds: Math.floor(currentSeconds), watchedAt: new Date().toISOString() }
+          : item
+      )
+    );
+  }, [activeVideo]);
 
   const runSearch = async (searchQuery, token = null) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return;
 
-    const directId = extractVideoId(trimmed);
+    if (!token) {
+      setQuery(trimmed);
+    }
+
+    const directId = extractVideoIdFromInput(trimmed);
     if (directId && !token) {
       setError('');
       setHasSearched(true);
@@ -76,7 +102,7 @@ const SafeYouTube = () => {
         const data = await res.json();
 
         if (res.ok) {
-          playVideo(data);
+          playVideo(data, 0);
         } else {
           playVideo({
             id: directId,
@@ -85,8 +111,8 @@ const SafeYouTube = () => {
             thumbnail: `https://i.ytimg.com/vi/${directId}/hqdefault.jpg`,
             publishedAt: '',
             description: '',
-          });
-          if (!res.ok && res.status !== 404) {
+          }, 0);
+          if (res.status !== 404) {
             setError(data.message || 'Could not load video details.');
           }
         }
@@ -98,7 +124,7 @@ const SafeYouTube = () => {
           thumbnail: `https://i.ytimg.com/vi/${directId}/hqdefault.jpg`,
           publishedAt: '',
           description: '',
-        });
+        }, 0);
       } finally {
         setLoading(false);
       }
@@ -113,6 +139,7 @@ const SafeYouTube = () => {
       setHasSearched(true);
       setResults([]);
       setPageToken(null);
+      setSearchHistory(addToSearchHistory(trimmed));
     }
 
     try {
@@ -131,7 +158,7 @@ const SafeYouTube = () => {
       setPageToken(data.nextPageToken || null);
 
       if (!token && videos.length > 0) {
-        playVideo(videos[0]);
+        playVideo(videos[0], 0);
       }
     } catch (err) {
       setError(err.message || 'Something went wrong.');
@@ -147,16 +174,54 @@ const SafeYouTube = () => {
     runSearch(query);
   };
 
-  const embedUrl = activeVideo
-    ? `https://www.youtube-nocookie.com/embed/${activeVideo.id}?modestbranding=1&rel=0&playsinline=1&iv_load_policy=3`
-    : null;
+  const handleClearWatchHistory = () => {
+    clearWatchHistory();
+    setWatchHistory([]);
+    setContinueVideo(null);
+  };
+
+  const handleClearSearchHistory = () => {
+    clearSearchHistory();
+    setSearchHistory([]);
+  };
+
+  const renderVideoCard = (video, { resumeAt = 0, showProgress = false } = {}) => (
+    <button
+      type="button"
+      className={`safe-youtube-card ${activeVideo?.id === video.id ? 'active' : ''}`}
+      onClick={() => playVideo(video, resumeAt)}
+    >
+      <div className="safe-youtube-thumb-wrap">
+        <img
+          src={video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
+          alt=""
+          loading="lazy"
+        />
+        {showProgress && resumeAt > 0 && (
+          <span className="safe-youtube-resume-badge">
+            Resume {formatWatchTime(resumeAt)}
+          </span>
+        )}
+        <span className="safe-youtube-play-badge" aria-hidden="true">
+          <FaPlay />
+        </span>
+      </div>
+      <div className="safe-youtube-card-body">
+        <h4>{video.title}</h4>
+        {video.channel && <p className="safe-youtube-card-channel">{video.channel}</p>}
+        {video.publishedAt && (
+          <p className="safe-youtube-card-date">{formatPublishedDate(video.publishedAt)}</p>
+        )}
+      </div>
+    </button>
+  );
 
   return (
     <section className="safe-youtube-section" id="learn">
       <h1 className="work-title">Learn</h1>
       <p className="work-desc safe-youtube-desc">
         Search and watch any YouTube video here — no login, no comments, no likes, and no uploads.
-        Paste a YouTube link or type what you want to learn.
+        Your searches and watched videos are saved on this device so you can continue later.
       </p>
 
       <form className="safe-youtube-search" onSubmit={handleSubmit}>
@@ -178,26 +243,89 @@ const SafeYouTube = () => {
 
       {error && <p className="safe-youtube-error" role="alert">{error}</p>}
 
-      {embedUrl && (
+      {continueVideo && (
+        <div className="safe-youtube-history-block safe-youtube-continue">
+          <div className="safe-youtube-history-header">
+            <h3><FaClock aria-hidden="true" /> Continue watching</h3>
+          </div>
+          <ul className="safe-youtube-grid safe-youtube-grid-single">
+            <li>
+              {renderVideoCard(continueVideo, {
+                resumeAt: continueVideo.progressSeconds,
+                showProgress: true,
+              })}
+            </li>
+          </ul>
+        </div>
+      )}
+
+      {activeVideo && (
         <div className="safe-youtube-player-wrap">
           <div className="safe-youtube-player">
-            <iframe
+            <YouTubePlayer
               key={activeVideo.id}
-              src={embedUrl}
-              title={activeVideo.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
+              videoId={activeVideo.id}
+              startSeconds={startSeconds}
+              onProgress={handleProgress}
             />
           </div>
           <div className="safe-youtube-now-playing">
             <h2>{activeVideo.title}</h2>
             {activeVideo.channel && <p className="safe-youtube-channel">{activeVideo.channel}</p>}
+            {startSeconds > 0 && (
+              <p className="safe-youtube-resume-note">
+                Resuming from {formatWatchTime(startSeconds)}
+              </p>
+            )}
           </div>
         </div>
       )}
 
-      {hasSearched && !loading && results.length === 0 && !error && !extractVideoId(query) && (
+      {searchHistory.length > 0 && (
+        <div className="safe-youtube-history-block">
+          <div className="safe-youtube-history-header">
+            <h3><FaSearch aria-hidden="true" /> Recent searches</h3>
+            <button type="button" className="safe-youtube-clear-btn" onClick={handleClearSearchHistory}>
+              Clear
+            </button>
+          </div>
+          <div className="safe-youtube-search-chips">
+            {searchHistory.map((term) => (
+              <button
+                key={term}
+                type="button"
+                className="safe-youtube-chip"
+                onClick={() => runSearch(term)}
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {watchHistory.length > 0 && (
+        <div className="safe-youtube-history-block">
+          <div className="safe-youtube-history-header">
+            <h3><FaHistory aria-hidden="true" /> Watch history</h3>
+            <button type="button" className="safe-youtube-clear-btn" onClick={handleClearWatchHistory}>
+              Clear
+            </button>
+          </div>
+          <ul className="safe-youtube-grid">
+            {watchHistory.map((video) => (
+              <li key={video.id}>
+                {renderVideoCard(video, {
+                  resumeAt: video.progressSeconds,
+                  showProgress: true,
+                })}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
         <p className="safe-youtube-empty">No videos found. Try a different search.</p>
       )}
 
@@ -207,25 +335,7 @@ const SafeYouTube = () => {
           <ul className="safe-youtube-grid">
             {results.map((video) => (
               <li key={video.id}>
-                <button
-                  type="button"
-                  className={`safe-youtube-card ${activeVideo?.id === video.id ? 'active' : ''}`}
-                  onClick={() => playVideo(video)}
-                >
-                  <div className="safe-youtube-thumb-wrap">
-                    <img src={video.thumbnail} alt="" loading="lazy" />
-                    <span className="safe-youtube-play-badge" aria-hidden="true">
-                      <FaPlay />
-                    </span>
-                  </div>
-                  <div className="safe-youtube-card-body">
-                    <h4>{video.title}</h4>
-                    <p className="safe-youtube-card-channel">{video.channel}</p>
-                    {video.publishedAt && (
-                      <p className="safe-youtube-card-date">{formatPublishedDate(video.publishedAt)}</p>
-                    )}
-                  </div>
-                </button>
+                {renderVideoCard(video)}
               </li>
             ))}
           </ul>
