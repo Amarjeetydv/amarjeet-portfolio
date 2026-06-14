@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { getApiBaseUrl } from './utils/api';
 import {
   loadWatchHistory,
@@ -17,6 +17,8 @@ import {
 import YouTubePlayer from './YouTubePlayer';
 import './SafeYouTube.css';
 
+const HISTORY_PREVIEW_COUNT = 1;
+
 const SafeYouTube = () => {
   const playerWrapRef = useRef(null);
   const [query, setQuery] = useState('');
@@ -30,6 +32,7 @@ const SafeYouTube = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [watchHistory, setWatchHistory] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   useEffect(() => {
     setWatchHistory(loadWatchHistory());
@@ -124,6 +127,7 @@ const SafeYouTube = () => {
       setHasSearched(true);
       setResults([]);
       setPageToken(null);
+      setHistoryExpanded(false);
       setSearchHistory(addToSearchHistory(trimmed));
     }
 
@@ -162,6 +166,7 @@ const SafeYouTube = () => {
   const handleClearWatchHistory = () => {
     clearWatchHistory();
     setWatchHistory([]);
+    setHistoryExpanded(false);
   };
 
   const handleClearSearchHistory = () => {
@@ -248,6 +253,31 @@ const SafeYouTube = () => {
           </div>
         )}
 
+        {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
+          <p className="yt-empty">No videos found. Try a different search.</p>
+        )}
+
+        {results.length > 0 && (
+          <section className="yt-section yt-section-results">
+            <div className="yt-section-head">
+              <h3>Results</h3>
+            </div>
+            <div className="yt-video-list">
+              {results.map((video) => renderVideoRow(video))}
+            </div>
+            {pageToken && (
+              <button
+                type="button"
+                className="yt-load-more"
+                onClick={() => runSearch(query, pageToken)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Loading...' : 'Show more'}
+              </button>
+            )}
+          </section>
+        )}
+
         {searchHistory.length > 0 && (
           <section className="yt-section">
             <div className="yt-section-head">
@@ -265,43 +295,57 @@ const SafeYouTube = () => {
         )}
 
         {watchHistory.length > 0 && (
-          <section className="yt-section">
-            <div className="yt-section-head">
-              <h3>History</h3>
-              <button type="button" onClick={handleClearWatchHistory}>Clear</button>
-            </div>
-            <div className="yt-video-list">
-              {watchHistory.map((video, index) =>
-                renderVideoRow(video, {
-                  resumeAt: video.progressSeconds,
-                  badge: index === 0 && video.progressSeconds > 0 ? 'Continue' : null,
-                })
+          <section className={`yt-section yt-history-section ${historyExpanded ? 'expanded' : 'collapsed'}`}>
+            <button
+              type="button"
+              className="yt-history-toggle"
+              onClick={() => setHistoryExpanded((prev) => !prev)}
+              aria-expanded={historyExpanded}
+            >
+              <span className="yt-history-toggle-label">
+                <h3>Watch history</h3>
+                <span className="yt-history-count">{watchHistory.length}</span>
+              </span>
+              <span className="yt-history-toggle-actions">
+                {!historyExpanded && watchHistory.length > HISTORY_PREVIEW_COUNT && (
+                  <span className="yt-history-hint">Show all</span>
+                )}
+                {historyExpanded ? (
+                  <FaChevronUp aria-hidden="true" />
+                ) : (
+                  <FaChevronDown aria-hidden="true" />
+                )}
+              </span>
+            </button>
+
+            <div className="yt-history-body">
+              <div className="yt-video-list">
+                {(historyExpanded
+                  ? watchHistory
+                  : watchHistory.slice(0, HISTORY_PREVIEW_COUNT)
+                ).map((video, index) =>
+                  renderVideoRow(video, {
+                    resumeAt: video.progressSeconds,
+                    badge: index === 0 && video.progressSeconds > 0 ? 'Continue' : null,
+                  })
+                )}
+              </div>
+
+              {!historyExpanded && watchHistory.length > HISTORY_PREVIEW_COUNT && (
+                <button
+                  type="button"
+                  className="yt-history-expand-btn"
+                  onClick={() => setHistoryExpanded(true)}
+                >
+                  Show all {watchHistory.length} videos
+                </button>
               )}
             </div>
-          </section>
-        )}
 
-        {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
-          <p className="yt-empty">No videos found. Try a different search.</p>
-        )}
-
-        {results.length > 0 && (
-          <section className="yt-section">
-            <div className="yt-section-head">
-              <h3>Results</h3>
-            </div>
-            <div className="yt-video-list">
-              {results.map((video) => renderVideoRow(video))}
-            </div>
-            {pageToken && (
-              <button
-                type="button"
-                className="yt-load-more"
-                onClick={() => runSearch(query, pageToken)}
-                disabled={loadingMore}
-              >
-                {loadingMore ? 'Loading...' : 'Show more'}
-              </button>
+            {historyExpanded && (
+              <div className="yt-history-footer">
+                <button type="button" onClick={handleClearWatchHistory}>Clear history</button>
+              </div>
             )}
           </section>
         )}
