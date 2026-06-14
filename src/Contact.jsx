@@ -4,6 +4,11 @@ import { getApiBaseUrl } from './utils/api';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
+const isImageAttachment = (url, name) => {
+  const target = (name || url || '').toLowerCase();
+  return /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(target) || /\/image\/upload\//i.test(url || '');
+};
+
 const Contact = () => {
   const { conversationId: routeConversationId } = useParams();
   const navigate = useNavigate();
@@ -19,6 +24,7 @@ const Contact = () => {
 
   const messagesEndRef = useRef(null);
   const chatFileInputRef = useRef(null);
+  const formFileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,6 +108,64 @@ const Contact = () => {
     }
     setStatus({ type: '', message: '' });
     setAttachment(file);
+  };
+
+  const clearAttachment = () => {
+    setAttachment(null);
+    if (chatFileInputRef.current) {
+      chatFileInputRef.current.value = '';
+    }
+    if (formFileInputRef.current) {
+      formFileInputRef.current.value = '';
+    }
+  };
+
+  const renderAttachmentInMessage = (msg) => {
+    if (!msg.attachment_url) return null;
+
+    const showImage = isImageAttachment(msg.attachment_url, msg.attachment_name);
+
+    return (
+      <div className="chat-attachment-block">
+        {showImage && (
+          <a
+            href={msg.attachment_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="chat-attachment-image-link"
+          >
+            <img
+              src={msg.attachment_url}
+              alt={msg.attachment_name || 'Attachment'}
+              className="chat-attachment-image"
+            />
+          </a>
+        )}
+        <a
+          href={msg.attachment_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="chat-attachment-link"
+        >
+          📎 {msg.attachment_name || 'View attachment'}
+        </a>
+      </div>
+    );
+  };
+
+  const renderPendingAttachment = () => {
+    if (!attachment) return null;
+
+    return (
+      <div className="attachment-pending">
+        <span className="attachment-pending-name" title={attachment.name}>
+          📎 {attachment.name}
+        </span>
+        <button type="button" className="attachment-pending-remove" onClick={clearAttachment} aria-label="Remove attachment">
+          ✕
+        </button>
+      </div>
+    );
   };
 
   const startChat = (id, name, initialMessage) => {
@@ -230,10 +294,11 @@ const Contact = () => {
           </label>
           <label>
             Attach a file (optional)
-            <input type="file" name="attachment" onChange={handleFileChange} />
+            <input ref={formFileInputRef} type="file" name="attachment" onChange={handleFileChange} />
             <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>
               Allowed types: PDF, JPG, PNG. Max size: 5MB.
             </small>
+            {renderPendingAttachment()}
           </label>
           <button type="submit" disabled={isSending} style={{ position: 'relative', overflow: 'hidden' }}>
             {isSending ? (
@@ -267,17 +332,10 @@ const Contact = () => {
                 <div className="chat-bubble-label">
                   {msg.sender === 'visitor' ? 'You' : 'Amarjeet'}
                 </div>
-                <p className="chat-bubble-text">{msg.message_text}</p>
-                {msg.attachment_url && (
-                  <a
-                    href={msg.attachment_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="chat-attachment-link"
-                  >
-                    📎 {msg.attachment_name || 'View attachment'}
-                  </a>
+                {msg.message_text && msg.message_text !== '(attachment)' && (
+                  <p className="chat-bubble-text">{msg.message_text}</p>
                 )}
+                {renderAttachmentInMessage(msg)}
                 <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
               </div>
             ))}
@@ -285,6 +343,7 @@ const Contact = () => {
           </div>
 
           <form className="chat-input-form" onSubmit={handleChatSubmit}>
+            {renderPendingAttachment()}
             <textarea
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}

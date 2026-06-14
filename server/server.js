@@ -127,23 +127,25 @@ async function initDb() {
 
 initDb();
 
-const uploadToCloudinary = (file) => {
+const uploadBufferToCloudinary = (buffer, filename) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         resource_type: 'auto',
         use_filename: true,
         unique_filename: true,
-        filename_override: file.originalname,
+        filename_override: filename,
       },
       (error, result) => {
         if (error) return reject(error);
         resolve(result);
       }
     );
-    stream.end(file.buffer);
+    stream.end(buffer);
   });
 };
+
+const uploadToCloudinary = (file) => uploadBufferToCloudinary(file.buffer, file.originalname);
 
 const escapeHtml = (str) =>
   (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -219,7 +221,7 @@ ${header}
 
 ${attachmentUrl ? `📎 <b>Attachment:</b> <a href="${attachmentUrl}">View File</a>` : ''}
 
-<i>↩️ Reply to this message to respond on the website.</i>
+<i>↩️ Reply to this message with text or an attachment (photo/document).</i>
   `.trim();
 
   const telegramMessageId = await sendTelegramMessage(text);
@@ -264,6 +266,64 @@ const handleFileUpload = async (file) => {
   const uploadResult = await uploadToCloudinary(file);
   return {
     attachmentName: file.originalname,
+    attachmentUrl: uploadResult?.secure_url || uploadResult?.url || null,
+  };
+};
+
+const extractTelegramMedia = (message) => {
+  if (message.photo?.length) {
+    const photo = message.photo[message.photo.length - 1];
+    return {
+      fileId: photo.file_id,
+      fileName: 'photo.jpg',
+      caption: message.caption?.trim() || '',
+    };
+  }
+
+  if (message.document) {
+    return {
+      fileId: message.document.file_id,
+      fileName: message.document.file_name || 'document',
+      caption: message.caption?.trim() || '',
+    };
+  }
+
+  return null;
+};
+
+const downloadTelegramFile = async (fileId) => {
+  if (!telegramBotToken) {
+    throw new Error('Telegram bot token is not configured');
+  }
+
+  const getFileRes = await fetch(
+    `https://api.telegram.org/bot${telegramBotToken}/getFile?file_id=${encodeURIComponent(fileId)}`
+  );
+  const getFileData = await getFileRes.json();
+
+  if (!getFileData.ok) {
+    throw new Error(getFileData.description || 'Failed to get file info from Telegram');
+  }
+
+  const filePath = getFileData.result.file_path;
+  const fileRes = await fetch(`https://api.telegram.org/file/bot${telegramBotToken}/${filePath}`);
+
+  if (!fileRes.ok) {
+    throw new Error('Failed to download file from Telegram');
+  }
+
+  const buffer = Buffer.from(await fileRes.arrayBuffer());
+  return {
+    buffer,
+    fileName: path.basename(filePath),
+  };
+};
+
+const uploadTelegramMedia = async (media) => {
+  const { buffer, fileName } = await downloadTelegramFile(media.fileId);
+  const uploadResult = await uploadBufferToCloudinary(buffer, media.fileName || fileName);
+  return {
+    attachmentName: media.fileName || fileName,
     attachmentUrl: uploadResult?.secure_url || uploadResult?.url || null,
   };
 };
@@ -427,7 +487,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
   const update = req.body;
   const message = update?.message;
 
-  if (!message?.text || !message.from) {
+  if (!message?.from) {
     return res.sendStatus(200);
   }
 
@@ -438,6 +498,13 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
   const replyToMessageId = message.reply_to_message?.message_id;
   if (!replyToMessageId) {
+    return res.sendStatus(200);
+  }
+
+  const media = extractTelegramMedia(message);
+  const messageText = message.text?.trim() || media?.caption || '';
+
+  if (!messageText && !media) {
     return res.sendStatus(200);
   }
 
@@ -455,19 +522,38 @@ app.post('/api/telegram/webhook', async (req, res) => {
     }
 
     const conversationId = mapping.rows[0].conversation_id;
-    const savedMessage = await saveChatMessage(client, {
+
+    let attachmentName = null;
+    let attachmentUrl = null;
+
+    if (media) {
+      const uploaded = await uploadTelegramMedia(media);
+      attachmentName = uploaded.attachmentName;
+      attachmentUrl = uploaded.attachmentUrl;
+    }
+
+    await saveChatMessage(client, {
       conversationId,
       sender: 'admin',
-      messageText: message.text.trim(),
+      messageText: messageText || '(attachment)',
+      attachmentName,
+      attachmentUrl,
     });
 
-    console.log(`Admin reply saved for conversation ${conversationId}`);
+    console.log(`Admin reply saved for conversation ${conversationId}${attachmentUrl ? ' (with attachment)' : ''}`);
 
-    await sendTelegramMessage(`✅ Reply sent to visitor on the website.\n\n🆔 Chat ID: <code>${conversationId}</code>`);
+    const confirmText = attachmentUrl
+      ? `✅ Reply with attachment sent to visitor on the website.\n\n🆔 Chat ID: <code>${conversationId}</code>`
+      : `✅ Reply sent to visitor on the website.\n\n🆔 Chat ID: <code>${conversationId}</code>`;
+
+    await sendTelegramMessage(confirmText);
 
     res.sendStatus(200);
   } catch (error) {
     console.error('Telegram webhook error:', error);
+    await sendTelegramMessage(
+      `❌ Failed to send reply to the website.\n\n<code>${escapeHtml(error.message)}</code>`
+    );
     res.sendStatus(200);
   } finally {
     if (client) client.release();
