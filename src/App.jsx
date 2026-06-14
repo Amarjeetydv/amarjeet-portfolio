@@ -11,6 +11,7 @@ import Skills from './Skills.jsx';
 import EducationPage from './EducationPage.jsx';
 import CertificationsPage from './CertificationsPage.jsx';
 import Contact from './Contact.jsx';
+import SafeYouTube from './SafeYouTube.jsx';
 import SEO from './SEO.jsx';
 import { seoConfig } from './seoConfig.js';
 
@@ -21,6 +22,7 @@ const sections = [
   { id: 'education', path: '/education', label: 'Education' },
   { id: 'certifications', path: '/certifications', label: 'Certifications' },
   { id: 'contact', path: '/contact', label: 'Contact' },
+  { id: 'learn', path: '/learn', label: 'Learn' },
 ];
 
 function App() {
@@ -85,6 +87,12 @@ function App() {
           <>
             <SEO {...seoConfig.contact} />
             <Contact />
+          </>
+        } />
+        <Route path="learn" element={
+          <>
+            <SEO {...seoConfig.learn} />
+            <SafeYouTube />
           </>
         } />
       </Route>

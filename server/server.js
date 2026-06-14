@@ -21,6 +21,7 @@ const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
 const telegramChatId = process.env.TELEGRAM_CHAT_ID?.trim();
 const telegramWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
+const youtubeApiKey = process.env.YOUTUBE_API_KEY?.trim();
 
 console.log('--- Cloudinary Config ---');
 console.log('Cloud Name:', cloudName || 'MISSING');
@@ -557,6 +558,111 @@ app.post('/api/telegram/webhook', async (req, res) => {
     res.sendStatus(200);
   } finally {
     if (client) client.release();
+  }
+});
+
+const mapYouTubeSearchItem = (item) => ({
+  id: item.id.videoId,
+  title: item.snippet.title,
+  channel: item.snippet.channelTitle,
+  thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+  publishedAt: item.snippet.publishedAt,
+  description: item.snippet.description,
+});
+
+app.get('/api/youtube/video/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    return res.status(400).json({ message: 'Invalid video ID.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      id: videoId,
+      key: youtubeApiKey,
+    });
+
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const reason = data?.error?.message || 'YouTube API request failed.';
+      return res.status(response.status).json({ message: reason });
+    }
+
+    const item = data.items?.[0];
+    if (!item) {
+      return res.status(404).json({ message: 'Video not found.' });
+    }
+
+    res.json({
+      id: videoId,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+      publishedAt: item.snippet.publishedAt,
+      description: item.snippet.description,
+    });
+  } catch (error) {
+    console.error('YouTube video lookup error:', error);
+    res.status(500).json({ message: 'Failed to load video details.' });
+  }
+});
+
+app.get('/api/youtube/search', async (req, res) => {
+  const q = req.query.q?.trim();
+  const pageToken = req.query.pageToken?.trim();
+
+  if (!q) {
+    return res.status(400).json({ message: 'Search query is required.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      type: 'video',
+      q,
+      maxResults: '20',
+      key: youtubeApiKey,
+    });
+
+    if (pageToken) {
+      params.set('pageToken', pageToken);
+    }
+
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const reason = data?.error?.message || 'YouTube API request failed.';
+      return res.status(response.status).json({ message: reason });
+    }
+
+    const items = (data.items || [])
+      .filter((item) => item.id?.videoId)
+      .map(mapYouTubeSearchItem);
+
+    res.json({
+      items,
+      nextPageToken: data.nextPageToken || null,
+    });
+  } catch (error) {
+    console.error('YouTube search error:', error);
+    res.status(500).json({ message: 'Failed to search YouTube.' });
   }
 });
 

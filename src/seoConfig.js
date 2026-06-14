@@ -28,5 +28,10 @@ export const seoConfig = {
     title: "Contact | Amarjeet Yadav – Full Stack Developer",
     description: "Get in touch with Amarjeet Yadav for internships, projects, or collaboration opportunities.",
     path: "/contact"
+  },
+  learn: {
+    title: "Learn | Safe YouTube Viewer",
+    description: "Search and watch YouTube videos safely — no login, comments, likes, or uploads. Learn from any topic on YouTube.",
+    path: "/learn"
   }
 };
