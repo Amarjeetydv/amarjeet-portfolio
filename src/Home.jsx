@@ -42,34 +42,40 @@ const Home = () => {
   return (
     <section id="home" className="home-container">
       <div className="home-content">
-        <div className="profile-img-wrapper">
-          <img src={myphoto} alt="Portrait of Amarjeet Yadav" className="hero-photo" />
-        </div>
-        
-        <div className="intro-text">
-          <h1 className="hero-title">Amarjeet Yadav</h1>
-          <h2 className="hero-role">
-            {text}
-            <span className="hero-cursor" aria-hidden="true"></span>
-          </h2>
-          <p className="hero-tagline">
-            Building scalable, user-centric web applications with modern technologies.
-          </p>
+        <div className="hero-copy">
+          <div className="intro-text">
+            <h1 className="hero-title">Amarjeet Yadav</h1>
+            <div className="hero-role-wrap" aria-label={roles[loopNum % roles.length]}>
+              <h2 className="hero-role">
+                {text}
+                <span className="hero-cursor" aria-hidden="true"></span>
+              </h2>
+            </div>
+            <p className="hero-tagline">
+              Building scalable, user-centric web applications with modern technologies.
+            </p>
+          </div>
+
+          <nav className="hero-cta-group" aria-label="Quick access">
+            <a
+              href="https://drive.google.com/file/d/1duGuRp6joowM3oQdeoLTyLjq2PRWHACW/view?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cta-button"
+            >
+              Resume
+            </a>
+            <Link to="/projects" className="cta-button">Projects</Link>
+            <Link to="/skills" className="cta-button">Skills</Link>
+            <Link to="/contact" className="cta-button">Contact</Link>
+          </nav>
         </div>
 
-        <nav className="hero-cta-group" aria-label="Quick access">
-          <a 
-            href="https://drive.google.com/file/d/1duGuRp6joowM3oQdeoLTyLjq2PRWHACW/view?usp=sharing" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="cta-button"
-          >
-            Resume
-          </a>
-          <Link to="/projects" className="cta-button">Projects</Link>
-          <Link to="/skills" className="cta-button">Skills</Link>
-          <Link to="/contact" className="cta-button">Contact</Link>
-        </nav>
+        <div className="hero-visual">
+          <div className="profile-img-wrapper">
+            <img src={myphoto} alt="Portrait of Amarjeet Yadav" className="hero-photo" />
+          </div>
+        </div>
       </div>
     </section>
   );

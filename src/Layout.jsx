@@ -8,6 +8,8 @@ const Layout = ({ sections, theme, toggleTheme }) => {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   const location = useLocation();
+  const isHomeRoute = location.pathname === '/';
+
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > window.innerHeight * 0.5);
@@ -22,13 +24,18 @@ const Layout = ({ sections, theme, toggleTheme }) => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  useEffect(() => {
+    document.body.classList.toggle('home-page', isHomeRoute);
+    return () => document.body.classList.remove('home-page');
+  }, [isHomeRoute]);
+
   return (
     <>
       <Navbar sections={sections} theme={theme} toggleTheme={toggleTheme} />
-      <main className="content">
+      <main className={`content ${isHomeRoute ? 'home-main' : ''}`}>
         <Outlet />
       </main>
-      <footer className="site-footer">
+      <footer className={`site-footer ${isHomeRoute ? 'site-footer-home' : ''}`}>
         <h2>Follow me</h2>
         <div className="social-links">
           <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FaGithub size={24} /></a>
