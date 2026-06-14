@@ -2,7 +2,22 @@ import { FaGithub, FaExternalLinkAlt } from "react-icons/fa";
 
 const myProjects = [
   {
-    name: "auto-theft-guard",
+    name: "Emergency Response Coordination System (ERCS)",
+    description: "A full-stack emergency coordination platform for citizens, responders, and administrators. Citizens report emergencies with location and media; responders manage assignments with real-time Socket.io messaging; admins oversee users, analytics, escalations, and audit logs. Includes JWT auth, role-based dashboards, and Leaflet map integration.",
+    repoUrl: "https://github.com/Amarjeetydv/emergency-response-system",
+    liveUrl: "https://emergency-response-system-frontend.vercel.app/login",
+    stack: ["Angular", "TypeScript", "Node.js", "Express.js", "MySQL", "Socket.io", "JWT", "Leaflet"],
+    featured: true,
+  },
+  {
+    name: "Job Finder",
+    description: "A lightweight job board built with PHP and MySQL for easy local deployment on XAMPP/WAMP. Supports job seekers, employers, and admins with keyword/location search, title autocomplete, apply and track applications, saved jobs, and a responsive testimonial slider.",
+    repoUrl: "https://github.com/Amarjeetydv/Job_Finder",
+    liveUrl: null,
+    stack: ["PHP", "MySQL", "HTML", "CSS", "JavaScript"],
+  },
+  {
+    name: "Auto Theft Guard",
     description: "A real-time fuel theft detection and vehicle lock management system with automated alerts and comprehensive monitoring. Features automatic vehicle locking on theft detection, continuous fuel monitoring, interactive dashboard, real-time statistics, and fleet management with MySQL triggers for instant detection.",
     repoUrl: "https://github.com/Amarjeetydv/auto-theft-guard",
     liveUrl: null,
