@@ -81,6 +81,12 @@ function App() {
             <Contact />
           </>
         } />
+        <Route path="contact/chat/:conversationId" element={
+          <>
+            <SEO {...seoConfig.contact} />
+            <Contact />
+          </>
+        } />
       </Route>
     </Routes>
   )

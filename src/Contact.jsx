@@ -1,8 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getApiBaseUrl } from './utils/api';
+
+const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
 const Contact = () => {
+  const { conversationId: routeConversationId } = useParams();
+  const navigate = useNavigate();
+
+  const [mode, setMode] = useState('form');
+  const [conversationId, setConversationId] = useState(null);
+  const [visitorName, setVisitorName] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
   const [attachment, setAttachment] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
+  const [isSending, setIsSending] = useState(false);
+
+  const messagesEndRef = useRef(null);
+  const chatFileInputRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const fetchMessages = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/messages`);
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      setVisitorName(data.visitorName || '');
+      setMessages(data.messages || []);
+      return true;
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    const initChat = async () => {
+      const storedId = localStorage.getItem(CHAT_STORAGE_KEY);
+      const idToLoad = routeConversationId || storedId;
+
+      if (!idToLoad) return;
+
+      const found = await fetchMessages(idToLoad);
+      if (found) {
+        setConversationId(idToLoad);
+        setMode('chat');
+        localStorage.setItem(CHAT_STORAGE_KEY, idToLoad);
+      } else if (routeConversationId) {
+        setStatus({ type: 'error', message: 'Chat not found. Please start a new conversation.' });
+      }
+    };
+
+    initChat();
+  }, [routeConversationId, fetchMessages]);
+
+  useEffect(() => {
+    if (mode !== 'chat' || !conversationId) return;
+
+    const poll = setInterval(() => {
+      fetchMessages(conversationId);
+    }, 4000);
+
+    return () => clearInterval(poll);
+  }, [mode, conversationId, fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (status.message && status.type !== 'info') {
@@ -20,7 +89,7 @@ const Contact = () => {
       return;
     }
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (!allowedTypes.includes(file.type)) {
       setStatus({ type: 'error', message: 'Invalid file type. Please upload a PDF, JPG, or PNG.' });
       e.target.value = null;
@@ -35,97 +104,219 @@ const Contact = () => {
     setAttachment(file);
   };
 
+  const startChat = (id, name, initialMessage) => {
+    setConversationId(id);
+    setVisitorName(name);
+    setMessages([initialMessage]);
+    setMode('chat');
+    localStorage.setItem(CHAT_STORAGE_KEY, id);
+    navigate(`/contact/chat/${id}`, { replace: true });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: 'info', message: 'Sending...' });
+    setIsSending(true);
+
     const formData = new FormData(e.target);
     formData.delete('attachment');
     if (attachment) {
       formData.append('attachment', attachment);
     }
+
     try {
-      let baseUrl = import.meta.env.VITE_API_URL;
-      if (!baseUrl) {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          baseUrl = 'http://localhost:5000';
-        } else {
-          baseUrl = 'https://amarjeet-portfolio.onrender.com';
-        }
-      }
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/contact`;
-      console.log('Attempting to send message to API at:', apiUrl);
-      const res = await fetch(apiUrl, {
+      const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
         method: 'POST',
         body: formData,
       });
+
       if (res.ok) {
-        setStatus({ type: 'success', message: 'Message sent successfully!' });
+        const data = await res.json();
+        const name = formData.get('name');
+        startChat(data.conversationId, name, data.chatMessage);
+        setStatus({ type: 'success', message: 'Message sent! Stay on this page to see replies.' });
         e.target.reset();
         setAttachment(null);
       } else {
         const errorData = await res.json().catch(() => null);
-        const errorMessage = errorData?.message || 'Failed to send message. Please try again.';
-        setStatus({ type: 'error', message: errorMessage });
+        setStatus({ type: 'error', message: errorData?.message || 'Failed to send message. Please try again.' });
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       setStatus({ type: 'error', message: 'Failed to connect to the server. Ensure the backend is running.' });
+    } finally {
+      setIsSending(false);
     }
+  };
+
+  const sendChatMessage = async () => {
+    if (!conversationId || (!chatInput.trim() && !attachment)) return;
+
+    setIsSending(true);
+    const formData = new FormData();
+    formData.append('message', chatInput.trim() || '(attachment)');
+
+    if (attachment) {
+      formData.append('attachment', attachment);
+    }
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/chat/${conversationId}/messages`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [...prev, data.chatMessage]);
+        setChatInput('');
+        setAttachment(null);
+        if (chatFileInputRef.current) {
+          chatFileInputRef.current.value = '';
+        }
+      } else {
+        const errorData = await res.json().catch(() => null);
+        setStatus({ type: 'error', message: errorData?.message || 'Failed to send message.' });
+      }
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      setStatus({ type: 'error', message: 'Failed to connect to the server.' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleChatSubmit = (e) => {
+    e.preventDefault();
+    sendChatMessage();
+  };
+
+  const handleNewConversation = () => {
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    setMode('form');
+    setConversationId(null);
+    setMessages([]);
+    setChatInput('');
+    setAttachment(null);
+    navigate('/contact', { replace: true });
+  };
+
+  const formatTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <section className="my-work-section" id="contact">
       <h1 className="work-title">Contact</h1>
       <p className="work-desc">
-        Get in touch with me! I'm always interested in new opportunities and collaborations. Let's discuss how we can work together.
+        {mode === 'chat'
+          ? 'Your conversation is live. Stay on this page — replies from Amarjeet will appear here.'
+          : "Get in touch with me! I'm always interested in new opportunities and collaborations."}
       </p>
-      <form className="contact-form" onSubmit={handleSubmit}>
-        <label>
-          Name:
-          <input type="text" name="name" placeholder="Enter your full name" required autoComplete="name" />
-        </label>
-        <label>
-          Email:
-          <input type="email" name="email" placeholder="Enter your email address" required autoComplete="email" />
-        </label>
-        <label>
-          Message:
-          <textarea name="message" placeholder="Write your message here..." required />
-        </label>
-        <label>
-          Attach a file (optional)
-          <input type="file" name="attachment" onChange={handleFileChange} />
-          <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>Allowed types: PDF, JPG, PNG. Max size: 5MB.</small>
-        </label>
-        <button type="submit" disabled={status.type === 'info'} style={{ position: 'relative', overflow: 'hidden' }}>
-          {status.type === 'info' ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <span className="spinner"></span> Sending...
-            </span>
-          ) : 'Send Message'}
-        </button>
-      </form>
 
-      {/* Toast Notification */}
+      {mode === 'form' ? (
+        <form className="contact-form" onSubmit={handleSubmit}>
+          <label>
+            Name:
+            <input type="text" name="name" placeholder="Enter your full name" required autoComplete="name" />
+          </label>
+          <label>
+            Email:
+            <input type="email" name="email" placeholder="Enter your email address" required autoComplete="email" />
+          </label>
+          <label>
+            Message:
+            <textarea name="message" placeholder="Write your message here..." required />
+          </label>
+          <label>
+            Attach a file (optional)
+            <input type="file" name="attachment" onChange={handleFileChange} />
+            <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>
+              Allowed types: PDF, JPG, PNG. Max size: 5MB.
+            </small>
+          </label>
+          <button type="submit" disabled={isSending} style={{ position: 'relative', overflow: 'hidden' }}>
+            {isSending ? (
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <span className="spinner"></span> Sending...
+              </span>
+            ) : 'Send Message'}
+          </button>
+        </form>
+      ) : (
+        <div className="chat-container">
+          <div className="chat-header">
+            <div>
+              <strong>Chat with Amarjeet</strong>
+              {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
+            </div>
+            <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
+              New conversation
+            </button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.length === 0 && (
+              <p className="chat-empty">No messages yet. Send a message to start the conversation.</p>
+            )}
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`chat-bubble ${msg.sender === 'visitor' ? 'chat-bubble-visitor' : 'chat-bubble-admin'}`}
+              >
+                <div className="chat-bubble-label">
+                  {msg.sender === 'visitor' ? 'You' : 'Amarjeet'}
+                </div>
+                <p className="chat-bubble-text">{msg.message_text}</p>
+                {msg.attachment_url && (
+                  <a
+                    href={msg.attachment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="chat-attachment-link"
+                  >
+                    📎 {msg.attachment_name || 'View attachment'}
+                  </a>
+                )}
+                <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form className="chat-input-form" onSubmit={handleChatSubmit}>
+            <textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Type a message..."
+              rows={2}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendChatMessage();
+                }
+              }}
+            />
+            <div className="chat-input-actions">
+              <label className="chat-file-label">
+                📎 Attach
+                <input
+                  ref={chatFileInputRef}
+                  type="file"
+                  onChange={handleFileChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+              </label>
+              <button type="submit" disabled={isSending || (!chatInput.trim() && !attachment)}>
+                {isSending ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {status.message && status.type !== 'info' && (
-        <div style={{
-          position: 'fixed',
-          bottom: '30px',
-          right: '30px',
-          backgroundColor: 'var(--surface-color, #242424)',
-          color: 'var(--text-color, #f0f0f0)',
-          padding: '16px 24px',
-          borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          zIndex: 9999,
-          border: `1px solid ${status.type === 'success' ? 'var(--primary-color, #a259ff)' : '#ff4d4d'}`,
-          animation: 'slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-          maxWidth: '90vw',
-          backdropFilter: 'blur(10px)',
-        }}>
+        <div className="contact-toast" data-type={status.type}>
           <span style={{ fontSize: '1.5rem' }}>
             {status.type === 'success' ? '✅' : '⚠️'}
           </span>
