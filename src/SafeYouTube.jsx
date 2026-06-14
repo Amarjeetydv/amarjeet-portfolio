@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { FaSearch, FaPlay, FaHistory, FaClock } from 'react-icons/fa';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import { getApiBaseUrl } from './utils/api';
 import {
   loadWatchHistory,
@@ -17,16 +17,8 @@ import {
 import YouTubePlayer from './YouTubePlayer';
 import './SafeYouTube.css';
 
-const formatPublishedDate = (isoDate) => {
-  if (!isoDate) return '';
-  return new Date(isoDate).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
-
 const SafeYouTube = () => {
+  const playerWrapRef = useRef(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [activeVideo, setActiveVideo] = useState(null);
@@ -38,7 +30,6 @@ const SafeYouTube = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [watchHistory, setWatchHistory] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
-  const [continueVideo, setContinueVideo] = useState(null);
 
   useEffect(() => {
     setWatchHistory(loadWatchHistory());
@@ -46,7 +37,6 @@ const SafeYouTube = () => {
 
     const last = loadLastVideo();
     if (last?.id) {
-      setContinueVideo(last);
       setActiveVideo(last);
       setStartSeconds(last.progressSeconds || 0);
     }
@@ -56,10 +46,12 @@ const SafeYouTube = () => {
     const resumeSeconds = Math.max(0, Math.floor(resumeAt || 0));
     setActiveVideo(video);
     setStartSeconds(resumeSeconds);
-    setContinueVideo({ ...video, progressSeconds: resumeSeconds });
     setWatchHistory(addToWatchHistory(video, resumeSeconds));
     saveLastVideo(video, resumeSeconds);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    requestAnimationFrame(() => {
+      playerWrapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }, []);
 
   const handleProgress = useCallback((videoId, currentSeconds) => {
@@ -68,9 +60,6 @@ const SafeYouTube = () => {
     saveLastVideo(
       activeVideo?.id === videoId ? activeVideo : { id: videoId, title: 'YouTube Video' },
       currentSeconds
-    );
-    setContinueVideo((prev) =>
-      prev?.id === videoId ? { ...prev, progressSeconds: Math.floor(currentSeconds) } : prev
     );
     setWatchHistory((prev) =>
       prev.map((item) =>
@@ -109,8 +98,6 @@ const SafeYouTube = () => {
             title: 'YouTube Video',
             channel: '',
             thumbnail: `https://i.ytimg.com/vi/${directId}/hqdefault.jpg`,
-            publishedAt: '',
-            description: '',
           }, 0);
           if (res.status !== 404) {
             setError(data.message || 'Could not load video details.');
@@ -122,8 +109,6 @@ const SafeYouTube = () => {
           title: 'YouTube Video',
           channel: '',
           thumbnail: `https://i.ytimg.com/vi/${directId}/hqdefault.jpg`,
-          publishedAt: '',
-          description: '',
         }, 0);
       } finally {
         setLoading(false);
@@ -177,7 +162,6 @@ const SafeYouTube = () => {
   const handleClearWatchHistory = () => {
     clearWatchHistory();
     setWatchHistory([]);
-    setContinueVideo(null);
   };
 
   const handleClearSearchHistory = () => {
@@ -185,173 +169,143 @@ const SafeYouTube = () => {
     setSearchHistory([]);
   };
 
-  const renderVideoCard = (video, { resumeAt = 0, showProgress = false } = {}) => (
-    <button
-      type="button"
-      className={`safe-youtube-card ${activeVideo?.id === video.id ? 'active' : ''}`}
-      onClick={() => playVideo(video, resumeAt)}
-    >
-      <div className="safe-youtube-thumb-wrap">
-        <img
-          src={video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
-          alt=""
-          loading="lazy"
-        />
-        {showProgress && resumeAt > 0 && (
-          <span className="safe-youtube-resume-badge">
-            Resume {formatWatchTime(resumeAt)}
-          </span>
-        )}
-        <span className="safe-youtube-play-badge" aria-hidden="true">
-          <FaPlay />
-        </span>
-      </div>
-      <div className="safe-youtube-card-body">
-        <h4>{video.title}</h4>
-        {video.channel && <p className="safe-youtube-card-channel">{video.channel}</p>}
-        {video.publishedAt && (
-          <p className="safe-youtube-card-date">{formatPublishedDate(video.publishedAt)}</p>
-        )}
-      </div>
-    </button>
-  );
+  const renderVideoRow = (video, { resumeAt = 0, badge = null } = {}) => {
+    const isActive = activeVideo?.id === video.id;
+
+    return (
+      <button
+        type="button"
+        className={`yt-video-row ${isActive ? 'active' : ''}`}
+        onClick={() => playVideo(video, resumeAt)}
+      >
+        <div className="yt-video-thumb">
+          <img
+            src={video.thumbnail || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+            alt=""
+            loading="lazy"
+          />
+          {resumeAt > 0 && (
+            <span className="yt-video-duration">{formatWatchTime(resumeAt)}</span>
+          )}
+        </div>
+        <div className="yt-video-meta">
+          {badge && <span className="yt-video-badge">{badge}</span>}
+          <h4>{video.title}</h4>
+          {video.channel && <p>{video.channel}</p>}
+        </div>
+      </button>
+    );
+  };
 
   return (
     <section className="safe-youtube-section" id="learn">
-      <h1 className="work-title">Learn</h1>
-      <p className="work-desc safe-youtube-desc">
-        Search and watch any YouTube video here — no login, no comments, no likes, and no uploads.
-        Your searches and watched videos are saved on this device so you can continue later.
-      </p>
-
-      <form className="safe-youtube-search" onSubmit={handleSubmit}>
-        <div className="safe-youtube-search-box">
-          <FaSearch className="safe-youtube-search-icon" aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search YouTube or paste a video link..."
-            aria-label="Search YouTube"
-            autoComplete="off"
-          />
-          <button type="submit" disabled={loading || !query.trim()}>
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-      </form>
-
-      {error && <p className="safe-youtube-error" role="alert">{error}</p>}
-
-      {continueVideo && (
-        <div className="safe-youtube-history-block safe-youtube-continue">
-          <div className="safe-youtube-history-header">
-            <h3><FaClock aria-hidden="true" /> Continue watching</h3>
-          </div>
-          <ul className="safe-youtube-grid safe-youtube-grid-single">
-            <li>
-              {renderVideoCard(continueVideo, {
-                resumeAt: continueVideo.progressSeconds,
-                showProgress: true,
-              })}
-            </li>
-          </ul>
-        </div>
-      )}
-
-      {activeVideo && (
-        <div className="safe-youtube-player-wrap">
-          <div className="safe-youtube-player">
-            <YouTubePlayer
-              key={activeVideo.id}
-              videoId={activeVideo.id}
-              startSeconds={startSeconds}
-              onProgress={handleProgress}
-            />
-          </div>
-          <div className="safe-youtube-now-playing">
-            <h2>{activeVideo.title}</h2>
-            {activeVideo.channel && <p className="safe-youtube-channel">{activeVideo.channel}</p>}
-            {startSeconds > 0 && (
-              <p className="safe-youtube-resume-note">
-                Resuming from {formatWatchTime(startSeconds)}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {searchHistory.length > 0 && (
-        <div className="safe-youtube-history-block">
-          <div className="safe-youtube-history-header">
-            <h3><FaSearch aria-hidden="true" /> Recent searches</h3>
-            <button type="button" className="safe-youtube-clear-btn" onClick={handleClearSearchHistory}>
-              Clear
+      <div className="yt-app">
+        <header className="yt-header">
+          <h1 className="yt-logo">Learn</h1>
+          <form className="yt-search-form" onSubmit={handleSubmit}>
+            <div className="yt-search-bar">
+              <FaSearch className="yt-search-icon" aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                aria-label="Search YouTube"
+                autoComplete="off"
+              />
+              {query && (
+                <button
+                  type="button"
+                  className="yt-search-clear"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <button type="submit" className="yt-search-submit" disabled={loading || !query.trim()}>
+              {loading ? '...' : 'Go'}
             </button>
-          </div>
-          <div className="safe-youtube-search-chips">
-            {searchHistory.map((term) => (
-              <button
-                key={term}
-                type="button"
-                className="safe-youtube-chip"
-                onClick={() => runSearch(term)}
-              >
-                {term}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+          </form>
+        </header>
 
-      {watchHistory.length > 0 && (
-        <div className="safe-youtube-history-block">
-          <div className="safe-youtube-history-header">
-            <h3><FaHistory aria-hidden="true" /> Watch history</h3>
-            <button type="button" className="safe-youtube-clear-btn" onClick={handleClearWatchHistory}>
-              Clear
-            </button>
+        {error && <p className="yt-error" role="alert">{error}</p>}
+
+        {activeVideo && (
+          <div className="yt-player-section" ref={playerWrapRef}>
+            <div className="yt-player">
+              <YouTubePlayer
+                videoId={activeVideo.id}
+                startSeconds={startSeconds}
+                onProgress={handleProgress}
+              />
+            </div>
+            <div className="yt-now-playing">
+              <h2>{activeVideo.title}</h2>
+              {activeVideo.channel && <p>{activeVideo.channel}</p>}
+            </div>
           </div>
-          <ul className="safe-youtube-grid">
-            {watchHistory.map((video) => (
-              <li key={video.id}>
-                {renderVideoCard(video, {
+        )}
+
+        {searchHistory.length > 0 && (
+          <section className="yt-section">
+            <div className="yt-section-head">
+              <h3>Recent searches</h3>
+              <button type="button" onClick={handleClearSearchHistory}>Clear</button>
+            </div>
+            <div className="yt-chip-row">
+              {searchHistory.map((term) => (
+                <button key={term} type="button" className="yt-chip" onClick={() => runSearch(term)}>
+                  {term}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {watchHistory.length > 0 && (
+          <section className="yt-section">
+            <div className="yt-section-head">
+              <h3>History</h3>
+              <button type="button" onClick={handleClearWatchHistory}>Clear</button>
+            </div>
+            <div className="yt-video-list">
+              {watchHistory.map((video, index) =>
+                renderVideoRow(video, {
                   resumeAt: video.progressSeconds,
-                  showProgress: true,
-                })}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                  badge: index === 0 && video.progressSeconds > 0 ? 'Continue' : null,
+                })
+              )}
+            </div>
+          </section>
+        )}
 
-      {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
-        <p className="safe-youtube-empty">No videos found. Try a different search.</p>
-      )}
+        {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
+          <p className="yt-empty">No videos found. Try a different search.</p>
+        )}
 
-      {results.length > 0 && (
-        <div className="safe-youtube-results">
-          <h3 className="safe-youtube-results-title">Results</h3>
-          <ul className="safe-youtube-grid">
-            {results.map((video) => (
-              <li key={video.id}>
-                {renderVideoCard(video)}
-              </li>
-            ))}
-          </ul>
-
-          {pageToken && (
-            <button
-              type="button"
-              className="safe-youtube-load-more"
-              onClick={() => runSearch(query, pageToken)}
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Loading...' : 'Load more'}
-            </button>
-          )}
-        </div>
-      )}
+        {results.length > 0 && (
+          <section className="yt-section">
+            <div className="yt-section-head">
+              <h3>Results</h3>
+            </div>
+            <div className="yt-video-list">
+              {results.map((video) => renderVideoRow(video))}
+            </div>
+            {pageToken && (
+              <button
+                type="button"
+                className="yt-load-more"
+                onClick={() => runSearch(query, pageToken)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Loading...' : 'Show more'}
+              </button>
+            )}
+          </section>
+        )}
+      </div>
     </section>
   );
 };
