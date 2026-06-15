@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaSearch, FaChevronDown, FaChevronUp, FaArrowLeft } from 'react-icons/fa';
 import { getApiBaseUrl } from './utils/api';
 import {
   loadWatchHistory,
@@ -12,6 +12,7 @@ import {
   clearWatchHistory,
   clearSearchHistory,
   extractVideoIdFromInput,
+  extractChannelFromInput,
   formatWatchTime,
 } from './utils/safeYouTubeHistory';
 import YouTubePlayer from './YouTubePlayer';
@@ -33,6 +34,11 @@ const SafeYouTube = () => {
   const [watchHistory, setWatchHistory] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [activeChannel, setActiveChannel] = useState(null);
+  const [channelVideos, setChannelVideos] = useState([]);
+  const [channelPageToken, setChannelPageToken] = useState(null);
+  const [channelLoading, setChannelLoading] = useState(false);
+  const [channelLoadingMore, setChannelLoadingMore] = useState(false);
 
   useEffect(() => {
     setWatchHistory(loadWatchHistory());
@@ -73,12 +79,108 @@ const SafeYouTube = () => {
     );
   }, [activeVideo]);
 
+  const closeChannel = () => {
+    setActiveChannel(null);
+    setChannelVideos([]);
+    setChannelPageToken(null);
+  };
+
+  const loadChannelVideos = async (channelId, token = null) => {
+    if (token) {
+      setChannelLoadingMore(true);
+    } else {
+      setChannelLoading(true);
+      setChannelVideos([]);
+      setChannelPageToken(null);
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (token) params.set('pageToken', token);
+
+      const res = await fetch(
+        `${getApiBaseUrl()}/api/youtube/channel/${channelId}/videos?${params}`
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Could not load channel videos.');
+      }
+
+      const videos = data.items || [];
+      setChannelVideos((prev) => (token ? [...prev, ...videos] : videos));
+      setChannelPageToken(data.nextPageToken || null);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      if (!token) setChannelVideos([]);
+    } finally {
+      setChannelLoading(false);
+      setChannelLoadingMore(false);
+    }
+  };
+
+  const openChannel = useCallback(async (channel, token = null) => {
+    if (!channel?.channelId) return;
+
+    if (!token) {
+      setActiveChannel(channel);
+      setResults([]);
+      setPageToken(null);
+      setHasSearched(true);
+      setHistoryExpanded(false);
+      setError('');
+    }
+
+    await loadChannelVideos(channel.channelId, token);
+  }, []);
+
+  const resolveAndOpenChannel = async (channelQuery) => {
+    const trimmed = channelQuery.trim();
+    if (!trimmed) return;
+
+    setQuery(trimmed);
+    setLoading(true);
+    setError('');
+    setHasSearched(true);
+    setResults([]);
+    setPageToken(null);
+    setHistoryExpanded(false);
+    setSearchHistory(addToSearchHistory(trimmed));
+
+    try {
+      const params = new URLSearchParams({ q: trimmed });
+      const res = await fetch(`${getApiBaseUrl()}/api/youtube/channel/resolve?${params}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Channel not found.');
+      }
+
+      await openChannel(data);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      closeChannel();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runSearch = async (searchQuery, token = null) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return;
 
     if (!token) {
       setQuery(trimmed);
+    }
+
+    const channelInput = extractChannelFromInput(trimmed);
+    if (channelInput && !token) {
+      await resolveAndOpenChannel(trimmed);
+      return;
+    }
+
+    if (!token) {
+      closeChannel();
     }
 
     const directId = extractVideoIdFromInput(trimmed);
@@ -174,6 +276,31 @@ const SafeYouTube = () => {
     setSearchHistory([]);
   };
 
+  const renderChannelLink = (video) => {
+    if (!video.channel) return null;
+
+    if (!video.channelId) {
+      return <p>{video.channel}</p>;
+    }
+
+    return (
+      <button
+        type="button"
+        className="yt-channel-link"
+        onClick={(e) => {
+          e.stopPropagation();
+          openChannel({
+            channelId: video.channelId,
+            title: video.channel,
+            thumbnail: '',
+          });
+        }}
+      >
+        {video.channel}
+      </button>
+    );
+  };
+
   const renderVideoRow = (video, { resumeAt = 0, badge = null } = {}) => {
     const isActive = activeVideo?.id === video.id;
 
@@ -196,7 +323,7 @@ const SafeYouTube = () => {
         <div className="yt-video-meta">
           {badge && <span className="yt-video-badge">{badge}</span>}
           <h4>{video.title}</h4>
-          {video.channel && <p>{video.channel}</p>}
+          {renderChannelLink(video)}
         </div>
       </button>
     );
@@ -214,8 +341,8 @@ const SafeYouTube = () => {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                aria-label="Search YouTube"
+                placeholder="Search videos or paste a channel link"
+                aria-label="Search YouTube videos or channels"
                 autoComplete="off"
               />
               {query && (
@@ -248,16 +375,59 @@ const SafeYouTube = () => {
             </div>
             <div className="yt-now-playing">
               <h2>{activeVideo.title}</h2>
-              {activeVideo.channel && <p>{activeVideo.channel}</p>}
+              {renderChannelLink(activeVideo)}
             </div>
           </div>
         )}
 
-        {hasSearched && !loading && results.length === 0 && !error && !extractVideoIdFromInput(query) && (
+        {hasSearched && !loading && !channelLoading && results.length === 0 && !activeChannel && !error && !extractVideoIdFromInput(query) && !extractChannelFromInput(query) && (
           <p className="yt-empty">No videos found. Try a different search.</p>
         )}
 
-        {results.length > 0 && (
+        {activeChannel && (
+          <section className="yt-section yt-channel-section">
+            <div className="yt-channel-header">
+              <button type="button" className="yt-channel-back" onClick={closeChannel}>
+                <FaArrowLeft aria-hidden="true" />
+                <span>Back</span>
+              </button>
+              <div className="yt-channel-info">
+                {activeChannel.thumbnail && (
+                  <img src={activeChannel.thumbnail} alt="" className="yt-channel-avatar" />
+                )}
+                <div>
+                  <h3>{activeChannel.title}</h3>
+                  <p>All videos from this channel</p>
+                </div>
+              </div>
+            </div>
+
+            {channelLoading && <p className="yt-empty">Loading channel videos...</p>}
+
+            {!channelLoading && channelVideos.length === 0 && !error && (
+              <p className="yt-empty">No videos found on this channel.</p>
+            )}
+
+            {channelVideos.length > 0 && (
+              <div className="yt-video-list">
+                {channelVideos.map((video) => renderVideoRow(video))}
+              </div>
+            )}
+
+            {channelPageToken && (
+              <button
+                type="button"
+                className="yt-load-more"
+                onClick={() => openChannel(activeChannel, channelPageToken)}
+                disabled={channelLoadingMore}
+              >
+                {channelLoadingMore ? 'Loading...' : 'Show more'}
+              </button>
+            )}
+          </section>
+        )}
+
+        {results.length > 0 && !activeChannel && (
           <section className="yt-section yt-section-results">
             <div className="yt-section-head">
               <h3>Results</h3>

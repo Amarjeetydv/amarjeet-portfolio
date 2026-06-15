@@ -34,6 +34,7 @@ export const addToWatchHistory = (video, progressSeconds = 0) => {
     id: video.id,
     title: video.title || 'YouTube Video',
     channel: video.channel || '',
+    channelId: video.channelId || '',
     thumbnail: video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`,
     progressSeconds: Math.max(0, Math.floor(progressSeconds || 0)),
     watchedAt: new Date().toISOString(),
@@ -80,6 +81,7 @@ export const saveLastVideo = (video, progressSeconds = 0) => {
     id: video.id,
     title: video.title || 'YouTube Video',
     channel: video.channel || '',
+    channelId: video.channelId || '',
     thumbnail: video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`,
     progressSeconds: Math.max(0, Math.floor(progressSeconds || 0)),
     updatedAt: new Date().toISOString(),
@@ -119,6 +121,37 @@ export const extractVideoIdFromInput = (input) => {
 
       const shortsMatch = url.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
       if (shortsMatch) return shortsMatch[1];
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const CHANNEL_ID_RE = /^UC[\w-]{22}$/;
+
+export const extractChannelFromInput = (input) => {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (CHANNEL_ID_RE.test(trimmed)) return trimmed;
+
+  if (trimmed.startsWith('@')) return trimmed;
+
+  try {
+    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = url.hostname.replace(/^www\./, '');
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const channelMatch = url.pathname.match(/^\/channel\/(UC[\w-]{22})/);
+      if (channelMatch) return channelMatch[1];
+
+      const handleMatch = url.pathname.match(/^\/@([\w.-]+)/);
+      if (handleMatch) return `@${handleMatch[1]}`;
+
+      const userMatch = url.pathname.match(/^\/user\/([\w.-]+)/);
+      if (userMatch) return userMatch[1];
     }
   } catch {
     return null;

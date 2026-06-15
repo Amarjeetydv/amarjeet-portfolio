@@ -561,14 +561,108 @@ app.post('/api/telegram/webhook', async (req, res) => {
   }
 });
 
+const CHANNEL_ID_RE = /^UC[\w-]{22}$/;
+
 const mapYouTubeSearchItem = (item) => ({
   id: item.id.videoId,
   title: item.snippet.title,
   channel: item.snippet.channelTitle,
+  channelId: item.snippet.channelId,
   thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
   publishedAt: item.snippet.publishedAt,
   description: item.snippet.description,
 });
+
+const mapYouTubeChannel = (item) => ({
+  channelId: item.id,
+  title: item.snippet.title,
+  thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+  description: item.snippet.description,
+});
+
+const parseChannelInput = (input) => {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (CHANNEL_ID_RE.test(trimmed)) {
+    return { type: 'id', value: trimmed };
+  }
+
+  if (trimmed.startsWith('@')) {
+    return { type: 'handle', value: trimmed.slice(1) };
+  }
+
+  try {
+    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = url.hostname.replace(/^www\./, '');
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const channelMatch = url.pathname.match(/^\/channel\/(UC[\w-]{22})/);
+      if (channelMatch) return { type: 'id', value: channelMatch[1] };
+
+      const handleMatch = url.pathname.match(/^\/@([\w.-]+)/);
+      if (handleMatch) return { type: 'handle', value: handleMatch[1] };
+
+      const userMatch = url.pathname.match(/^\/user\/([\w.-]+)/);
+      if (userMatch) return { type: 'username', value: userMatch[1] };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const fetchYouTubeChannel = async (parsed) => {
+  if (!parsed) return null;
+
+  if (parsed.type === 'id') {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      id: parsed.value,
+      key: youtubeApiKey,
+    });
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error?.message || 'YouTube API request failed.');
+    }
+    const item = data.items?.[0];
+    return item ? mapYouTubeChannel(item) : null;
+  }
+
+  if (parsed.type === 'handle') {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      forHandle: parsed.value,
+      key: youtubeApiKey,
+    });
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error?.message || 'YouTube API request failed.');
+    }
+    const item = data.items?.[0];
+    return item ? mapYouTubeChannel(item) : null;
+  }
+
+  if (parsed.type === 'username') {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      forUsername: parsed.value,
+      key: youtubeApiKey,
+    });
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error?.message || 'YouTube API request failed.');
+    }
+    const item = data.items?.[0];
+    return item ? mapYouTubeChannel(item) : null;
+  }
+
+  return null;
+};
 
 app.get('/api/youtube/video/:videoId', async (req, res) => {
   const { videoId } = req.params;
@@ -607,6 +701,7 @@ app.get('/api/youtube/video/:videoId', async (req, res) => {
       id: videoId,
       title: item.snippet.title,
       channel: item.snippet.channelTitle,
+      channelId: item.snippet.channelId,
       thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
       publishedAt: item.snippet.publishedAt,
       description: item.snippet.description,
@@ -663,6 +758,111 @@ app.get('/api/youtube/search', async (req, res) => {
   } catch (error) {
     console.error('YouTube search error:', error);
     res.status(500).json({ message: 'Failed to search YouTube.' });
+  }
+});
+
+app.get('/api/youtube/channel/resolve', async (req, res) => {
+  const q = req.query.q?.trim();
+
+  if (!q) {
+    return res.status(400).json({ message: 'Channel query is required.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const parsed = parseChannelInput(q);
+    let channel = await fetchYouTubeChannel(parsed);
+
+    if (!channel) {
+      const params = new URLSearchParams({
+        part: 'snippet',
+        type: 'channel',
+        q,
+        maxResults: '1',
+        key: youtubeApiKey,
+      });
+      const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        const reason = data?.error?.message || 'YouTube API request failed.';
+        return res.status(response.status).json({ message: reason });
+      }
+
+      const item = data.items?.[0];
+      if (item?.id?.channelId) {
+        channel = {
+          channelId: item.id.channelId,
+          title: item.snippet.title,
+          thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+          description: item.snippet.description,
+        };
+      }
+    }
+
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found.' });
+    }
+
+    res.json(channel);
+  } catch (error) {
+    console.error('YouTube channel resolve error:', error);
+    res.status(500).json({ message: error.message || 'Failed to resolve channel.' });
+  }
+});
+
+app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
+  const { channelId } = req.params;
+  const pageToken = req.query.pageToken?.trim();
+
+  if (!CHANNEL_ID_RE.test(channelId)) {
+    return res.status(400).json({ message: 'Invalid channel ID.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      channelId,
+      type: 'video',
+      order: 'date',
+      maxResults: '20',
+      key: youtubeApiKey,
+    });
+
+    if (pageToken) {
+      params.set('pageToken', pageToken);
+    }
+
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const reason = data?.error?.message || 'YouTube API request failed.';
+      return res.status(response.status).json({ message: reason });
+    }
+
+    const items = (data.items || [])
+      .filter((item) => item.id?.videoId)
+      .map(mapYouTubeSearchItem);
+
+    res.json({
+      items,
+      nextPageToken: data.nextPageToken || null,
+    });
+  } catch (error) {
+    console.error('YouTube channel videos error:', error);
+    res.status(500).json({ message: 'Failed to load channel videos.' });
   }
 });
 
