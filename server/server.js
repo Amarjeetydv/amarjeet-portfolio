@@ -563,7 +563,15 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
 const CHANNEL_ID_RE = /^UC[\w-]{22}$/;
 
-const mapYouTubeSearchItem = (item) => ({
+const parseIsoDurationSeconds = (duration = '') => {
+  const match = duration.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  if (!match) return null;
+
+  const [, hours = '0', minutes = '0', seconds = '0'] = match;
+  return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+};
+
+const mapYouTubeSearchItem = (item, details = {}) => ({
   id: item.id.videoId,
   title: item.snippet.title,
   channel: item.snippet.channelTitle,
@@ -571,6 +579,8 @@ const mapYouTubeSearchItem = (item) => ({
   thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
   publishedAt: item.snippet.publishedAt,
   description: item.snippet.description,
+  durationSeconds: details.durationSeconds ?? null,
+  liveBroadcastContent: item.snippet.liveBroadcastContent || details.liveBroadcastContent || 'none',
 });
 
 const mapYouTubeChannel = (item) => ({
@@ -579,6 +589,58 @@ const mapYouTubeChannel = (item) => ({
   thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
   description: item.snippet.description,
 });
+
+const mapYouTubePlaylist = (item) => ({
+  id: item.id,
+  title: item.snippet.title,
+  channel: item.snippet.channelTitle,
+  channelId: item.snippet.channelId,
+  thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+  publishedAt: item.snippet.publishedAt,
+  description: item.snippet.description,
+  itemCount: item.contentDetails?.itemCount ?? null,
+});
+
+const mapYouTubePlaylistItem = (item, details = {}) => ({
+  id: item.snippet.resourceId.videoId,
+  title: item.snippet.title,
+  channel: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle,
+  channelId: item.snippet.videoOwnerChannelId || item.snippet.channelId,
+  thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+  publishedAt: item.snippet.publishedAt,
+  description: item.snippet.description,
+  durationSeconds: details.durationSeconds ?? null,
+  liveBroadcastContent: details.liveBroadcastContent || 'none',
+  position: item.snippet.position,
+});
+
+const fetchYouTubeVideoDetailsMap = async (videoIds) => {
+  const ids = [...new Set(videoIds)].filter(Boolean);
+  if (ids.length === 0) return new Map();
+
+  const params = new URLSearchParams({
+    part: 'contentDetails,snippet',
+    id: ids.join(','),
+    key: youtubeApiKey,
+  });
+
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || 'YouTube API request failed.');
+  }
+
+  return new Map(
+    (data.items || []).map((item) => [
+      item.id,
+      {
+        durationSeconds: parseIsoDurationSeconds(item.contentDetails?.duration),
+        liveBroadcastContent: item.snippet?.liveBroadcastContent || 'none',
+      },
+    ])
+  );
+};
 
 const parseChannelInput = (input) => {
   const trimmed = input.trim();
@@ -819,9 +881,14 @@ app.get('/api/youtube/channel/resolve', async (req, res) => {
 app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
   const { channelId } = req.params;
   const pageToken = req.query.pageToken?.trim();
+  const section = req.query.section?.trim() || 'home';
 
   if (!CHANNEL_ID_RE.test(channelId)) {
     return res.status(400).json({ message: 'Invalid channel ID.' });
+  }
+
+  if (!['home', 'videos', 'shorts', 'live'].includes(section)) {
+    return res.status(400).json({ message: 'Invalid channel section.' });
   }
 
   if (!youtubeApiKey) {
@@ -836,9 +903,13 @@ app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
       channelId,
       type: 'video',
       order: 'date',
-      maxResults: '20',
+      maxResults: section === 'shorts' ? '50' : '20',
       key: youtubeApiKey,
     });
+
+    if (section === 'live') {
+      params.set('eventType', 'live');
+    }
 
     if (pageToken) {
       params.set('pageToken', pageToken);
@@ -852,9 +923,17 @@ app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
       return res.status(response.status).json({ message: reason });
     }
 
-    const items = (data.items || [])
-      .filter((item) => item.id?.videoId)
-      .map(mapYouTubeSearchItem);
+    const searchItems = (data.items || []).filter((item) => item.id?.videoId);
+    const detailsMap = await fetchYouTubeVideoDetailsMap(searchItems.map((item) => item.id.videoId));
+    let items = searchItems.map((item) => mapYouTubeSearchItem(item, detailsMap.get(item.id.videoId)));
+
+    if (section === 'videos') {
+      items = items.filter((item) => item.durationSeconds === null || item.durationSeconds > 60);
+    }
+
+    if (section === 'shorts') {
+      items = items.filter((item) => item.durationSeconds !== null && item.durationSeconds <= 60);
+    }
 
     res.json({
       items,
@@ -863,6 +942,103 @@ app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
   } catch (error) {
     console.error('YouTube channel videos error:', error);
     res.status(500).json({ message: 'Failed to load channel videos.' });
+  }
+});
+
+app.get('/api/youtube/channel/:channelId/playlists', async (req, res) => {
+  const { channelId } = req.params;
+  const pageToken = req.query.pageToken?.trim();
+
+  if (!CHANNEL_ID_RE.test(channelId)) {
+    return res.status(400).json({ message: 'Invalid channel ID.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet,contentDetails',
+      channelId,
+      maxResults: '20',
+      key: youtubeApiKey,
+    });
+
+    if (pageToken) {
+      params.set('pageToken', pageToken);
+    }
+
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const reason = data?.error?.message || 'YouTube API request failed.';
+      return res.status(response.status).json({ message: reason });
+    }
+
+    res.json({
+      items: (data.items || []).map(mapYouTubePlaylist),
+      nextPageToken: data.nextPageToken || null,
+    });
+  } catch (error) {
+    console.error('YouTube channel playlists error:', error);
+    res.status(500).json({ message: 'Failed to load channel playlists.' });
+  }
+});
+
+app.get('/api/youtube/playlist/:playlistId/videos', async (req, res) => {
+  const { playlistId } = req.params;
+  const pageToken = req.query.pageToken?.trim();
+
+  if (!/^[\w-]{10,80}$/.test(playlistId)) {
+    return res.status(400).json({ message: 'Invalid playlist ID.' });
+  }
+
+  if (!youtubeApiKey) {
+    return res.status(503).json({
+      message: 'YouTube search is not configured yet. Add YOUTUBE_API_KEY to the server environment.',
+    });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      part: 'snippet',
+      playlistId,
+      maxResults: '50',
+      key: youtubeApiKey,
+    });
+
+    if (pageToken) {
+      params.set('pageToken', pageToken);
+    }
+
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const reason = data?.error?.message || 'YouTube API request failed.';
+      return res.status(response.status).json({ message: reason });
+    }
+
+    const playlistItems = (data.items || []).filter(
+      (item) => item.snippet?.resourceId?.videoId && item.snippet.title !== 'Private video'
+    );
+    const detailsMap = await fetchYouTubeVideoDetailsMap(
+      playlistItems.map((item) => item.snippet.resourceId.videoId)
+    );
+
+    res.json({
+      items: playlistItems.map((item) =>
+        mapYouTubePlaylistItem(item, detailsMap.get(item.snippet.resourceId.videoId))
+      ),
+      nextPageToken: data.nextPageToken || null,
+    });
+  } catch (error) {
+    console.error('YouTube playlist videos error:', error);
+    res.status(500).json({ message: 'Failed to load playlist videos.' });
   }
 });
 

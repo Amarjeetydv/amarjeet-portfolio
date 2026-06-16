@@ -224,6 +224,50 @@
   color: var(--text-muted-color);
 }
 
+.yt-channel-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0 0 0.7rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.yt-channel-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.yt-channel-tab {
+  position: relative;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted-color);
+  font-family: var(--font-family);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+}
+
+.yt-channel-tab:hover,
+.yt-channel-tab.active {
+  color: var(--text-color);
+}
+
+.yt-channel-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0.65rem;
+  right: 0.65rem;
+  bottom: -0.72rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-color);
+}
+
 /* Sections */
 .yt-section {
   margin-top: 1.25rem;
@@ -507,6 +551,150 @@
   overflow: hidden;
 }
 
+.yt-playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.yt-playlist-card {
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family);
+}
+
+.yt-playlist-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+}
+
+.yt-playlist-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.yt-playlist-thumb span {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42%;
+  padding: 0 0.65rem;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.yt-playlist-meta {
+  padding-top: 0.45rem;
+}
+
+.yt-playlist-meta h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-playlist-meta p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-muted-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-playlist-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.yt-playlist-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.yt-playlist-back:hover {
+  color: var(--primary-color);
+}
+
+.yt-playlist-view-head {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  padding-bottom: 0.35rem;
+}
+
+.yt-playlist-view-thumb {
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+}
+
+.yt-playlist-view-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.yt-playlist-view-meta {
+  min-width: 0;
+}
+
+.yt-playlist-view-meta h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-playlist-view-meta p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted-color);
+}
+
 .yt-error {
   margin: 0.75rem 0 0;
   text-align: center;
@@ -596,6 +784,25 @@
 
   .yt-video-list {
     gap: 0.75rem;
+  }
+
+  .yt-channel-tabs {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .yt-playlist-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .yt-playlist-view-head {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+
+  .yt-playlist-view-meta h4 {
+    font-size: 0.92rem;
   }
 }
 

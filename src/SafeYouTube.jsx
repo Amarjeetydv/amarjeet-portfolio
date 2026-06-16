@@ -19,6 +19,14 @@ import YouTubePlayer from './YouTubePlayer';
 import './SafeYouTube.css';
 
 const HISTORY_PREVIEW_COUNT = 1;
+const CHANNEL_TABS = [
+  { id: 'home', label: 'Home' },
+  { id: 'videos', label: 'Videos' },
+  { id: 'shorts', label: 'Shorts' },
+  { id: 'live', label: 'Live' },
+  { id: 'playlists', label: 'Playlists' },
+  { id: 'posts', label: 'Posts' },
+];
 
 const SafeYouTube = () => {
   const playerWrapRef = useRef(null);
@@ -35,10 +43,16 @@ const SafeYouTube = () => {
   const [searchHistory, setSearchHistory] = useState([]);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [activeChannel, setActiveChannel] = useState(null);
-  const [channelVideos, setChannelVideos] = useState([]);
+  const [activeChannelTab, setActiveChannelTab] = useState('home');
+  const [channelItems, setChannelItems] = useState([]);
   const [channelPageToken, setChannelPageToken] = useState(null);
   const [channelLoading, setChannelLoading] = useState(false);
   const [channelLoadingMore, setChannelLoadingMore] = useState(false);
+  const [activePlaylist, setActivePlaylist] = useState(null);
+  const [playlistVideos, setPlaylistVideos] = useState([]);
+  const [playlistPageToken, setPlaylistPageToken] = useState(null);
+  const [playlistLoading, setPlaylistLoading] = useState(false);
+  const [playlistLoadingMore, setPlaylistLoadingMore] = useState(false);
 
   useEffect(() => {
     setWatchHistory(loadWatchHistory());
@@ -81,45 +95,59 @@ const SafeYouTube = () => {
 
   const closeChannel = () => {
     setActiveChannel(null);
-    setChannelVideos([]);
+    setActiveChannelTab('home');
+    setChannelItems([]);
     setChannelPageToken(null);
+    closePlaylist();
   };
 
-  const loadChannelVideos = async (channelId, token = null) => {
+  const closePlaylist = () => {
+    setActivePlaylist(null);
+    setPlaylistVideos([]);
+    setPlaylistPageToken(null);
+  };
+
+  const loadChannelContent = async (channelId, tab = activeChannelTab, token = null) => {
+    if (tab === 'posts') {
+      setChannelItems([]);
+      setChannelPageToken(null);
+      return;
+    }
+
     if (token) {
       setChannelLoadingMore(true);
     } else {
       setChannelLoading(true);
-      setChannelVideos([]);
+      setChannelItems([]);
       setChannelPageToken(null);
     }
 
     try {
       const params = new URLSearchParams();
       if (token) params.set('pageToken', token);
+      if (tab !== 'playlists') params.set('section', tab);
 
-      const res = await fetch(
-        `${getApiBaseUrl()}/api/youtube/channel/${channelId}/videos?${params}`
-      );
+      const endpoint = tab === 'playlists' ? 'playlists' : 'videos';
+      const res = await fetch(`${getApiBaseUrl()}/api/youtube/channel/${channelId}/${endpoint}?${params}`);
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Could not load channel videos.');
+        throw new Error(data.message || 'Could not load channel content.');
       }
 
-      const videos = data.items || [];
-      setChannelVideos((prev) => (token ? [...prev, ...videos] : videos));
+      const items = data.items || [];
+      setChannelItems((prev) => (token ? [...prev, ...items] : items));
       setChannelPageToken(data.nextPageToken || null);
     } catch (err) {
       setError(err.message || 'Something went wrong.');
-      if (!token) setChannelVideos([]);
+      if (!token) setChannelItems([]);
     } finally {
       setChannelLoading(false);
       setChannelLoadingMore(false);
     }
   };
 
-  const openChannel = useCallback(async (channel, token = null) => {
+  const openChannel = async (channel, token = null) => {
     if (!channel?.channelId) return;
 
     if (!token) {
@@ -128,11 +156,58 @@ const SafeYouTube = () => {
       setPageToken(null);
       setHasSearched(true);
       setHistoryExpanded(false);
+      setActiveChannelTab('home');
       setError('');
     }
 
-    await loadChannelVideos(channel.channelId, token);
-  }, []);
+    await loadChannelContent(channel.channelId, token ? activeChannelTab : 'home', token);
+  };
+
+  const changeChannelTab = async (tab) => {
+    if (!activeChannel || tab === activeChannelTab) return;
+
+    setActiveChannelTab(tab);
+    closePlaylist();
+    setError('');
+    await loadChannelContent(activeChannel.channelId, tab);
+  };
+
+  const loadPlaylistVideos = async (playlist, token = null) => {
+    if (!playlist?.id) return;
+
+    if (token) {
+      setPlaylistLoadingMore(true);
+    } else {
+      setActivePlaylist(playlist);
+      setPlaylistLoading(true);
+      setPlaylistVideos([]);
+      setPlaylistPageToken(null);
+    }
+
+    setError('');
+
+    try {
+      const params = new URLSearchParams();
+      if (token) params.set('pageToken', token);
+
+      const res = await fetch(`${getApiBaseUrl()}/api/youtube/playlist/${playlist.id}/videos?${params}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Could not load playlist videos.');
+      }
+
+      const videos = data.items || [];
+      setPlaylistVideos((prev) => (token ? [...prev, ...videos] : videos));
+      setPlaylistPageToken(data.nextPageToken || null);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      if (!token) setPlaylistVideos([]);
+    } finally {
+      setPlaylistLoading(false);
+      setPlaylistLoadingMore(false);
+    }
+  };
 
   const resolveAndOpenChannel = async (channelQuery) => {
     const trimmed = channelQuery.trim();
@@ -329,6 +404,35 @@ const SafeYouTube = () => {
     );
   };
 
+  const renderPlaylistCard = (playlist) => (
+    <button
+      type="button"
+      className="yt-playlist-card"
+      key={playlist.id}
+      onClick={() => loadPlaylistVideos(playlist)}
+    >
+      <div className="yt-playlist-thumb">
+        <img src={playlist.thumbnail} alt="" loading="lazy" />
+        <span>{playlist.itemCount ?? 0} videos</span>
+      </div>
+      <div className="yt-playlist-meta">
+        <h4>{playlist.title}</h4>
+        <p>{playlist.description || 'Playlist'}</p>
+      </div>
+    </button>
+  );
+
+  const getChannelEmptyText = () => {
+    if (activeChannelTab === 'posts') {
+      return 'Posts are not available here because YouTube does not provide community posts through its public API.';
+    }
+
+    if (activeChannelTab === 'shorts') return 'No Shorts found on this channel.';
+    if (activeChannelTab === 'live') return 'No live streams found right now.';
+    if (activeChannelTab === 'playlists') return 'No playlists found on this channel.';
+    return 'No videos found on this channel.';
+  };
+
   return (
     <section className="safe-youtube-section" id="learn">
       <div className="yt-app">
@@ -397,28 +501,98 @@ const SafeYouTube = () => {
                 )}
                 <div>
                   <h3>{activeChannel.title}</h3>
-                  <p>All videos from this channel</p>
+                  <p>Browse this channel</p>
                 </div>
               </div>
             </div>
 
-            {channelLoading && <p className="yt-empty">Loading channel videos...</p>}
+            <div className="yt-channel-tabs" role="tablist" aria-label="Channel sections">
+              {CHANNEL_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeChannelTab === tab.id}
+                  className={`yt-channel-tab ${activeChannelTab === tab.id ? 'active' : ''}`}
+                  onClick={() => changeChannelTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-            {!channelLoading && channelVideos.length === 0 && !error && (
-              <p className="yt-empty">No videos found on this channel.</p>
+            {channelLoading && !activePlaylist && (
+              <p className="yt-empty">
+                Loading {CHANNEL_TABS.find((tab) => tab.id === activeChannelTab)?.label.toLowerCase()}...
+              </p>
             )}
 
-            {channelVideos.length > 0 && (
+            {!channelLoading && !activePlaylist && channelItems.length === 0 && !error && (
+              <p className="yt-empty">{getChannelEmptyText()}</p>
+            )}
+
+            {channelItems.length > 0 && activeChannelTab !== 'playlists' && (
               <div className="yt-video-list">
-                {channelVideos.map((video) => renderVideoRow(video))}
+                {channelItems.map((video) => renderVideoRow(video))}
               </div>
             )}
 
-            {channelPageToken && (
+            {activePlaylist && activeChannelTab === 'playlists' && (
+              <div className="yt-playlist-view">
+                <button type="button" className="yt-playlist-back" onClick={closePlaylist}>
+                  <FaArrowLeft aria-hidden="true" />
+                  <span>Playlists</span>
+                </button>
+
+                <div className="yt-playlist-view-head">
+                  <div className="yt-playlist-view-thumb">
+                    <img src={activePlaylist.thumbnail} alt="" />
+                  </div>
+                  <div className="yt-playlist-view-meta">
+                    <h4>{activePlaylist.title}</h4>
+                    <p>
+                      {activePlaylist.itemCount ?? playlistVideos.length} videos
+                      {activePlaylist.channel ? ` - ${activePlaylist.channel}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {playlistLoading && <p className="yt-empty">Loading playlist videos...</p>}
+
+                {!playlistLoading && playlistVideos.length === 0 && !error && (
+                  <p className="yt-empty">No public videos found in this playlist.</p>
+                )}
+
+                {playlistVideos.length > 0 && (
+                  <div className="yt-video-list">
+                    {playlistVideos.map((video) => renderVideoRow(video))}
+                  </div>
+                )}
+
+                {playlistPageToken && (
+                  <button
+                    type="button"
+                    className="yt-load-more"
+                    onClick={() => loadPlaylistVideos(activePlaylist, playlistPageToken)}
+                    disabled={playlistLoadingMore}
+                  >
+                    {playlistLoadingMore ? 'Loading...' : 'Show more'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!activePlaylist && channelItems.length > 0 && activeChannelTab === 'playlists' && (
+              <div className="yt-playlist-grid">
+                {channelItems.map((playlist) => renderPlaylistCard(playlist))}
+              </div>
+            )}
+
+            {!activePlaylist && channelPageToken && (
               <button
                 type="button"
                 className="yt-load-more"
-                onClick={() => openChannel(activeChannel, channelPageToken)}
+                onClick={() => loadChannelContent(activeChannel.channelId, activeChannelTab, channelPageToken)}
                 disabled={channelLoadingMore}
               >
                 {channelLoadingMore ? 'Loading...' : 'Show more'}
