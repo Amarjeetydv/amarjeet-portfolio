@@ -9,6 +9,7 @@ const YouTubePlayer = ({ videoId, startSeconds = 0, onProgress }) => {
   const progressTimerRef = useRef(null);
   const onProgressRef = useRef(onProgress);
   const currentVideoRef = useRef(videoId);
+  const startSecondsRef = useRef(startSeconds);
 
   useEffect(() => {
     onProgressRef.current = onProgress;
@@ -17,6 +18,10 @@ const YouTubePlayer = ({ videoId, startSeconds = 0, onProgress }) => {
   useEffect(() => {
     currentVideoRef.current = videoId;
   }, [videoId]);
+
+  useEffect(() => {
+    startSecondsRef.current = startSeconds;
+  }, [startSeconds]);
 
   const clearProgressTimer = useCallback(() => {
     if (progressTimerRef.current) {
@@ -64,7 +69,7 @@ const YouTubePlayer = ({ videoId, startSeconds = 0, onProgress }) => {
 
       playerRef.current = new window.YT.Player(containerRef.current, {
         host: 'https://www.youtube-nocookie.com',
-        videoId,
+          videoId: currentVideoRef.current,
         playerVars: {
           autoplay: 1,
           modestbranding: 1,
@@ -73,13 +78,13 @@ const YouTubePlayer = ({ videoId, startSeconds = 0, onProgress }) => {
           iv_load_policy: 3,
           enablejsapi: 1,
           origin: window.location.origin,
-          start: Math.floor(startSeconds || 0),
+          start: Math.floor(startSecondsRef.current || 0),
         },
         events: {
           onReady: () => {
             if (cancelled) return;
             isReadyRef.current = true;
-            loadVideo(videoId, startSeconds);
+            loadVideo(currentVideoRef.current, startSecondsRef.current);
           },
           onStateChange: (event) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -117,10 +122,11 @@ const YouTubePlayer = ({ videoId, startSeconds = 0, onProgress }) => {
 
     return () => {
       cancelled = true;
-      isReadyRef.current = false;
       window.removeEventListener('pagehide', handlePageHide);
       clearProgressTimer();
       reportProgress();
+      window.onYouTubeIframeAPIReady = previousReady;
+      isReadyRef.current = false;
       playerRef.current?.destroy?.();
       playerRef.current = null;
     };

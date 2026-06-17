@@ -27,9 +27,48 @@ const CHANNEL_TABS = [
   { id: 'playlists', label: 'Playlists' },
   { id: 'posts', label: 'Posts' },
 ];
+const SEARCH_DEBOUNCE_MS = 650;
+const CLIENT_YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 30;
+const CLIENT_YOUTUBE_CACHE_PREFIX = 'safe_youtube_api_cache:';
+
+const getClientCacheKey = (url) => `${CLIENT_YOUTUBE_CACHE_PREFIX}${url}`;
+
+const readClientCache = (url) => {
+  try {
+    const raw = localStorage.getItem(getClientCacheKey(url));
+    if (!raw) return null;
+
+    const cached = JSON.parse(raw);
+    if (!cached?.expiresAt || cached.expiresAt < Date.now()) {
+      localStorage.removeItem(getClientCacheKey(url));
+      return null;
+    }
+
+    return cached.data;
+  } catch {
+    return null;
+  }
+};
+
+const writeClientCache = (url, data, ttlMs = CLIENT_YOUTUBE_CACHE_TTL_MS) => {
+  try {
+    localStorage.setItem(
+      getClientCacheKey(url),
+      JSON.stringify({
+        data,
+        expiresAt: Date.now() + ttlMs,
+      })
+    );
+  } catch {
+    // Ignore storage failures; server-side cache still protects API quota.
+  }
+};
 
 const SafeYouTube = () => {
   const playerWrapRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+  const apiMemoryCacheRef = useRef(new Map());
+  const apiInFlightRef = useRef(new Map());
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [activeVideo, setActiveVideo] = useState(null);
@@ -63,6 +102,53 @@ const SafeYouTube = () => {
       setActiveVideo(last);
       setStartSeconds(last.progressSeconds || 0);
     }
+  }, []);
+
+  useEffect(() => () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+  }, []);
+
+  const fetchYouTubeJson = useCallback(async (url) => {
+    const memoryCached = apiMemoryCacheRef.current.get(url);
+    if (memoryCached?.expiresAt > Date.now()) {
+      return { ok: true, status: 200, data: memoryCached.data, cached: true };
+    }
+
+    const localCached = readClientCache(url);
+    if (localCached) {
+      apiMemoryCacheRef.current.set(url, {
+        data: localCached,
+        expiresAt: Date.now() + CLIENT_YOUTUBE_CACHE_TTL_MS,
+      });
+      return { ok: true, status: 200, data: localCached, cached: true };
+    }
+
+    if (apiInFlightRef.current.has(url)) {
+      return apiInFlightRef.current.get(url);
+    }
+
+    const request = fetch(url)
+      .then(async (res) => {
+        const data = await res.json();
+
+        if (res.ok) {
+          apiMemoryCacheRef.current.set(url, {
+            data,
+            expiresAt: Date.now() + CLIENT_YOUTUBE_CACHE_TTL_MS,
+          });
+          writeClientCache(url, data);
+        }
+
+        return { ok: res.ok, status: res.status, data, cached: false };
+      })
+      .finally(() => {
+        apiInFlightRef.current.delete(url);
+      });
+
+    apiInFlightRef.current.set(url, request);
+    return request;
   }, []);
 
   const playVideo = useCallback((video, resumeAt = 0) => {
@@ -128,10 +214,11 @@ const SafeYouTube = () => {
       if (tab !== 'playlists') params.set('section', tab);
 
       const endpoint = tab === 'playlists' ? 'playlists' : 'videos';
-      const res = await fetch(`${getApiBaseUrl()}/api/youtube/channel/${channelId}/${endpoint}?${params}`);
-      const data = await res.json();
+      const { ok, data } = await fetchYouTubeJson(
+        `${getApiBaseUrl()}/api/youtube/channel/${channelId}/${endpoint}?${params}`
+      );
 
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data.message || 'Could not load channel content.');
       }
 
@@ -190,10 +277,11 @@ const SafeYouTube = () => {
       const params = new URLSearchParams();
       if (token) params.set('pageToken', token);
 
-      const res = await fetch(`${getApiBaseUrl()}/api/youtube/playlist/${playlist.id}/videos?${params}`);
-      const data = await res.json();
+      const { ok, data } = await fetchYouTubeJson(
+        `${getApiBaseUrl()}/api/youtube/playlist/${playlist.id}/videos?${params}`
+      );
 
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data.message || 'Could not load playlist videos.');
       }
 
@@ -224,10 +312,9 @@ const SafeYouTube = () => {
 
     try {
       const params = new URLSearchParams({ q: trimmed });
-      const res = await fetch(`${getApiBaseUrl()}/api/youtube/channel/resolve?${params}`);
-      const data = await res.json();
+      const { ok, data } = await fetchYouTubeJson(`${getApiBaseUrl()}/api/youtube/channel/resolve?${params}`);
 
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data.message || 'Channel not found.');
       }
 
@@ -267,10 +354,9 @@ const SafeYouTube = () => {
       setLoading(true);
 
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/youtube/video/${directId}`);
-        const data = await res.json();
+        const { ok, status, data } = await fetchYouTubeJson(`${getApiBaseUrl()}/api/youtube/video/${directId}`);
 
-        if (res.ok) {
+        if (ok) {
           playVideo(data, 0);
         } else {
           playVideo({
@@ -279,7 +365,7 @@ const SafeYouTube = () => {
             channel: '',
             thumbnail: `https://i.ytimg.com/vi/${directId}/hqdefault.jpg`,
           }, 0);
-          if (res.status !== 404) {
+          if (status !== 404) {
             setError(data.message || 'Could not load video details.');
           }
         }
@@ -312,10 +398,9 @@ const SafeYouTube = () => {
       const params = new URLSearchParams({ q: trimmed });
       if (token) params.set('pageToken', token);
 
-      const res = await fetch(`${getApiBaseUrl()}/api/youtube/search?${params}`);
-      const data = await res.json();
+      const { ok, data } = await fetchYouTubeJson(`${getApiBaseUrl()}/api/youtube/search?${params}`);
 
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data.message || 'Search failed. Please try again.');
       }
 
@@ -337,7 +422,21 @@ const SafeYouTube = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    runSearch(query);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      runSearch(query);
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  const handleSearchChipClick = (term) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      runSearch(term);
+    }, SEARCH_DEBOUNCE_MS);
   };
 
   const handleClearWatchHistory = () => {
@@ -630,7 +729,7 @@ const SafeYouTube = () => {
             </div>
             <div className="yt-chip-row">
               {searchHistory.map((term) => (
-                <button key={term} type="button" className="yt-chip" onClick={() => runSearch(term)}>
+                <button key={term} type="button" className="yt-chip" onClick={() => handleSearchChipClick(term)}>
                   {term}
                 </button>
               ))}

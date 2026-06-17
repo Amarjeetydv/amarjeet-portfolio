@@ -562,6 +562,106 @@ app.post('/api/telegram/webhook', async (req, res) => {
 });
 
 const CHANNEL_ID_RE = /^UC[\w-]{22}$/;
+const YOUTUBE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
+const YOUTUBE_STATIC_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const YOUTUBE_CACHE_MAX_ENTRIES = 500;
+const YOUTUBE_ENDPOINT_QUOTA_UNITS = {
+  search: 100,
+  videos: 1,
+  channels: 1,
+  playlists: 1,
+  playlistItems: 1,
+};
+
+const youtubeResponseCache = new Map();
+const youtubeInFlightRequests = new Map();
+const youtubeRequestStats = {
+  total: 0,
+  byEndpoint: new Map(),
+  recent: [],
+};
+
+const getYouTubeCacheKey = (endpoint, params) => {
+  const normalized = new URLSearchParams(params);
+  normalized.delete('key');
+  normalized.sort();
+  return `${endpoint}?${normalized.toString()}`;
+};
+
+const pruneYouTubeCache = () => {
+  while (youtubeResponseCache.size > YOUTUBE_CACHE_MAX_ENTRIES) {
+    const oldestKey = youtubeResponseCache.keys().next().value;
+    youtubeResponseCache.delete(oldestKey);
+  }
+};
+
+const recordYouTubeRequest = (endpoint, cacheStatus) => {
+  const now = Date.now();
+  youtubeRequestStats.recent = youtubeRequestStats.recent.filter((entry) => now - entry.timestamp < 60_000);
+
+  if (cacheStatus === 'miss') {
+    youtubeRequestStats.total += 1;
+    youtubeRequestStats.byEndpoint.set(endpoint, (youtubeRequestStats.byEndpoint.get(endpoint) || 0) + 1);
+    youtubeRequestStats.recent.push({ endpoint, timestamp: now });
+  }
+
+  const endpointCount = youtubeRequestStats.byEndpoint.get(endpoint) || 0;
+  const recentCount = youtubeRequestStats.recent.filter((entry) => entry.endpoint === endpoint).length;
+  const quotaUnits = YOUTUBE_ENDPOINT_QUOTA_UNITS[endpoint] || 1;
+
+  console.info(
+    `[youtube-api] endpoint=${endpoint}.list cache=${cacheStatus} totalExternal=${youtubeRequestStats.total} endpointExternal=${endpointCount} recentExternalPerMinute=${recentCount} estimatedQuotaUnits=${quotaUnits}`
+  );
+};
+
+const fetchYouTubeApi = async (endpoint, params, { cacheTtlMs = YOUTUBE_CACHE_TTL_MS } = {}) => {
+  if (!youtubeApiKey) {
+    throw new Error('YouTube API key is not configured.');
+  }
+
+  const requestParams = new URLSearchParams(params);
+  requestParams.set('key', youtubeApiKey);
+
+  const cacheKey = getYouTubeCacheKey(endpoint, requestParams);
+  const cached = youtubeResponseCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && cached.expiresAt > now) {
+    recordYouTubeRequest(endpoint, 'hit');
+    return cached.data;
+  }
+
+  if (youtubeInFlightRequests.has(cacheKey)) {
+    recordYouTubeRequest(endpoint, 'shared');
+    return youtubeInFlightRequests.get(cacheKey);
+  }
+
+  recordYouTubeRequest(endpoint, 'miss');
+
+  const request = fetch(`https://www.googleapis.com/youtube/v3/${endpoint}?${requestParams}`)
+    .then(async (response) => {
+      const data = await response.json();
+
+      if (!response.ok) {
+        const error = new Error(data?.error?.message || 'YouTube API request failed.');
+        error.status = response.status;
+        throw error;
+      }
+
+      youtubeResponseCache.set(cacheKey, {
+        data,
+        expiresAt: Date.now() + cacheTtlMs,
+      });
+      pruneYouTubeCache();
+      return data;
+    })
+    .finally(() => {
+      youtubeInFlightRequests.delete(cacheKey);
+    });
+
+  youtubeInFlightRequests.set(cacheKey, request);
+  return request;
+};
 
 const parseIsoDurationSeconds = (duration = '') => {
   const match = duration.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
@@ -618,18 +718,10 @@ const fetchYouTubeVideoDetailsMap = async (videoIds) => {
   const ids = [...new Set(videoIds)].filter(Boolean);
   if (ids.length === 0) return new Map();
 
-  const params = new URLSearchParams({
+  const data = await fetchYouTubeApi('videos', {
     part: 'contentDetails,snippet',
     id: ids.join(','),
-    key: youtubeApiKey,
-  });
-
-  const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || 'YouTube API request failed.');
-  }
+  }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
 
   return new Map(
     (data.items || []).map((item) => [
@@ -679,51 +771,74 @@ const fetchYouTubeChannel = async (parsed) => {
   if (!parsed) return null;
 
   if (parsed.type === 'id') {
-    const params = new URLSearchParams({
+    const data = await fetchYouTubeApi('channels', {
       part: 'snippet',
       id: parsed.value,
-      key: youtubeApiKey,
-    });
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error?.message || 'YouTube API request failed.');
-    }
+    }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
     const item = data.items?.[0];
     return item ? mapYouTubeChannel(item) : null;
   }
 
   if (parsed.type === 'handle') {
-    const params = new URLSearchParams({
+    const data = await fetchYouTubeApi('channels', {
       part: 'snippet',
       forHandle: parsed.value,
-      key: youtubeApiKey,
-    });
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error?.message || 'YouTube API request failed.');
-    }
+    }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
     const item = data.items?.[0];
     return item ? mapYouTubeChannel(item) : null;
   }
 
   if (parsed.type === 'username') {
-    const params = new URLSearchParams({
+    const data = await fetchYouTubeApi('channels', {
       part: 'snippet',
       forUsername: parsed.value,
-      key: youtubeApiKey,
-    });
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${params}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error?.message || 'YouTube API request failed.');
-    }
+    }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
     const item = data.items?.[0];
     return item ? mapYouTubeChannel(item) : null;
   }
 
   return null;
+};
+
+const fetchYouTubeUploadsPlaylistId = async (channelId) => {
+  const data = await fetchYouTubeApi('channels', {
+    part: 'contentDetails',
+    id: channelId,
+  }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
+
+  return data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads || null;
+};
+
+const fetchYouTubeUploadsPlaylistItems = async (channelId, pageToken = null) => {
+  const uploadsPlaylistId = await fetchYouTubeUploadsPlaylistId(channelId);
+  if (!uploadsPlaylistId) {
+    return { items: [], nextPageToken: null };
+  }
+
+  const params = {
+    part: 'snippet',
+    playlistId: uploadsPlaylistId,
+    maxResults: '25',
+  };
+
+  if (pageToken) {
+    params.pageToken = pageToken;
+  }
+
+  const data = await fetchYouTubeApi('playlistItems', params);
+  const playlistItems = (data.items || []).filter(
+    (item) => item.snippet?.resourceId?.videoId && item.snippet.title !== 'Private video'
+  );
+  const detailsMap = await fetchYouTubeVideoDetailsMap(
+    playlistItems.map((item) => item.snippet.resourceId.videoId)
+  );
+
+  return {
+    items: playlistItems.map((item) =>
+      mapYouTubePlaylistItem(item, detailsMap.get(item.snippet.resourceId.videoId))
+    ),
+    nextPageToken: data.nextPageToken || null,
+  };
 };
 
 app.get('/api/youtube/video/:videoId', async (req, res) => {
@@ -740,19 +855,10 @@ app.get('/api/youtube/video/:videoId', async (req, res) => {
   }
 
   try {
-    const params = new URLSearchParams({
+    const data = await fetchYouTubeApi('videos', {
       part: 'snippet',
       id: videoId,
-      key: youtubeApiKey,
-    });
-
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      const reason = data?.error?.message || 'YouTube API request failed.';
-      return res.status(response.status).json({ message: reason });
-    }
+    }, { cacheTtlMs: YOUTUBE_STATIC_CACHE_TTL_MS });
 
     const item = data.items?.[0];
     if (!item) {
@@ -769,6 +875,9 @@ app.get('/api/youtube/video/:videoId', async (req, res) => {
       description: item.snippet.description,
     });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube video lookup error:', error);
     res.status(500).json({ message: 'Failed to load video details.' });
   }
@@ -789,25 +898,18 @@ app.get('/api/youtube/search', async (req, res) => {
   }
 
   try {
-    const params = new URLSearchParams({
+    const params = {
       part: 'snippet',
       type: 'video',
       q,
-      maxResults: '20',
-      key: youtubeApiKey,
-    });
+      maxResults: '10',
+    };
 
     if (pageToken) {
-      params.set('pageToken', pageToken);
+      params.pageToken = pageToken;
     }
 
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      const reason = data?.error?.message || 'YouTube API request failed.';
-      return res.status(response.status).json({ message: reason });
-    }
+    const data = await fetchYouTubeApi('search', params);
 
     const items = (data.items || [])
       .filter((item) => item.id?.videoId)
@@ -818,6 +920,9 @@ app.get('/api/youtube/search', async (req, res) => {
       nextPageToken: data.nextPageToken || null,
     });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube search error:', error);
     res.status(500).json({ message: 'Failed to search YouTube.' });
   }
@@ -841,20 +946,12 @@ app.get('/api/youtube/channel/resolve', async (req, res) => {
     let channel = await fetchYouTubeChannel(parsed);
 
     if (!channel) {
-      const params = new URLSearchParams({
+      const data = await fetchYouTubeApi('search', {
         part: 'snippet',
         type: 'channel',
         q,
         maxResults: '1',
-        key: youtubeApiKey,
       });
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        const reason = data?.error?.message || 'YouTube API request failed.';
-        return res.status(response.status).json({ message: reason });
-      }
 
       const item = data.items?.[0];
       if (item?.id?.channelId) {
@@ -873,6 +970,9 @@ app.get('/api/youtube/channel/resolve', async (req, res) => {
 
     res.json(channel);
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube channel resolve error:', error);
     res.status(500).json({ message: error.message || 'Failed to resolve channel.' });
   }
@@ -898,48 +998,50 @@ app.get('/api/youtube/channel/:channelId/videos', async (req, res) => {
   }
 
   try {
-    const params = new URLSearchParams({
+    if (section !== 'live') {
+      const { items: uploadItems, nextPageToken } = await fetchYouTubeUploadsPlaylistItems(channelId, pageToken);
+      let items = uploadItems;
+
+      if (section === 'videos') {
+        items = items.filter((item) => item.durationSeconds === null || item.durationSeconds > 60);
+      }
+
+      if (section === 'shorts') {
+        items = items.filter((item) => item.durationSeconds !== null && item.durationSeconds <= 60);
+      }
+
+      return res.json({
+        items,
+        nextPageToken,
+      });
+    }
+
+    const params = {
       part: 'snippet',
       channelId,
       type: 'video',
       order: 'date',
-      maxResults: section === 'shorts' ? '50' : '20',
-      key: youtubeApiKey,
-    });
-
-    if (section === 'live') {
-      params.set('eventType', 'live');
-    }
+      eventType: 'live',
+      maxResults: '10',
+    };
 
     if (pageToken) {
-      params.set('pageToken', pageToken);
+      params.pageToken = pageToken;
     }
 
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      const reason = data?.error?.message || 'YouTube API request failed.';
-      return res.status(response.status).json({ message: reason });
-    }
-
+    const data = await fetchYouTubeApi('search', params);
     const searchItems = (data.items || []).filter((item) => item.id?.videoId);
     const detailsMap = await fetchYouTubeVideoDetailsMap(searchItems.map((item) => item.id.videoId));
-    let items = searchItems.map((item) => mapYouTubeSearchItem(item, detailsMap.get(item.id.videoId)));
-
-    if (section === 'videos') {
-      items = items.filter((item) => item.durationSeconds === null || item.durationSeconds > 60);
-    }
-
-    if (section === 'shorts') {
-      items = items.filter((item) => item.durationSeconds !== null && item.durationSeconds <= 60);
-    }
+    const items = searchItems.map((item) => mapYouTubeSearchItem(item, detailsMap.get(item.id.videoId)));
 
     res.json({
       items,
       nextPageToken: data.nextPageToken || null,
     });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube channel videos error:', error);
     res.status(500).json({ message: 'Failed to load channel videos.' });
   }
@@ -960,30 +1062,26 @@ app.get('/api/youtube/channel/:channelId/playlists', async (req, res) => {
   }
 
   try {
-    const params = new URLSearchParams({
+    const params = {
       part: 'snippet,contentDetails',
       channelId,
       maxResults: '20',
-      key: youtubeApiKey,
-    });
+    };
 
     if (pageToken) {
-      params.set('pageToken', pageToken);
+      params.pageToken = pageToken;
     }
 
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      const reason = data?.error?.message || 'YouTube API request failed.';
-      return res.status(response.status).json({ message: reason });
-    }
+    const data = await fetchYouTubeApi('playlists', params);
 
     res.json({
       items: (data.items || []).map(mapYouTubePlaylist),
       nextPageToken: data.nextPageToken || null,
     });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube channel playlists error:', error);
     res.status(500).json({ message: 'Failed to load channel playlists.' });
   }
@@ -1004,24 +1102,17 @@ app.get('/api/youtube/playlist/:playlistId/videos', async (req, res) => {
   }
 
   try {
-    const params = new URLSearchParams({
+    const params = {
       part: 'snippet',
       playlistId,
       maxResults: '50',
-      key: youtubeApiKey,
-    });
+    };
 
     if (pageToken) {
-      params.set('pageToken', pageToken);
+      params.pageToken = pageToken;
     }
 
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      const reason = data?.error?.message || 'YouTube API request failed.';
-      return res.status(response.status).json({ message: reason });
-    }
+    const data = await fetchYouTubeApi('playlistItems', params);
 
     const playlistItems = (data.items || []).filter(
       (item) => item.snippet?.resourceId?.videoId && item.snippet.title !== 'Private video'
@@ -1037,6 +1128,9 @@ app.get('/api/youtube/playlist/:playlistId/videos', async (req, res) => {
       nextPageToken: data.nextPageToken || null,
     });
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error('YouTube playlist videos error:', error);
     res.status(500).json({ message: 'Failed to load playlist videos.' });
   }
