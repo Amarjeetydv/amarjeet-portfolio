@@ -1,176 +1,204 @@
-# 👨‍💻 Personal Portfolio Website
-A modern and responsive personal portfolio website built with React.js to showcase my skills, projects, and professional experience to recruiters and hiring managers.
+<div align="center">
 
-**Live Demo:** 
-https://amarjeet-portfolio-blue.vercel.app/
----
+![Header](https://capsule-render.vercel.app/api?type=waving&height=220&color=0:0F172A,50:1D4ED8,100:0EA5E9&text=Amarjeet%20Yadav&fontColor=FFFFFF&fontSize=48&fontAlignY=38&desc=Aspiring%20Software%20Engineer%20%7C%20Full%20Stack%20Developer%20%7C%20DSA%20Enthusiast&descAlignY=58&descSize=16)
 
-## 🚀 About The Project
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Inter&weight=600&size=24&duration=2800&pause=900&color=38BDF8&center=true&vCenter=true&width=850&lines=MCA+Student+at+Lovely+Professional+University;Backend+Development+%7C+Full+Stack+Applications;Advanced+DSA+%7C+System+Design+%7C+Problem+Solving;Preparing+for+Software+Engineer+Roles)](https://git.io/typing-svg)
 
-This project is a comprehensive digital resume and portfolio. It's designed to be a central hub for my professional identity, providing an interactive and visually appealing platform for potential employers to learn about my capabilities. The primary goal is to create a strong first impression and effectively communicate my technical skills and project work.
+[![Profile Views](https://komarev.com/ghpvc/?username=Amarjeetydv&label=Profile%20Views&color=0ea5e9&style=for-the-badge)](https://github.com/Amarjeetydv)
+[![GitHub Followers](https://img.shields.io/github/followers/Amarjeetydv?label=Followers&style=for-the-badge&logo=github&color=1d4ed8)](https://github.com/Amarjeetydv?tab=followers)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeetydv/)
+[![Email](https://img.shields.io/badge/Email-Contact%20Me-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:amarjeetyadav043590@gmail.com)
 
-The website is built from the ground up using modern web technologies, emphasizing clean code, responsive design, and a user-friendly interface.
+</div>
 
----
+## 👋 Professional Introduction
 
-## ✨ Features
+I am **Amarjeet Yadav**, an MCA student at **Lovely Professional University** and an aspiring **Software Engineer** focused on full stack development, backend engineering, and Data Structures and Algorithms. I enjoy building scalable web applications, designing REST APIs, and solving algorithmic problems with clean, maintainable code.
 
--   **Home Page:** A professionally designed landing page with centered typography, animated role text (Full Stack Developer / React Developer / MERN Developer), and a polished glass-morphism hero card. The page is fully scrollable with accessible footer.
--   **Responsive Portrait:** A circular profile photo with proper framing, positioned in the hero section with smooth floating animations.
--   **Centered Hero Layout:** Desktop view features a balanced two-column layout with centered name and role, while mobile adapts to single-column for optimal readability.
--   **About Me Section:** A detailed section about my background, passion for technology, and career aspirations.
--   **Skills Showcase:** A visually organized display of my technical skills.
--   **Project Gallery:** A collection of my best projects with descriptions, tech stacks, and links to live demos and source code.
--   **Downloadable Resume:** Easy access for recruiters to download my resume in PDF format.
--   **Contact Form:** A functional contact form for easy communication (can be integrated with a backend service like EmailJS or a custom Node.js API).
--   **Fully Responsive:** Adapts seamlessly to all devices, from mobile phones to desktops, with proper spacing and visibility.
--   **Modern UI/UX:** Clean, modern design with smooth animations, transitions, and glass-morphism effects.
+> **Current CGPA:** 8.80/10  
+> **Education:** Master of Computer Applications, Lovely Professional University, 2025-2027
 
----
+## 🚀 About Me
 
-## 🎨 Recent Updates
+- I enjoy solving **Data Structures and Algorithms** problems.
+- I love **Backend Development** and API-driven application design.
+- I build **scalable full stack applications** using modern web technologies.
+- I am currently learning **advanced DSA**, **System Design**, and improving my full stack development skills.
+- I am actively preparing for **Software Engineer** roles.
 
-**Home Page Redesign (Latest)**
-- ✅ Fixed and restored portrait image with proper circular framing
-- ✅ Centered hero layout on desktop with balanced two-column design
-- ✅ Implemented animated role text (typewriter effect) with roles rotating: "Full Stack Developer" → "React Developer" → "MERN Developer"
-- ✅ Added glass-morphism effect to hero card with subtle gradient background
-- ✅ Enabled smooth scrolling on home page for full footer accessibility
-- ✅ Improved spacing and visual hierarchy for professional appearance
-- ✅ Mobile-responsive adjustments with single-column layout on smaller screens
+## 🎯 Current Focus
 
----
+```text
+Advanced DSA        █████████░░   Improving consistency and depth
+System Design       ███████░░░░   Learning scalable architecture patterns
+Full Stack Skills   █████████░░   Building production-style applications
+Backend APIs        █████████░░   REST APIs, authentication, and databases
+```
 
 ## 🛠️ Tech Stack
 
-The project is built using a modern frontend stack and follows best practices for web development.
+### Programming Languages
+
+![C++](https://img.shields.io/badge/C++-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)
+![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=111827)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
 
 ### Frontend
-!React
-!Bootstrap
-!HTML5
-!CSS3
-!JavaScript
 
-### Backend (Optional)
-!NodeJS
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![React.js](https://img.shields.io/badge/React.js-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Angular 17](https://img.shields.io/badge/Angular%2017-DD0031?style=for-the-badge&logo=angular&logoColor=white)
 
-### Tools & Principles
-!Git
-!GitHub
-!Responsive Design
+### Backend, Database & Tools
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-111827?style=for-the-badge&logo=express&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
+
+## 🧩 Core Skills
+
+| Area | Skills |
+| --- | --- |
+| Programming | Data Structures and Algorithms, Object Oriented Programming, Problem Solving |
+| Backend | REST APIs, Authentication, JWT, Database Design |
+| Frontend | Responsive Web Design, Component-Based Development, Bootstrap UI |
+| Engineering | Git, GitHub, API Testing, Debugging, Clean Code Practices |
+
+## 📌 Featured Projects
+
+<table>
+  <tr>
+    <td width="50%">
+      <h3>Emergency Response Coordination Platform</h3>
+      <p>Real-time emergency coordination platform supporting incident reporting, responder assignment, and live communication.</p>
+      <p>
+        <img src="https://img.shields.io/badge/Angular-DD0031?style=flat-square&logo=angular&logoColor=white" alt="Angular" />
+        <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+        <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
+        <img src="https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="Socket.io" />
+        <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+      </p>
+      <p>
+        <a href="https://github.com/Amarjeetydv/emergency-response-system">Repository</a> |
+        <a href="https://emergency-response-system-frontend.vercel.app/login">Live Demo</a>
+      </p>
+    </td>
+    <td width="50%">
+      <h3>Vehicle Fuel Protection Application</h3>
+      <p>Fuel theft detection system with automatic vehicle locking, REST APIs, dashboard, MySQL triggers, and stored procedures.</p>
+      <p>
+        <img src="https://img.shields.io/badge/React.js-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React.js" />
+        <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+        <img src="https://img.shields.io/badge/Express.js-111827?style=flat-square&logo=express&logoColor=white" alt="Express.js" />
+        <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
+        <img src="https://img.shields.io/badge/Bootstrap-7952B3?style=flat-square&logo=bootstrap&logoColor=white" alt="Bootstrap" />
+      </p>
+      <p>
+        <a href="https://github.com/Amarjeetydv/vehicle-fuel-protection-system">Repository</a>
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>Cafe Management System</h3>
+      <p>Role-based full stack cafe management system with authentication, billing, inventory, and order management.</p>
+      <p>
+        <img src="https://img.shields.io/badge/Angular%2017-DD0031?style=flat-square&logo=angular&logoColor=white" alt="Angular 17" />
+        <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+        <img src="https://img.shields.io/badge/Express.js-111827?style=flat-square&logo=express&logoColor=white" alt="Express.js" />
+        <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
+        <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+      </p>
+      <p>
+        <a href="https://github.com/Amarjeetydv/Cafe-Management-System">Repository</a>
+      </p>
+    </td>
+    <td width="50%">
+      <h3>What I Focus On</h3>
+      <p>Building projects that combine practical backend logic, clean UI, authentication, database workflows, and real-world problem solving.</p>
+      <p>
+        <img src="https://img.shields.io/badge/REST%20APIs-0F172A?style=flat-square" alt="REST APIs" />
+        <img src="https://img.shields.io/badge/Auth-1D4ED8?style=flat-square" alt="Authentication" />
+        <img src="https://img.shields.io/badge/Database-0EA5E9?style=flat-square" alt="Database" />
+        <img src="https://img.shields.io/badge/Responsive%20UI-16A34A?style=flat-square" alt="Responsive UI" />
+      </p>
+    </td>
+  </tr>
+</table>
+
+## 📊 GitHub Statistics
+
+<div align="center">
+
+<img height="170" src="https://github-readme-stats.vercel.app/api?username=Amarjeetydv&show_icons=true&theme=github_dark&hide_border=true&rank_icon=github&include_all_commits=true&count_private=true" alt="Amarjeet Yadav GitHub Stats" />
+<img height="170" src="https://github-readme-streak-stats.herokuapp.com?user=Amarjeetydv&theme=github-dark-blue&hide_border=true" alt="Amarjeet Yadav GitHub Streak" />
+
+<img height="190" src="https://github-readme-stats.vercel.app/api/top-langs/?username=Amarjeetydv&layout=compact&theme=github_dark&hide_border=true&langs_count=8" alt="Top Languages" />
+
+</div>
+
+## 🟩 Contribution Activity
+
+<div align="center">
+
+![Contribution Snake](https://raw.githubusercontent.com/Amarjeetydv/Amarjeetydv/output/github-contribution-grid-snake-dark.svg)
+
+</div>
+
+## 💻 LeetCode
+
+<div align="left">
+
+[![LeetCode](https://img.shields.io/badge/LeetCode-Add%20Profile%20Link%20Here-FFA116?style=for-the-badge&logo=leetcode&logoColor=black)](https://leetcode.com/)
+
+</div>
+
+## 📜 Certifications
+
+- **Sigma 9.0**
+- **Java Programming**
+- **Full Stack Developer Diploma**
+- **Communication Skills**
+
+<details>
+<summary><strong>More About My Engineering Interests</strong></summary>
+
+I am especially interested in backend systems, authentication flows, database-backed applications, and solving real-world problems through practical full stack projects. I am also building stronger foundations in DSA and System Design to prepare for software engineering interviews and production engineering work.
+
+</details>
+
+## 🤝 Connect With Me
+
+<div align="left">
+
+[![GitHub](https://img.shields.io/badge/GitHub-Amarjeetydv-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Amarjeetydv)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeetydv/)
+[![Email](https://img.shields.io/badge/Email-amarjeetyadav043590%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:amarjeetyadav043590@gmail.com)
+
+</div>
+
+## 💡 Fun Fact
+
+I enjoy turning problem statements into working applications, from designing the database to building APIs and connecting everything through a responsive frontend.
+
+## ✨ Quote
+
+> "Great software is built by combining strong fundamentals, clear thinking, and consistent practice."
+
+<div align="center">
 
 ---
 
-## 📂 Folder Structure
+### Thanks for visiting my profile.
 
-The project follows a standard React application structure to maintain organized, scalable, and maintainable code.
+![Footer](https://capsule-render.vercel.app/api?type=waving&height=120&section=footer&color=0:0EA5E9,50:1D4ED8,100:0F172A)
 
-```
-/
-├── public/
-│   ├── index.html
-│   └── ...
-├── src/
-│   ├── assets/
-│   │   ├── images/
-│   │   └── styles/
-│   ├── components/
-│   │   ├── Header.jsx
-│   │   ├── Footer.jsx
-│   │   └── ...
-│   ├── sections/ (or pages/)
-│   │   ├── Home.jsx
-│   │   ├── About.jsx
-│   │   ├── Projects.jsx
-│   │   └── Contact.jsx
-│   ├── App.jsx
-│   ├── index.css
-│   └── main.jsx
-├── .gitignore
-├── package.json
-└── README.md
-```
-
----
-
-## ⚙️ Installation & Setup
-
-To get a local copy up and running, follow these simple steps.
-
-1.  **Clone the repository**
-    ```sh
-    git clone https://github.com/your-github-username/your-repo-name.git
-    ```
-2.  **Navigate to the project directory**
-    ```sh
-    cd your-repo-name
-    ```
-3.  **Install NPM packages**
-    ```sh
-    npm install
-    ```
-
----
-
-## ▶️ Usage
-
-After installation, you can run the development server:
-
-```sh
-npm run dev
-```
-
-This will start the application in development mode. Open http://localhost:5173 (or the port shown in your terminal) to view it in your browser. The page will reload when you make changes.
-
----
-
-## 📸 Screenshots
-
-Here are some screenshots of the project.
-
-*   **Home Page**
-    ![alt text](<Screenshot 2026-02-24 162440.png>)
-*   **Projects Section**
-    ![alt text](<Screenshot 2026-02-24 162501.png>)
-
----
-
-## 🚢 Deployment
-
-This application is ready to be deployed. You can host it on various platforms. Here are instructions for Vercel, a popular choice for React applications.
-
-1.  **Push your code to a GitHub repository.**
-2.  **Sign up or Log in to Vercel.**
-3.  **Create a "New Project" and import your repository from GitHub.**
-4.  **Configure the project settings:**
-    -   **Framework Preset:** `Vite`
-    -   **Build Command:** `npm run build`
-    -   **Output Directory:** `dist`
-5.  **Click "Deploy".** Vercel will automatically build and deploy your site.
-
----
-
-## 🔮 Future Enhancements
-
-I have a few ideas for future enhancements:
-
--   [ ] **Blog Section:** Add a personal blog to share articles and tutorials.
--   [ ] **Advanced Animations:** Integrate a library like `Framer Motion` for more dynamic UI/UX.
----
-
-## ✍️ Author
-
-**Amarjeet Yadav**
-
----
-
-## 📞 Contact 
-
--   **LinkedIn:** linkedin.com/in/amarjeetydv
--   **Email:** testingamarjeet56@gmail.com
-
-Feel free to reach out. I'm open to connecting and discussing opportunities!
-
----
-
+</div>

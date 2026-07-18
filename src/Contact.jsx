@@ -1,13 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './utils/api';
+import { useChatScroll, messagesAreEqual } from './hooks/useChatScroll';
+import ChatMessageBubble from './components/ChatMessageBubble';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
-
-const isImageAttachment = (url, name) => {
-  const target = (name || url || '').toLowerCase();
-  return /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(target) || /\/image\/upload\//i.test(url || '');
-};
 
 const Contact = () => {
   const { conversationId: routeConversationId } = useParams();
@@ -22,13 +19,26 @@ const Contact = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSending, setIsSending] = useState(false);
 
-  const messagesEndRef = useRef(null);
   const chatFileInputRef = useRef(null);
   const formFileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const {
+    containerRef: messagesContainerRef,
+    messagesEndRef,
+    unreadCount,
+    isNearBottom,
+    scrollToBottom,
+    resetScroll,
+  } = useChatScroll(messages);
+
+  // Auto-resize the chat input textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+  }, [chatInput]);
 
   const fetchMessages = useCallback(async (id) => {
     try {
@@ -37,7 +47,10 @@ const Contact = () => {
 
       const data = await res.json();
       setVisitorName(data.visitorName || '');
-      setMessages(data.messages || []);
+      setMessages((prev) => {
+        const next = data.messages || [];
+        return messagesAreEqual(prev, next) ? prev : next;
+      });
       return true;
     } catch (error) {
       console.error('Failed to fetch messages:', error);
@@ -74,10 +87,6 @@ const Contact = () => {
 
     return () => clearInterval(poll);
   }, [mode, conversationId, fetchMessages]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (status.message && status.type !== 'info') {
@@ -120,39 +129,6 @@ const Contact = () => {
     }
   };
 
-  const renderAttachmentInMessage = (msg) => {
-    if (!msg.attachment_url) return null;
-
-    const showImage = isImageAttachment(msg.attachment_url, msg.attachment_name);
-
-    return (
-      <div className="chat-attachment-block">
-        {showImage && (
-          <a
-            href={msg.attachment_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="chat-attachment-image-link"
-          >
-            <img
-              src={msg.attachment_url}
-              alt={msg.attachment_name || 'Attachment'}
-              className="chat-attachment-image"
-            />
-          </a>
-        )}
-        <a
-          href={msg.attachment_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="chat-attachment-link"
-        >
-          📎 {msg.attachment_name || 'View attachment'}
-        </a>
-      </div>
-    );
-  };
-
   const renderPendingAttachment = () => {
     if (!attachment) return null;
 
@@ -169,6 +145,7 @@ const Contact = () => {
   };
 
   const startChat = (id, name, initialMessage) => {
+    resetScroll();
     setConversationId(id);
     setVisitorName(name);
     setMessages([initialMessage]);
@@ -257,16 +234,13 @@ const Contact = () => {
 
   const handleNewConversation = () => {
     localStorage.removeItem(CHAT_STORAGE_KEY);
+    resetScroll();
     setMode('form');
     setConversationId(null);
     setMessages([]);
     setChatInput('');
     setAttachment(null);
     navigate('/contact', { replace: true });
-  };
-
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -320,35 +294,40 @@ const Contact = () => {
             </button>
           </div>
 
-          <div className="chat-messages">
-            {messages.length === 0 && (
-              <p className="chat-empty">No messages yet. Send a message to start the conversation.</p>
-            )}
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`chat-bubble ${msg.sender === 'visitor' ? 'chat-bubble-visitor' : 'chat-bubble-admin'}`}
+          <div className="chat-body">
+            <div className="chat-messages" ref={messagesContainerRef} role="log" aria-live="polite" aria-relevant="additions">
+              {messages.length === 0 && (
+                <p className="chat-empty">No messages yet. Send a message to start the conversation.</p>
+              )}
+              {messages.map((msg) => (
+                <ChatMessageBubble key={msg.id} msg={msg} />
+              ))}
+              <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
+            </div>
+
+            {!isNearBottom && (
+              <button
+                type="button"
+                className="chat-new-messages-btn"
+                onClick={() => scrollToBottom('smooth')}
+                aria-label={`${unreadCount} new message${unreadCount === 1 ? '' : 's'}. Scroll to latest.`}
               >
-                <div className="chat-bubble-label">
-                  {msg.sender === 'visitor' ? 'You' : 'Amarjeet'}
-                </div>
-                {msg.message_text && msg.message_text !== '(attachment)' && (
-                  <p className="chat-bubble-text">{msg.message_text}</p>
+                <span className="chat-new-messages-icon" aria-hidden="true">↓</span>
+                {unreadCount > 0 && (
+                  <span className="chat-unread-badge">{unreadCount}</span>
                 )}
-                {renderAttachmentInMessage(msg)}
-                <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              </button>
+            )}
           </div>
 
           <form className="chat-input-form" onSubmit={handleChatSubmit}>
             {renderPendingAttachment()}
             <textarea
+              ref={textareaRef}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Type a message..."
-              rows={2}
+              rows={1}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
