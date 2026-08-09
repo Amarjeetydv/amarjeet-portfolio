@@ -350,9 +350,12 @@ const Technical3DBackground = ({ theme }) => {
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
+      let lastWidth = window.innerWidth;
       handleResize = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
+        if (w === lastWidth) return;
+        lastWidth = w;
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
@@ -436,8 +439,12 @@ const Technical3DBackground = ({ theme }) => {
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
+    let lastWidth = window.innerWidth;
     const handleResize = () => {
-      canvas.width = window.innerWidth;
+      const w = window.innerWidth;
+      if (w === lastWidth) return;
+      lastWidth = w;
+      canvas.width = w;
       canvas.height = window.innerHeight;
     };
     handleResize();
@@ -582,8 +589,7 @@ const Technical3DBackground = ({ theme }) => {
         ref={canvasRef}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
+          inset: 0,
           width: '100vw',
           height: '100vh',
           zIndex: -2,
@@ -600,8 +606,7 @@ const Technical3DBackground = ({ theme }) => {
       ref={containerRef}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
+        inset: 0,
         width: '100vw',
         height: '100vh',
         zIndex: -2,
