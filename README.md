@@ -15,7 +15,7 @@
 
 I am **Amarjeet Yadav**, an MCA student at **Lovely Professional University** and an aspiring **Software Engineer** focused on full stack development, backend engineering, and Data Structures and Algorithms. I enjoy building scalable web applications, designing REST APIs, and solving algorithmic problems with clean, maintainable code.
 
-> **Current CGPA:** 8.81/10  
+> **Current CGPA:** 8.89/10  
 > **Education:** Master of Computer Applications, Lovely Professional University, 2025-2027
 
 ## 🚀 About Me

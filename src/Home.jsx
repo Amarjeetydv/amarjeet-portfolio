@@ -77,7 +77,7 @@ const Home = () => {
                   View My Work <FaChevronRight size={10} />
                 </Link>
                 <a
-                  href="https://drive.google.com/file/d/1ujQHDRzmUEedHdFGgbxGUVCUIbdP_BQE/view?usp=sharing"
+                  href="/Amarjeet_Yadav_Resume.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hero-btn-outline"
