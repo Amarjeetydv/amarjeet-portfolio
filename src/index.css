@@ -173,3 +173,23 @@ body {
     animation: none !important;
   }
 }
+
+/* Root overflow-x containment */
+html,
+body,
+#root,
+main,
+.portfolio-container,
+#contact {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+/* Neutralize background blobs & grids to prevent layout stretching */
+.bg-blob,
+.bg-grid {
+  max-width: 100vw !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}

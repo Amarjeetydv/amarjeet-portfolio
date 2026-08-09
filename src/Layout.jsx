@@ -25,7 +25,8 @@ const Layout = ({ sections, theme, toggleTheme }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowBackToTop(window.scrollY > window.innerHeight * 0.5);
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
+      setShowBackToTop(window.scrollY > 300 && !isNearBottom);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();

@@ -246,7 +246,7 @@ const Contact = () => {
   };
 
   return (
-    <section className="my-work-section" id="contact">
+    <section className="my-work-section w-full max-w-full overflow-hidden px-4 box-border" id="contact" style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box', paddingLeft: '1rem', paddingRight: '1rem' }}>
       <h1 className="work-title">Contact</h1>
       <p className="work-desc">
         {mode === 'chat'
@@ -262,25 +262,25 @@ const Contact = () => {
               Have a question, opportunity, or project idea? Feel free to reach out via the form, or connect through the details below.
             </p>
             <div className="contact-details-list">
-              <div className="contact-detail-item">
+              <div className="contact-detail-item" style={{ flexWrap: 'wrap' }}>
                 <span className="contact-detail-icon"><FaEnvelope /></span>
-                <div>
+                <div className="min-w-0 flex-1 overflow-hidden" style={{ flex: '1', minWidth: '0', overflow: 'hidden' }}>
                   <strong>Email</strong>
-                  <a href="mailto:amarjeetyadav043590@gmail.com">amarjeetyadav043590@gmail.com</a>
+                  <a href="mailto:amarjeetyadav043590@gmail.com" style={{ wordBreak: 'break-all', overflowWrap: 'anywhere', whiteSpace: 'normal', display: 'block', maxWidth: '100%' }}>amarjeetyadav043590@gmail.com</a>
                 </div>
               </div>
-              <div className="contact-detail-item">
+              <div className="contact-detail-item" style={{ flexWrap: 'wrap' }}>
                 <span className="contact-detail-icon"><FaPhoneAlt /></span>
-                <div>
+                <div className="min-w-0 flex-1 overflow-hidden" style={{ flex: '1', minWidth: '0', overflow: 'hidden' }}>
                   <strong>Phone</strong>
-                  <a href="tel:+919305917283">+91 93059 17283</a>
+                  <a href="tel:+919305917283" style={{ wordBreak: 'break-all', overflowWrap: 'anywhere', whiteSpace: 'normal', display: 'block', maxWidth: '100%' }}>+91 93059 17283</a>
                 </div>
               </div>
-              <div className="contact-detail-item">
+              <div className="contact-detail-item" style={{ flexWrap: 'wrap' }}>
                 <span className="contact-detail-icon"><FaMapMarkerAlt /></span>
-                <div>
+                <div className="min-w-0 flex-1 overflow-hidden" style={{ flex: '1', minWidth: '0', overflow: 'hidden' }}>
                   <strong>Location</strong>
-                  <span>Mau, Uttar Pradesh, India</span>
+                  <span style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'normal', display: 'block', maxWidth: '100%' }}>Mau, Uttar Pradesh, India</span>
                 </div>
               </div>
             </div>
@@ -296,7 +296,7 @@ const Contact = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="contact-form-column">
             <form className="contact-form" onSubmit={handleSubmit}>
               <label>
@@ -311,10 +311,10 @@ const Contact = () => {
                 Message:
                 <textarea name="message" placeholder="Write your message here..." required />
               </label>
-              <label>
+              <label className="file-upload-wrapper">
                 Attach a file (optional)
-                <input ref={formFileInputRef} type="file" name="attachment" onChange={handleFileChange} />
-                <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>
+                <input ref={formFileInputRef} type="file" name="attachment" onChange={handleFileChange} className="file-upload-input" />
+                <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem', maxWidth: '100%', wordBreak: 'break-word', display: 'block' }}>
                   Allowed types: PDF, JPG, PNG. Max size: 5MB.
                 </small>
                 {renderPendingAttachment()}

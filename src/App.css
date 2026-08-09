@@ -6,7 +6,9 @@
 }
 
 /* Remove old sidebar menu styles */
-.menu { display: none; } 
+.menu {
+  display: none;
+}
 
 .content {
   width: 100%;
@@ -142,7 +144,8 @@ section {
   font-weight: 700;
   color: var(--text-color);
   margin-bottom: 1.5rem;
-  min-height: 2.2rem; /* prevents layout shift/jump when characters delete */
+  min-height: 2.2rem;
+  /* prevents layout shift/jump when characters delete */
   letter-spacing: -0.2px;
 }
 
@@ -163,8 +166,15 @@ section {
 }
 
 @keyframes blinkCursor {
-  from, to { color: transparent }
-  50% { color: var(--primary-color); }
+
+  from,
+  to {
+    color: transparent
+  }
+
+  50% {
+    color: var(--primary-color);
+  }
 }
 
 .hero-title {
@@ -321,9 +331,17 @@ section {
 }
 
 @keyframes floatNode {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* Scroll Down Mouse */
@@ -360,8 +378,15 @@ section {
 }
 
 @keyframes scrollWheel {
-  0% { transform: translateY(0); opacity: 1; }
-  100% { transform: translateY(10px); opacity: 0; }
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
 }
 
 /* --- About Section --- */
@@ -454,14 +479,29 @@ section {
 
 /* Animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 .hero-cursor {
@@ -694,6 +734,11 @@ section {
 }
 
 /* --- Contact Section --- */
+#contact {
+  overflow-x: hidden;
+  padding-bottom: 5rem !important;
+}
+
 .contact-grid-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -754,6 +799,8 @@ section {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .contact-detail-item strong {
@@ -770,6 +817,8 @@ section {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.25s ease;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .contact-detail-item a:hover {
@@ -820,10 +869,14 @@ section {
 /* Right Column Contact Form */
 .contact-form-column {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .contact-form {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -834,19 +887,28 @@ section {
   padding: 2.2rem;
   border-radius: var(--border-radius);
   box-shadow: 0 8px 32px 0 var(--shadow-color);
+  position: relative;
+  z-index: 2;
 }
 
-.contact-form label {
+.contact-form label,
+.file-upload-wrapper {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   font-weight: 600;
   color: var(--text-color);
   font-size: 0.95rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .contact-form input,
 .contact-form textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 14px;
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
@@ -876,6 +938,9 @@ section {
 }
 
 .contact-form input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
@@ -903,6 +968,9 @@ section {
 }
 
 .contact-form button[type="submit"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 14px 28px;
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
@@ -913,6 +981,8 @@ section {
   cursor: pointer;
   box-shadow: 0 4px 15px var(--glow-color);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .contact-form button[type="submit"]:hover {
@@ -1060,6 +1130,7 @@ section {
     opacity: 0;
     transform: translateY(8px) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1204,6 +1275,9 @@ section {
 }
 
 .attachment-pending {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1494,6 +1568,7 @@ section {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1502,9 +1577,17 @@ section {
 
 /* Keyframe for profile photo floating effect */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* Keyframe for profile photo glowing effect */
@@ -1512,6 +1595,7 @@ section {
   from {
     box-shadow: 0 0 10px -5px var(--glow-color);
   }
+
   to {
     box-shadow: 0 0 20px 5px var(--glow-color);
   }
@@ -1530,21 +1614,21 @@ section {
   .about-grid {
     gap: 1.5rem;
   }
-  
+
   .hero-social-sidebar {
     display: none;
   }
-  
+
   .hero-grid-layout {
     grid-template-columns: 1fr;
     text-align: center;
     gap: 2.5rem;
   }
-  
+
   .hero-copy {
     align-items: center;
   }
-  
+
   .hero-tagline {
     margin: 0 auto 2.5rem;
   }
@@ -1552,7 +1636,7 @@ section {
   .hero-social-row {
     justify-content: center;
   }
-  
+
   .hero-cta-group {
     justify-content: center;
   }
@@ -1575,7 +1659,20 @@ section {
   .footer-main-container {
     grid-template-columns: 1fr;
   }
-  
+
+  .contact-info-column {
+    padding: 1rem;
+  }
+
+  .contact-form {
+    padding: 1.5rem 1rem;
+    margin-bottom: 4rem;
+    /* Clearance for floating scroll-to-top button */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   .footer-main-container {
     text-align: center;
     gap: 1.75rem;
@@ -1675,16 +1772,19 @@ section {
 
   .hero-visual {
     margin-top: 1.5rem;
-    order: 2; /* profile visual sits below copy */
+    order: 2;
+    /* profile visual sits below copy */
   }
 
   .profile-visual-container {
-    width: clamp(170px, 45vw, 215px); /* responsive, smaller visual */
+    width: clamp(170px, 45vw, 215px);
+    /* responsive, smaller visual */
     height: clamp(170px, 45vw, 215px);
   }
 
   .tech-node {
-    display: none; /* hide floating nodes to avoid visual overlap */
+    display: none;
+    /* hide floating nodes to avoid visual overlap */
   }
 
   .about-main-text-card {
@@ -1708,10 +1808,159 @@ section {
   }
 
   .contact-form {
-    padding: 1.5rem;
+    padding: 1.25rem 1rem;
+    margin-bottom: 4rem;
+    /* Clearance for floating scroll-to-top button */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
-  
+
+  .contact-info-column {
+    padding: 1rem;
+  }
+
+  .contact-detail-item {
+    flex-wrap: wrap !important;
+  }
+
+  .file-upload-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    /* gap-2 */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .file-upload-input {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    padding: 10px !important;
+    height: auto !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .file-upload-input::-webkit-file-upload-button {
+    margin-bottom: 0.25rem;
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+  }
+
   .contact-info-column h2 {
     font-size: 1.65rem;
   }
+}
+
+@media (max-width: 640px) {
+  .back-to-top-btn {
+    bottom: 1.25rem !important;
+    right: 1rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.2rem !important;
+    z-index: 50 !important;
+  }
+
+  #contact {
+    padding-bottom: 2rem !important;
+  }
+
+  .contact-form,
+  #contact form {
+    margin-bottom: 1rem !important;
+  }
+
+  .site-footer-redesigned,
+  footer {
+    margin-top: 0 !important;
+    padding-top: 1.5rem !important;
+  }
+
+  #contact .contact-form-container,
+  #contact .contact-card,
+  #contact .contact-form-column,
+  #contact .contact-form {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .contact-form button[type="submit"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding-right: 45px !important;
+    /* Touch target safety reservation */
+  }
+}
+
+/* Force box-sizing & constrain contact card widths */
+.contact-form,
+.contact-container,
+.chat-container,
+.contact-grid-container,
+.contact-info,
+.contact-info-column,
+.contact-form-column,
+.contact-form input,
+.contact-form textarea,
+.contact-form button,
+.contact-form input[type="file"],
+.file-upload-wrapper,
+.file-upload-input,
+.attachment-pending {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex-basis: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Neutralize negative horizontal margins under 640px */
+@media (max-width: 640px) {
+
+  #contact,
+  .contact-grid-container,
+  .contact-info-column,
+  .contact-form-column,
+  .contact-form {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* Force email and detail texts to wrap */
+.contact-detail-item,
+.contact-detail-item a,
+.contact-detail-item span,
+.contact-detail-item div {
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Responsive utility classes for contact items */
+.min-w-0 {
+  min-width: 0 !important;
+}
+
+.flex-1 {
+  flex: 1 !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
 }
