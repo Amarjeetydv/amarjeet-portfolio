@@ -302,3 +302,63 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile Timeline Axis & Layout Cleanup under 640px */
+@media (max-width: 640px) {
+  #education {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .education-timeline,
+  .timeline-container,
+  .timeline {
+    padding-left: 1.5rem !important;
+    padding-right: 0.75rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .timeline-line,
+  .timeline-axis,
+  .timeline-item::after {
+    left: 1.25rem !important;
+  }
+
+  .timeline-node,
+  .timeline-dot,
+  .timeline-arrow,
+  .timeline-item:first-of-type .timeline-dot,
+  .timeline-item::before {
+    left: 1.25rem !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .timeline-item:hover .timeline-dot,
+  .timeline-item:first-of-type:hover .timeline-dot {
+    transform: translateX(-50%) scale(1.2) !important;
+  }
+
+  .education-card,
+  .timeline-card,
+  .timeline-content {
+    margin-left: 1.75rem !important;
+    width: calc(100% - 1.75rem) !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .timeline-item {
+    padding: 0 0 calc(var(--spacing-unit) * 1.5) 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .timeline-dot::after {
+    width: 1.75rem !important;
+    left: 50% !important;
+  }
+}
