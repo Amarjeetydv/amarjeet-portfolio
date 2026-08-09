@@ -70,14 +70,9 @@ The portfolio is highly balanced and visually professional. By reducing the Hero
 *   **About Me decluttering:** `PASS`. Removed the redundant MCA student card from the highlights. The grid displays two clean, balanced cards (**Full Stack Developer** and **DSA Enthusiast**) that match the left description layout perfectly.
 *   **Education timeline CGPA:** `PASS`. The MCA timeline card now displays the academic score (**Score: 8.81 / 10**) matching the formatting of other entries (BCA, Class XII, Class X).
 
-## 8. Mobile Responsiveness & Background Performance
-
-*   **Zero Horizontal Overflow:** `PASS`. Configured `html`, `body`, and the `#root` wrapper to strictly use `width: 100%`, `max-width: 100vw`, and `overflow-x: hidden`. This prevents absolute position assets and glowing blobs (`.bg-blob`) from bleeding past mobile viewport bounds.
-*   **Background Animation Continuity:** `PASS`. Width checks in resize listeners prevent layout modifications and GPU context resets during mobile address bar shifts. The fixed background canvas uses `inset: 0` coordinates, avoiding expensive canvas dimensions re-calculation calls.
-
 ---
 
-## 9. Functionality
+## 8. Functionality
 
 *   **View My Work CTA:** Navigates to `/projects` section smoothly.
 *   **View My CV CTA:** Opens the Google Drive CV in a new browser tab.
