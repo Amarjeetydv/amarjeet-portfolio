@@ -17,13 +17,25 @@ import { seoConfig } from './seoConfig.js';
 
 const sections = [
   { id: 'home', path: '/', label: 'Home' },
-  { id: 'projects', path: '/projects', label: 'Projects' },
+  { id: 'about', path: '/about', label: 'About' },
   { id: 'skills', path: '/skills', label: 'Skills' },
   { id: 'education', path: '/education', label: 'Education' },
   { id: 'certifications', path: '/certifications', label: 'Certifications' },
+  { id: 'projects', path: '/projects', label: 'Projects' },
   { id: 'contact', path: '/contact', label: 'Contact' },
   { id: 'learn', path: '/learn', label: 'Learn' },
 ];
+
+const UnifiedPortfolio = () => (
+  <div className="unified-sections">
+    <div id="home"><Home /></div>
+    <div id="skills"><Skills /></div>
+    <div id="education"><EducationPage /></div>
+    <div id="certifications"><CertificationsPage /></div>
+    <div id="projects"><Projects /></div>
+    <div id="contact"><Contact /></div>
+  </div>
+);
 
 function App() {
   const [theme, setTheme] = useState(() => {
@@ -50,37 +62,43 @@ function App() {
         <Route index element={
           <>
             <SEO {...seoConfig.home} />
-            <Home />
+            <UnifiedPortfolio />
+          </>
+        } />
+        <Route path="about" element={
+          <>
+            <SEO {...seoConfig.home} />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="projects" element={
           <>
             <SEO {...seoConfig.projects} />
-            <Projects />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="skills" element={
           <>
             <SEO {...seoConfig.skills} />
-            <Skills />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="education" element={
           <>
             <SEO {...seoConfig.education} />
-            <EducationPage />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="certifications" element={
           <>
             <SEO {...seoConfig.certifications} />
-            <CertificationsPage />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="contact" element={
           <>
             <SEO {...seoConfig.contact} />
-            <Contact />
+            <UnifiedPortfolio />
           </>
         } />
         <Route path="contact/chat/:conversationId" element={

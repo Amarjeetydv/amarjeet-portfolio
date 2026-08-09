@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './utils/api';
 import { useChatScroll, messagesAreEqual } from './hooks/useChatScroll';
 import ChatMessageBubble from './components/ChatMessageBubble';
+import { FaGithub, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaEnvelope, FaPhoneAlt, FaMapMarkerAlt } from 'react-icons/fa';
+import { SiLeetcode } from 'react-icons/si';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
@@ -253,35 +255,80 @@ const Contact = () => {
       </p>
 
       {mode === 'form' ? (
-        <form className="contact-form" onSubmit={handleSubmit}>
-          <label>
-            Name:
-            <input type="text" name="name" placeholder="Enter your full name" required autoComplete="name" />
-          </label>
-          <label>
-            Email:
-            <input type="email" name="email" placeholder="Enter your email address" required autoComplete="email" />
-          </label>
-          <label>
-            Message:
-            <textarea name="message" placeholder="Write your message here..." required />
-          </label>
-          <label>
-            Attach a file (optional)
-            <input ref={formFileInputRef} type="file" name="attachment" onChange={handleFileChange} />
-            <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>
-              Allowed types: PDF, JPG, PNG. Max size: 5MB.
-            </small>
-            {renderPendingAttachment()}
-          </label>
-          <button type="submit" disabled={isSending} style={{ position: 'relative', overflow: 'hidden' }}>
-            {isSending ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                <span className="spinner"></span> Sending...
-              </span>
-            ) : 'Send Message'}
-          </button>
-        </form>
+        <div className="contact-grid-container">
+          <div className="contact-info-column">
+            <h2>Let's Connect</h2>
+            <p className="contact-info-subtitle">
+              Have a question, opportunity, or project idea? Feel free to reach out via the form, or connect through the details below.
+            </p>
+            <div className="contact-details-list">
+              <div className="contact-detail-item">
+                <span className="contact-detail-icon"><FaEnvelope /></span>
+                <div>
+                  <strong>Email</strong>
+                  <a href="mailto:amarjeetyadav043590@gmail.com">amarjeetyadav043590@gmail.com</a>
+                </div>
+              </div>
+              <div className="contact-detail-item">
+                <span className="contact-detail-icon"><FaPhoneAlt /></span>
+                <div>
+                  <strong>Phone</strong>
+                  <a href="tel:+919305917283">+91 93059 17283</a>
+                </div>
+              </div>
+              <div className="contact-detail-item">
+                <span className="contact-detail-icon"><FaMapMarkerAlt /></span>
+                <div>
+                  <strong>Location</strong>
+                  <span>Mau, Uttar Pradesh, India</span>
+                </div>
+              </div>
+            </div>
+            <div className="contact-info-socials">
+              <strong>Follow Me</strong>
+              <div className="contact-social-icons">
+                <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FaGithub /></a>
+                <a href="https://linkedin.com/in/amarjeet-yadav-978820291" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FaLinkedin /></a>
+                <a href="https://www.facebook.com/profile.php?id=100083695459596" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebook /></a>
+                <a href="https://x.com/YadavPrade66061?t=YaB_XMLECI7jmVnaloxduQ&s=09" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
+                <a href="https://www.instagram.com/_amarjeet_30/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
+                <a href="https://leetcode.com/u/Amarjeet__Yadav/" target="_blank" rel="noopener noreferrer" aria-label="LeetCode"><SiLeetcode /></a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="contact-form-column">
+            <form className="contact-form" onSubmit={handleSubmit}>
+              <label>
+                Name:
+                <input type="text" name="name" placeholder="Enter your full name" required autoComplete="name" />
+              </label>
+              <label>
+                Email:
+                <input type="email" name="email" placeholder="Enter your email address" required autoComplete="email" />
+              </label>
+              <label>
+                Message:
+                <textarea name="message" placeholder="Write your message here..." required />
+              </label>
+              <label>
+                Attach a file (optional)
+                <input ref={formFileInputRef} type="file" name="attachment" onChange={handleFileChange} />
+                <small style={{ color: 'var(--text-muted-color)', marginTop: '0.5rem' }}>
+                  Allowed types: PDF, JPG, PNG. Max size: 5MB.
+                </small>
+                {renderPendingAttachment()}
+              </label>
+              <button type="submit" disabled={isSending}>
+                {isSending ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <span className="spinner"></span> Sending...
+                  </span>
+                ) : 'Send Message'}
+              </button>
+            </form>
+          </div>
+        </div>
       ) : (
         <div className="chat-container">
           <div className="chat-header">

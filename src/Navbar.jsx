@@ -1,56 +1,151 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import { FaSun, FaMoon } from "react-icons/fa";
 
 const Navbar = ({ sections, theme, toggleTheme }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  // Helper to retrieve initial active tab from the URL path on direct loads
+  const getInitialSection = () => {
+    if (location.pathname === '/learn') return 'learn';
+    const pathId = location.pathname.substring(1);
+    return pathId || 'home';
+  };
+
+  const [activeSection, setActiveSection] = useState(getInitialSection);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
   const handleLinkClick = () => {
-    setIsOpen(false); // Close menu on link click
+    setIsOpen(false);
   };
 
+  // Synchronize routing path navigations with the active section highlight
+  useEffect(() => {
+    if (location.pathname === '/learn') {
+      setActiveSection('learn');
+    } else {
+      const pathId = location.pathname.substring(1);
+      setActiveSection(pathId || 'home');
+    }
+  }, [location.pathname]);
+
+  // Scroll Spy logic using IntersectionObserver
+  useEffect(() => {
+    if (location.pathname === '/learn') return;
+
+    const sectionDomIds = ['hero', 'about', 'skills', 'education', 'certifications', 'projects', 'contact'];
+    
+    const observerOptions = {
+      root: null,
+      // Sets an offset to account for the sticky header height (80px) and page margins
+      rootMargin: '-85px 0px -40% 0px',
+      threshold: [0, 0.1, 0.2, 0.3]
+    };
+
+    const sectionElements = sectionDomIds
+      .map(id => document.getElementById(id))
+      .filter(el => el !== null);
+
+    const observerCallback = (entries) => {
+      const visibleEntries = entries.filter(entry => entry.isIntersecting);
+      if (visibleEntries.length > 0) {
+        // Sort entries by visibility ratio descending to find primary section
+        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const topEntry = visibleEntries[0];
+        let activeId = topEntry.target.id;
+        if (activeId === 'hero') {
+          activeId = 'home';
+        }
+        setActiveSection(activeId);
+      }
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    sectionElements.forEach(el => observer.observe(el));
+
+    // Fallback: force 'home' active when user is scrolled to the absolute top
+    const handleScrollFallback = () => {
+      if (window.scrollY < 100) {
+        setActiveSection('home');
+      }
+    };
+    window.addEventListener('scroll', handleScrollFallback, { passive: true });
+
+    return () => {
+      sectionElements.forEach(el => observer.unobserve(el));
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScrollFallback);
+    };
+  }, [location.pathname]);
+
   return (
-    <div className="navbar-container">
-      {/* Backdrop Overlay */}
+    <header className="navbar-header">
+      <div className="navbar-nav-container">
+        <NavLink to="/" className="navbar-logo" onClick={handleLinkClick}>
+          <span className="logo-title-accent">Mr.</span> Amarjeet Yadav
+        </NavLink>
+        
+        {/* Desktop Navigation */}
+        <nav className="navbar-desktop-menu">
+          <ul>
+            {sections.map((section) => (
+              <li key={section.id}>
+                <NavLink
+                  to={section.path}
+                  className={() => (activeSection === section.id ? 'active' : '')}
+                  onClick={handleLinkClick}
+                >
+                  {section.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Action buttons on the right */}
+        <div className="navbar-actions">
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            <FaSun className="theme-toggle-icon sun" />
+            <FaMoon className="theme-toggle-icon moon" />
+          </button>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            className={`hamburger-button ${isOpen ? 'open' : ''}`}
+            onClick={toggleMenu}
+            aria-label="Toggle navigation"
+            aria-expanded={isOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu drawer */}
       <div 
         className={`navbar-backdrop ${isOpen ? 'open' : ''}`} 
         onClick={() => setIsOpen(false)}
         aria-hidden="true"
       />
-      <div className="navbar-controls">
-        <button
-          className={`hamburger-button ${isOpen ? 'open' : ''}`}
-          onClick={toggleMenu}
-          aria-label="Toggle navigation"
-          aria-expanded={isOpen}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-        <button
-          className="theme-toggle-btn"
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          <FaSun className="theme-toggle-icon sun" />
-          <FaMoon className="theme-toggle-icon moon" />
-        </button>
-      </div>
-      <nav className={`navbar-menu ${isOpen ? 'open' : ''}`} aria-hidden={!isOpen} inert={!isOpen ? true : undefined}>
+      <nav className={`navbar-mobile-menu ${isOpen ? 'open' : ''}`} aria-hidden={!isOpen} inert={!isOpen ? true : undefined}>
         <ul>
           {sections.map((section) => (
             <li key={section.id}>
               <NavLink
                 to={section.path}
-                className={({ isActive }) => (isActive ? 'active' : '')}
+                className={() => (activeSection === section.id ? 'active' : '')}
                 onClick={handleLinkClick}
-                end={section.path === '/'}
               >
                 {section.label}
               </NavLink>
@@ -58,7 +153,7 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
           ))}
         </ul>
       </nav>
-    </div>
+    </header>
   );
 };
 

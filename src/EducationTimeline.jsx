@@ -6,6 +6,7 @@ const educationList = [
     degree: "Master of Computer Applications (MCA)",
     institution: "School of Computer Applications, Lovely Professional University, Phagwara, Punjab, India",
     duration: "Jun 2025 – Jun 2027",
+    Score: "8.81 / 10",
   },
   {
     degree: "Bachelor of Computer Applications (BCA)",

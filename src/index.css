@@ -1,43 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* 
-    Modern Color Palette (Dark-Mode First)
-    - --bg-color: Main background
-    - --surface-color: For cards and elevated elements
-    - --primary-color: The main accent for highlights and buttons
-    - --text-color: Primary text color
-    - --text-muted-color: Secondary, less prominent text
-    - --border-color: For subtle borders and dividers
-  */
-  --bg-color: #1a1a1a;
-  --surface-color: #242424;
-  --primary-color: #a259ff;
-  --primary-hover-color: #b375ff;
-  --text-color: #f0f0f0;
-  --glow-color: rgba(162, 89, 255, 0.5);
-  --shadow-color: rgba(0, 0, 0, 0.3);
-  --glass-bg: rgba(36, 36, 36, 0.5);
-  --text-muted-color: #a0a0a0;
-  --border-color: #333333;
+  /* Modern Dark Mode first variables (Premium Dark Navy/Glassmorphic look) */
+  --bg-color: #080b11;
+  --surface-color: #111622;
+  --glass-bg: rgba(17, 22, 34, 0.75);
+  --primary-color: #3b82f6; /* Electric Blue */
+  --primary-hover-color: #60a5fa;
+  --secondary-color: #8b5cf6; /* Deep Purple */
+  --accent-color: #06b6d4; /* Vibrant Cyan */
+  --text-color: #f3f4f6;
+  --text-muted-color: #9ca3af;
+  --border-color: #1e293b;
+  --glow-color: rgba(139, 92, 246, 0.25);
+  --shadow-color: rgba(0, 0, 0, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.06);
 
   /* Typography & Layout */
-  --font-family: 'Poppins', sans-serif;
-  --spacing-unit: 1rem;
-  --border-radius: 8px;
+  --font-family: 'Poppins', 'Inter', sans-serif;
+  --spacing-unit: 1.25rem;
+  --border-radius: 16px;
 }
 
 [data-theme="light"] {
   --bg-color: #f8f9fa;
   --surface-color: #ffffff;
-  --primary-color: #7b3fe4;
-  --primary-hover-color: #9e54ff;
-  --text-color: #212529;
-  --glow-color: rgba(123, 63, 228, 0.3);
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --text-muted-color: #6c757d;
-  --border-color: #dee2e6;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --primary-color: #2563eb;
+  --primary-hover-color: #1d4ed8;
+  --secondary-color: #7c3aed;
+  --accent-color: #0891b2;
+  --text-color: #0f172a;
+  --text-muted-color: #475569;
+  --border-color: #e2e8f0;
+  --glow-color: rgba(37, 99, 235, 0.15);
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --glass-border: rgba(0, 0, 0, 0.05);
 }
 
 /* Smooth scrolling for anchor links */
@@ -53,9 +51,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   box-sizing: border-box;
-  /* Subtle fade-in animation on page load */
-  animation: pageFadeIn 0.7s ease-out;
+  animation: pageFadeIn 0.8s ease-out;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 *, *::before, *::after {
@@ -66,10 +64,101 @@ body {
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Visible focus indicators for keyboard navigation */
+:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+/* Animated Tech Background Elements */
+.bg-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  z-index: -2;
+  pointer-events: none;
+}
+
+[data-theme="light"] .bg-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+}
+
+.bg-blob {
+  position: fixed;
+  width: min(500px, 90vw);
+  height: min(500px, 90vw);
+  border-radius: 50%;
+  filter: blur(90px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: screen;
+}
+
+[data-theme="light"] .bg-blob {
+  opacity: 0.12;
+  mix-blend-mode: multiply;
+  filter: blur(100px);
+}
+
+.bg-blob-1 {
+  background-color: var(--primary-color);
+  top: -10%;
+  left: -10%;
+  animation: float-blob-1 25s infinite alternate ease-in-out;
+}
+
+.bg-blob-2 {
+  background-color: var(--secondary-color);
+  bottom: -10%;
+  right: -10%;
+  animation: float-blob-2 20s infinite alternate ease-in-out;
+}
+
+.bg-blob-3 {
+  background-color: var(--accent-color);
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: float-blob-3 30s infinite alternate ease-in-out;
+}
+
+@keyframes float-blob-1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(80px, 60px) scale(1.2); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes float-blob-2 {
+  0% { transform: translate(0px, 0px) scale(1.1); }
+  50% { transform: translate(-70px, -90px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1.1); }
+}
+
+@keyframes float-blob-3 {
+  0% { transform: translate(-50%, -50%) translate(0px, 0px) scale(0.85); }
+  50% { transform: translate(-50%, -50%) translate(50px, -70px) scale(1.15); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(0.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-blob-1, .bg-blob-2, .bg-blob-3 {
+    animation: none !important;
   }
 }

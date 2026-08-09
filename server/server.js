@@ -1137,12 +1137,21 @@ app.get('/api/youtube/playlist/:playlistId/videos', async (req, res) => {
 });
 
 app.get('/api/messages', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const adminApiKey = process.env.ADMIN_API_KEY?.trim();
+
+  if (!adminApiKey || authHeader !== `Bearer ${adminApiKey}`) {
+    console.warn(`[security] Unauthorized access attempt to /api/messages from IP ${req.ip}`);
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
   let client;
   try {
     client = await pool.connect();
     const result = await client.query('SELECT * FROM contact_messages ORDER BY id DESC');
     res.json(result.rows);
   } catch (error) {
+    console.error('Failed to retrieve contact messages:', error);
     res.status(500).json({ error: error.message });
   } finally {
     if (client) client.release();
@@ -1153,7 +1162,7 @@ app.get('/', (req, res) => {
   res.send('Portfolio backend running');
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Server Error:', err);
   res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });

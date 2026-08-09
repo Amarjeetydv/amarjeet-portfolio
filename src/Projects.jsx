@@ -10,7 +10,7 @@ const myProjects = [
     featured: true,
   },
   {
-    name: "Job Finder",
+    name: "Job Finder Portal",
     description: "A lightweight job board built with PHP and MySQL for easy local deployment on XAMPP/WAMP. Supports job seekers, employers, and admins with keyword/location search, title autocomplete, apply and track applications, saved jobs, and a responsive testimonial slider.",
     repoUrl: "https://github.com/Amarjeetydv/Job_Finder",
     liveUrl: null,
@@ -24,31 +24,31 @@ const myProjects = [
     stack: ["React", "Bootstrap", "Node.js", "Express.js", "MySQL"],
   },
   {
-    name: "amarjeet-portfolio",
-    description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Includes dynamic project fetching and modern UI components.",
+    name: "Amarjeet Portfolio",
+    description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Built with modern, clean UI components.",
     repoUrl: "https://github.com/Amarjeetydv/amarjeet-portfolio",
     liveUrl: null,
-    stack: ["React", "JavaScript", "CSS", "Vite", "GitHub API"],
+    stack: ["React", "JavaScript", "CSS", "Vite"],
   },
   {
-    name: "cafe management system",
+    name: "Cafe Management System",
     description: "A comprehensive cafe management system with frontend and backend functionality. Features user authentication, menu management, order processing, and administrative controls.",
     repoUrl: "https://github.com/Amarjeetydv/cafe-management-system",
     liveUrl: null,
     stack: ["HTML", "CSS", "JavaScript", "PHP", "MySQL"],
   },
   {
-    name: "amarjeet bootstrap project",
+    name: "Amarjeet Bootstrap Project",
     description: "A modern, responsive frontend template for logistics or business websites, built with Bootstrap 4 and Font Awesome. Features multiple HTML templates, custom styles, interactive carousels, and a professional layout.",
     repoUrl: "https://github.com/Amarjeetydv/amarjeet-bootstrap-frontend",
     liveUrl: "https://amarjeet-bootstrap-ui.netlify.app/",
     stack: ["HTML"],
   },
   {
-    name: "amarjeet-css-project",
+    name: "Amarjeet CSS Project",
     description: "A collection of modern HTML and CSS UI components, including sliders, footers, and input forms. Features responsive design, Font Awesome icons, and demo pages for each component.",
     repoUrl: "https://github.com/Amarjeetydv/amarjeet-css-project",
-    liveUrl: " https://amarjeet-css-ui.netlify.app/",
+    liveUrl: "https://amarjeet-css-ui.netlify.app/",
     stack: ["HTML"],
   },
 ];
@@ -58,7 +58,7 @@ const Projects = () => {
     <section className="my-work-section" id="projects">
       <h1 className="work-title">My Work</h1>
       <p className="work-desc">
-        Explore a curated collection of my digital creations. From web applications to coding experiments, this is where I bring ideas to life.
+        Selected projects I've built using modern web technologies.
       </p>
       <div className="work-list">
         {myProjects.map((project) => (

@@ -6,7 +6,7 @@
 
 [![Profile Views](https://komarev.com/ghpvc/?username=Amarjeetydv&label=Profile%20Views&color=0ea5e9&style=for-the-badge)](https://github.com/Amarjeetydv)
 [![GitHub Followers](https://img.shields.io/github/followers/Amarjeetydv?label=Followers&style=for-the-badge&logo=github&color=1d4ed8)](https://github.com/Amarjeetydv?tab=followers)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeetydv/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeet-yadav-978820291)
 [![Email](https://img.shields.io/badge/Email-Contact%20Me-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:amarjeetyadav043590@gmail.com)
 
 </div>
@@ -15,7 +15,7 @@
 
 I am **Amarjeet Yadav**, an MCA student at **Lovely Professional University** and an aspiring **Software Engineer** focused on full stack development, backend engineering, and Data Structures and Algorithms. I enjoy building scalable web applications, designing REST APIs, and solving algorithmic problems with clean, maintainable code.
 
-> **Current CGPA:** 8.80/10  
+> **Current CGPA:** 8.81/10  
 > **Education:** Master of Computer Applications, Lovely Professional University, 2025-2027
 
 ## 🚀 About Me
@@ -92,7 +92,7 @@ Backend APIs        █████████░░   REST APIs, authenticatio
       </p>
     </td>
     <td width="50%">
-      <h3>Vehicle Fuel Protection Application</h3>
+      <h3>Auto Theft Guard</h3>
       <p>Fuel theft detection system with automatic vehicle locking, REST APIs, dashboard, MySQL triggers, and stored procedures.</p>
       <p>
         <img src="https://img.shields.io/badge/React.js-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React.js" />
@@ -102,7 +102,7 @@ Backend APIs        █████████░░   REST APIs, authenticatio
         <img src="https://img.shields.io/badge/Bootstrap-7952B3?style=flat-square&logo=bootstrap&logoColor=white" alt="Bootstrap" />
       </p>
       <p>
-        <a href="https://github.com/Amarjeetydv/vehicle-fuel-protection-system">Repository</a>
+        <a href="https://github.com/Amarjeetydv/auto-theft-guard">Repository</a>
       </p>
     </td>
   </tr>
@@ -111,14 +111,14 @@ Backend APIs        █████████░░   REST APIs, authenticatio
       <h3>Cafe Management System</h3>
       <p>Role-based full stack cafe management system with authentication, billing, inventory, and order management.</p>
       <p>
-        <img src="https://img.shields.io/badge/Angular%2017-DD0031?style=flat-square&logo=angular&logoColor=white" alt="Angular 17" />
-        <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
-        <img src="https://img.shields.io/badge/Express.js-111827?style=flat-square&logo=express&logoColor=white" alt="Express.js" />
+        <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5" />
+        <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" />
+        <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript" />
+        <img src="https://img.shields.io/badge/PHP-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP" />
         <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
-        <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
       </p>
       <p>
-        <a href="https://github.com/Amarjeetydv/Cafe-Management-System">Repository</a>
+        <a href="https://github.com/Amarjeetydv/cafe-management-system">Repository</a>
       </p>
     </td>
     <td width="50%">
@@ -157,7 +157,7 @@ Backend APIs        █████████░░   REST APIs, authenticatio
 
 <div align="left">
 
-[![LeetCode](https://img.shields.io/badge/LeetCode-Add%20Profile%20Link%20Here-FFA116?style=for-the-badge&logo=leetcode&logoColor=black)](https://leetcode.com/)
+[![LeetCode](https://img.shields.io/badge/LeetCode-Amarjeet__Yadav-FFA116?style=for-the-badge&logo=leetcode&logoColor=black)](https://leetcode.com/u/Amarjeet__Yadav/)
 
 </div>
 
@@ -180,7 +180,7 @@ I am especially interested in backend systems, authentication flows, database-ba
 <div align="left">
 
 [![GitHub](https://img.shields.io/badge/GitHub-Amarjeetydv-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Amarjeetydv)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeetydv/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amarjeet%20Yadav-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/amarjeet-yadav-978820291)
 [![Email](https://img.shields.io/badge/Email-amarjeetyadav043590%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:amarjeetyadav043590@gmail.com)
 
 </div>
