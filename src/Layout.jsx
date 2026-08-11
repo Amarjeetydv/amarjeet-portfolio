@@ -14,15 +14,6 @@ const Layout = ({ sections, theme, toggleTheme }) => {
   const navigate = useNavigate();
   const isHomeRoute = location.pathname === '/';
 
-  // Redirect to Home (/) and scroll to the top on initial load/hard refresh
-  useEffect(() => {
-    if (!window.__initialRedirectDone) {
-      window.__initialRedirectDone = true;
-      navigate('/', { replace: true });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [navigate]);
-
   useEffect(() => {
     const handleScroll = () => {
       const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
