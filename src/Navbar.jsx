@@ -36,7 +36,7 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
 
   // Scroll Spy logic using IntersectionObserver
   useEffect(() => {
-    if (location.pathname === '/learn') return;
+    if (location.pathname !== '/') return;
 
     const sectionDomIds = ['hero', 'about', 'skills', 'education', 'certifications', 'projects', 'contact'];
     
