@@ -153,7 +153,7 @@ The workspace contains several inconsistencies and redundancies:
 
 ## 11. SEO Audit
 
-*   **🔴 Sitemap Location Inconsistency (Medium):** The `robots.txt` Sitemap reference points to `https://amarjeet-portfolio-blue.vercel.app/sitemap.xml`, which does not match the actual portfolio deployment host.
+*   **🔴 Sitemap Location Inconsistency (Medium):** The `robots.txt` Sitemap reference has been updated to point to `https://amarjeetyadav.vercel.app/sitemap.xml` (previously it pointed to the old URL `https://amarjeet-portfolio-blue.vercel.app/sitemap.xml`).
 *   **🟡 Empty Sitemap (Medium):** `public/sitemap.xml` is an empty file (0 bytes).
 *   **🟡 Client-Side SEO Hoisting (Low):** The `<SEO>` component hoists tags using React 19 client-side. Web crawlers that do not execute JavaScript will only see the static placeholder `<title>Amarjeet's Devfolio</title>` in the original HTML.
 *   **🟡 Schema Markup (Low):** Structured metadata (JSON-LD) is missing for search engines.
