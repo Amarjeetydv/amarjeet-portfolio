@@ -1978,3 +1978,51 @@ section {
 .overflow-hidden {
   overflow: hidden !important;
 }
+
+/* Chat Unread Messages Separator */
+.chat-unread-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.25rem 0;
+  width: 100%;
+}
+
+.chat-unread-separator::before,
+.chat-unread-separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--primary-color);
+  opacity: 0.35;
+}
+
+.chat-unread-separator span {
+  padding: 0 0.85rem;
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(37, 99, 235, 0.25);
+}
+
+/* Chat Header Unread Count */
+.chat-header-unread {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-weight: 500;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+
+.chat-header-unread-dot {
+  font-size: 0.55rem;
+  margin-right: 4px;
+  line-height: 1;
+}

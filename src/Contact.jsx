@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './utils/api';
 import { useChatScroll, messagesAreEqual } from './hooks/useChatScroll';
@@ -24,6 +24,13 @@ const Contact = () => {
   const chatFileInputRef = useRef(null);
   const formFileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const unreadSeparatorRef = useRef(null);
+
+  const [isChatVisible, setIsChatVisible] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(document.visibilityState === 'visible');
+  const [sessionFirstUnreadId, setSessionFirstUnreadId] = useState(null);
+  const hasInitializedFirstUnread = useRef(false);
 
   const {
     containerRef: messagesContainerRef,
@@ -32,7 +39,7 @@ const Contact = () => {
     isNearBottom,
     scrollToBottom,
     resetScroll,
-  } = useChatScroll(messages);
+  } = useChatScroll(messages, { unreadSeparatorRef });
 
   // Auto-resize the chat input textarea based on content
   useEffect(() => {
@@ -89,6 +96,93 @@ const Contact = () => {
 
     return () => clearInterval(poll);
   }, [mode, conversationId, fetchMessages]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  useEffect(() => {
+    if (mode !== 'chat' || !conversationId) {
+      setIsChatVisible(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsChatVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    const el = chatContainerRef.current;
+    if (el) {
+      observer.observe(el);
+    }
+
+    return () => {
+      if (el) observer.unobserve(el);
+      observer.disconnect();
+    };
+  }, [mode, conversationId]);
+
+  useEffect(() => {
+    if (mode !== 'chat') {
+      hasInitializedFirstUnread.current = false;
+      setSessionFirstUnreadId(null);
+      setInitialUnreadCount(0);
+    }
+  }, [mode]);
+
+  const [initialUnreadCount, setInitialUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (messages.length > 0 && !hasInitializedFirstUnread.current) {
+      const unreadMsgs = messages.filter((m) => m.sender === 'admin' && !m.read_at);
+      if (unreadMsgs.length > 0) {
+        setSessionFirstUnreadId(unreadMsgs[0].id);
+        setInitialUnreadCount(unreadMsgs.length);
+      }
+      hasInitializedFirstUnread.current = true;
+    }
+  }, [messages]);
+
+  const currentUnreadCount = messages.filter((m) => m.sender === 'admin' && !m.read_at).length;
+
+  const markAsRead = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/read`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.markedReadCount > 0) {
+          window.dispatchEvent(new CustomEvent('portfolio_chat_read', { detail: { conversationId: id } }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'chat' && conversationId && isChatVisible && isTabVisible) {
+      const hasUnread = messages.some((msg) => msg.sender === 'admin' && !msg.read_at);
+      if (hasUnread) {
+        markAsRead(conversationId);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.sender === 'admin' && !msg.read_at
+              ? { ...msg, read_at: new Date().toISOString() }
+              : msg
+          )
+        );
+      }
+    }
+  }, [mode, conversationId, isChatVisible, isTabVisible, messages, markAsRead]);
 
   useEffect(() => {
     if (status.message && status.type !== 'info') {
@@ -330,11 +424,17 @@ const Contact = () => {
           </div>
         </div>
       ) : (
-        <div className="chat-container">
+        <div className="chat-container" ref={chatContainerRef}>
           <div className="chat-header">
             <div>
               <strong>Chat with Amarjeet</strong>
               {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
+              {currentUnreadCount > 0 && (
+                <span className="chat-header-unread">
+                  <span className="chat-header-unread-dot">🔴</span>
+                  {currentUnreadCount} {currentUnreadCount === 1 ? 'unread' : 'unread'}
+                </span>
+              )}
             </div>
             <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
               New conversation
@@ -347,7 +447,14 @@ const Contact = () => {
                 <p className="chat-empty">No messages yet. Send a message to start the conversation.</p>
               )}
               {messages.map((msg) => (
-                <ChatMessageBubble key={msg.id} msg={msg} />
+                <Fragment key={msg.id}>
+                  {msg.id === sessionFirstUnreadId && (
+                    <div className="chat-unread-separator" ref={unreadSeparatorRef}>
+                      <span>New Messages · {initialUnreadCount}</span>
+                    </div>
+                  )}
+                  <ChatMessageBubble msg={msg} />
+                </Fragment>
               ))}
               <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
             </div>

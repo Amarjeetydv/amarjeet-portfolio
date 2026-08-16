@@ -14,7 +14,7 @@ const messagesAreEqual = (prev, next) => {
 };
 
 export function useChatScroll(messages, options = {}) {
-  const { threshold = DEFAULT_THRESHOLD } = options;
+  const { threshold = DEFAULT_THRESHOLD, unreadSeparatorRef } = options;
 
   const containerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -123,12 +123,18 @@ export function useChatScroll(messages, options = {}) {
 
     const prevMessages = prevMessagesRef.current;
 
-    // 1. Initial Load: Scroll instantly to bottom
+    // 1. Initial Load: Scroll instantly to bottom (or to unread separator)
     if (isInitialLoadRef.current && messages.length > 0) {
       isInitialLoadRef.current = false;
-      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
-      isNearBottomRef.current = true;
-      setIsNearBottom(true);
+      if (unreadSeparatorRef && unreadSeparatorRef.current) {
+        unreadSeparatorRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+        isNearBottomRef.current = false;
+        setIsNearBottom(false);
+      } else {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
+        isNearBottomRef.current = true;
+        setIsNearBottom(true);
+      }
       prevMessagesRef.current = messages;
       return;
     }

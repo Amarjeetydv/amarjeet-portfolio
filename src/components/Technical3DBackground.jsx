@@ -74,6 +74,7 @@ const Technical3DBackground = ({ theme }) => {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       if (containerRef.current) {
+        containerRef.current.innerHTML = '';
         containerRef.current.appendChild(renderer.domElement);
       }
 
@@ -108,9 +109,9 @@ const Technical3DBackground = ({ theme }) => {
         nodes.push({
           position: new THREE.Vector3(x, y, z),
           velocity: new THREE.Vector3(
-            (Math.random() - 0.5) * 0.025,
-            (Math.random() - 0.5) * 0.025,
-            (Math.random() - 0.5) * 0.015
+            (Math.random() - 0.5) * 0.08,
+            (Math.random() - 0.5) * 0.08,
+            (Math.random() - 0.5) * 0.05
           )
         });
 
@@ -170,7 +171,10 @@ const Technical3DBackground = ({ theme }) => {
       });
       lineMaterialRef.current = lineMaterial;
 
+      const maxLines = nodeCount * 8; // Max connection lines to render
+      const linePositions = new Float32Array(maxLines * 2 * 3);
       const lineGeometry = new THREE.BufferGeometry();
+      lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
       lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
       scene.add(lineSegments);
 
@@ -262,8 +266,6 @@ const Technical3DBackground = ({ theme }) => {
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
 
-        if (document.visibilityState === 'hidden') return;
-
         const pArray = nodeGeometry.attributes.position.array;
         nodes.forEach((node, i) => {
           node.position.add(node.velocity);
@@ -280,24 +282,31 @@ const Technical3DBackground = ({ theme }) => {
         nodeGeometry.attributes.position.needsUpdate = true;
 
         // Re-populate connection lines vertices
-        const lineVertices = [];
+        const linePosAttr = lineSegments.geometry.attributes.position;
+        const linePosArray = linePosAttr.array;
+        let lineCount = 0;
+
         for (let i = 0; i < nodeCount; i++) {
           const posA = nodes[i].position;
           for (let j = i + 1; j < nodeCount; j++) {
             const posB = nodes[j].position;
             const dist = posA.distanceTo(posB);
             
-            if (dist < maxConnectionDistance) {
-              lineVertices.push(posA.x, posA.y, posA.z);
-              lineVertices.push(posB.x, posB.y, posB.z);
+            if (dist < maxConnectionDistance && lineCount < maxLines) {
+              const idx = lineCount * 6;
+              linePosArray[idx] = posA.x;
+              linePosArray[idx + 1] = posA.y;
+              linePosArray[idx + 2] = posA.z;
+              linePosArray[idx + 3] = posB.x;
+              linePosArray[idx + 4] = posB.y;
+              linePosArray[idx + 5] = posB.z;
+              lineCount++;
             }
           }
         }
 
-        lineSegments.geometry.dispose();
-        const newLineGeometry = new THREE.BufferGeometry();
-        newLineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(lineVertices, 3));
-        lineSegments.geometry = newLineGeometry;
+        linePosAttr.needsUpdate = true;
+        lineSegments.geometry.setDrawRange(0, lineCount * 2);
 
         // Update data packet flows
         const packetArray = packetGeometry.attributes.position.array;
@@ -342,13 +351,7 @@ const Technical3DBackground = ({ theme }) => {
 
       animate();
 
-      handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-          cancelAnimationFrame(animationFrameId);
-          animate();
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+      // Native visibility state pausing handled by browser automatically
 
       handleResize = () => {
         const w = window.innerWidth;
@@ -361,7 +364,7 @@ const Technical3DBackground = ({ theme }) => {
 
       cleanupFn = () => {
         cancelAnimationFrame(animationFrameId);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        // Cleanup handled
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('touchmove', handleTouchMove);
         window.removeEventListener('scroll', handleScroll);
@@ -376,8 +379,8 @@ const Technical3DBackground = ({ theme }) => {
         packetMaterial.dispose();
         packetPoints.geometry.dispose();
 
-        if (renderer && renderer.domElement && containerRef.current) {
-          containerRef.current.removeChild(renderer.domElement);
+        if (renderer && renderer.domElement && renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
         renderer.dispose();
       };
@@ -450,7 +453,7 @@ const Technical3DBackground = ({ theme }) => {
     const animate2D = () => {
       animationFrameId = requestAnimationFrame(animate2D);
 
-      if (document.visibilityState === 'hidden') return;
+      // Continuous fallback movement
 
       // Draw background color
       ctx.fillStyle = bgColor;
@@ -512,20 +515,14 @@ const Technical3DBackground = ({ theme }) => {
 
     animate2D();
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        cancelAnimationFrame(animationFrameId);
-        animate2D();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Native visibility state pausing handled by browser automatically
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Cleanup handled
     };
   }, [webGlSupported, theme]);
 

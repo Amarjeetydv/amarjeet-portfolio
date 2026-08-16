@@ -341,3 +341,34 @@
     gap: 1rem;
   }
 }
+
+/* Unread count badge for navbar items */
+.navbar-unread-container {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.navbar-unread-emoji {
+  font-size: 0.75rem;
+  margin-right: 3px;
+  line-height: 1;
+}
+
+.navbar-unread-count {
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  line-height: 1;
+  text-shadow: none;
+}

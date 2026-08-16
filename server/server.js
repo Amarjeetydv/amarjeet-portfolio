@@ -107,9 +107,24 @@ async function initDb() {
         message_text TEXT NOT NULL,
         attachment_name VARCHAR(255),
         attachment_url TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        read_at TIMESTAMP DEFAULT NULL
       );
     `);
+
+    const hasReadAt = await client.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name='chat_messages' AND column_name='read_at';
+    `);
+    if (hasReadAt.rowCount === 0) {
+      await client.query(`
+        ALTER TABLE chat_messages ADD COLUMN read_at TIMESTAMP DEFAULT NULL;
+      `);
+      await client.query(`
+        UPDATE chat_messages SET read_at = created_at WHERE read_at IS NULL;
+      `);
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS telegram_message_map (
@@ -409,7 +424,7 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
     }
 
     const messages = await client.query(
-      `SELECT id, sender, message_text, attachment_name, attachment_url, created_at
+      `SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
        FROM chat_messages
        WHERE conversation_id = $1
        ORDER BY created_at ASC`,
@@ -472,6 +487,72 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
       console.error('Failed to save follow-up message:', error);
       res.status(500).json({ message: 'Failed to send message' });
     }
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.get('/api/chat/:conversationId/unread-count', async (req, res) => {
+  const { conversationId } = req.params;
+  let client;
+  try {
+    client = await pool.connect();
+    const conversation = await client.query(
+      'SELECT id FROM conversations WHERE id = $1',
+      [conversationId]
+    );
+
+    if (conversation.rowCount === 0) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    const result = await client.query(
+      `SELECT COUNT(*)::int AS unread_count 
+       FROM chat_messages 
+       WHERE conversation_id = $1 AND sender = 'admin' AND read_at IS NULL`,
+      [conversationId]
+    );
+    res.json({
+      conversationId,
+      unreadCount: result.rows[0]?.unread_count || 0,
+    });
+  } catch (error) {
+    console.error('Failed to fetch unread count:', error);
+    res.status(500).json({ message: 'Failed to fetch unread count' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
+app.post('/api/chat/:conversationId/read', async (req, res) => {
+  const { conversationId } = req.params;
+  let client;
+  try {
+    client = await pool.connect();
+    const conversation = await client.query(
+      'SELECT id FROM conversations WHERE id = $1',
+      [conversationId]
+    );
+
+    if (conversation.rowCount === 0) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    const result = await client.query(
+      `UPDATE chat_messages 
+       SET read_at = CURRENT_TIMESTAMP 
+       WHERE conversation_id = $1 AND sender = 'admin' AND read_at IS NULL
+       RETURNING id`,
+      [conversationId]
+    );
+    res.json({
+      conversationId,
+      success: true,
+      markedReadCount: result.rowCount,
+    });
+  } catch (error) {
+    console.error('Failed to mark messages as read:', error);
+    res.status(500).json({ message: 'Failed to mark messages as read' });
   } finally {
     if (client) client.release();
   }

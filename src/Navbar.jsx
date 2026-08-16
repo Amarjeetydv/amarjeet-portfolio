@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import './Navbar.css';
 import { FaSun, FaMoon } from "react-icons/fa";
+import { getApiBaseUrl } from './utils/api';
 
 const Navbar = ({ sections, theme, toggleTheme }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,40 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
   };
 
   const [activeSection, setActiveSection] = useState(getInitialSection);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const storedId = localStorage.getItem('portfolio_chat_conversation_id');
+      if (!storedId) {
+        setUnreadCount(0);
+        return;
+      }
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/chat/${storedId}/unread-count`);
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count in Navbar:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 5000);
+
+    const handleChatRead = () => {
+      setUnreadCount(0);
+    };
+
+    window.addEventListener('portfolio_chat_read', handleChatRead);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('portfolio_chat_read', handleChatRead);
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -100,7 +135,15 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
                   className={() => (activeSection === section.id ? 'active' : '')}
                   onClick={handleLinkClick}
                 >
-                  {section.label}
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {section.label}
+                    {section.id === 'contact' && unreadCount > 0 && (
+                      <span className="navbar-unread-container">
+                        <span className="navbar-unread-emoji">🔴</span>
+                        <span className="navbar-unread-count">{unreadCount}</span>
+                      </span>
+                    )}
+                  </span>
                 </NavLink>
               </li>
             ))}
@@ -147,7 +190,15 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
                 className={() => (activeSection === section.id ? 'active' : '')}
                 onClick={handleLinkClick}
               >
-                {section.label}
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  {section.label}
+                  {section.id === 'contact' && unreadCount > 0 && (
+                    <span className="navbar-unread-container">
+                      <span className="navbar-unread-emoji">🔴</span>
+                      <span className="navbar-unread-count">{unreadCount}</span>
+                    </span>
+                  )}
+                </span>
               </NavLink>
             </li>
           ))}
