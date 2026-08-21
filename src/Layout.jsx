@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import { FaGithub, FaLinkedin, FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
 import { SiLeetcode } from "react-icons/si";
 import { useCustomCursor } from './hooks/useCustomCursor';
-import Technical3DBackground from './components/Technical3DBackground';
+
+const Technical3DBackground = lazy(() => import('./components/Technical3DBackground'));
 
 const Layout = ({ sections, theme, toggleTheme }) => {
   useCustomCursor();
@@ -69,7 +70,9 @@ const Layout = ({ sections, theme, toggleTheme }) => {
 
   return (
     <>
-      <Technical3DBackground theme={theme} />
+      <Suspense fallback={null}>
+        <Technical3DBackground theme={theme} />
+      </Suspense>
       <div className="bg-grid" aria-hidden="true" />
       <div className="bg-blob bg-blob-1" aria-hidden="true" />
       <div className="bg-blob bg-blob-2" aria-hidden="true" />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom';
 import './App.css'
 import './Theme.css'
@@ -12,7 +12,7 @@ import EducationPage from './EducationPage.jsx';
 import CertificationsPage from './CertificationsPage.jsx';
 import Patents from './Patents.jsx';
 import Contact from './Contact.jsx';
-import SafeYouTube from './SafeYouTube.jsx';
+const SafeYouTube = lazy(() => import('./SafeYouTube.jsx'));
 import SEO from './SEO.jsx';
 import { seoConfig } from './seoConfig.js';
 
@@ -119,7 +119,9 @@ function App() {
         <Route path="learn" element={
           <>
             <SEO {...seoConfig.learn} />
-            <SafeYouTube />
+            <Suspense fallback={<div className="chat-loading"><span className="spinner"></span> Loading...</div>}>
+              <SafeYouTube />
+            </Suspense>
           </>
         } />
       </Route>
