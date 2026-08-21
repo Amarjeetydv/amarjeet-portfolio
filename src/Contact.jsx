@@ -15,6 +15,17 @@ import {
   FaHistory
 } from 'react-icons/fa';
 import { SiLeetcode } from 'react-icons/si';
+import {
+  saveCachedConversations,
+  getCachedConversations,
+  saveCachedMessages,
+  getCachedMessages,
+  deleteCachedMessages,
+  addOfflineMessage,
+  getOfflineQueue,
+  removeOfflineMessage,
+  updateOfflineMessage
+} from './utils/indexedDb';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
@@ -42,6 +53,8 @@ const Contact = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSending, setIsSending] = useState(false);
 
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -78,22 +91,40 @@ const Contact = () => {
 
   const fetchConversationsList = useCallback(async () => {
     const uid = getUserId();
-    setConversationsLoading(true);
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/api/conversations?userId=${uid}`);
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data.conversations || []);
+    if (navigator.onLine) {
+      setConversationsLoading(true);
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/conversations?userId=${uid}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.conversations || [];
+          setConversations(list);
+          await saveCachedConversations(list, uid);
+        }
+      } catch (error) {
+        console.error('Failed to fetch online conversations:', error);
+      } finally {
+        setConversationsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error);
-    } finally {
-      setConversationsLoading(false);
+    } else {
+      const cached = await getCachedConversations(uid);
+      setConversations(cached);
     }
   }, []);
 
   const fetchMessages = useCallback(async (id) => {
     const uid = getUserId();
+    
+    // Local offline temporary conversation loading
+    if (id.startsWith('local-')) {
+      const cached = await getCachedMessages(id);
+      if (cached) {
+        setVisitorName(cached.visitorName || '');
+        setMessages(cached.messages || []);
+      }
+      return true;
+    }
+
     try {
       const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/messages?userId=${uid}`);
       if (!res.ok) {
@@ -116,6 +147,9 @@ const Contact = () => {
         const next = data.messages || [];
         return messagesAreEqual(prev, next) ? prev : next;
       });
+      
+      // Save loaded messages to IndexedDB cache
+      await saveCachedMessages(id, data.messages || [], data.visitorName || '');
       return true;
     } catch (error) {
       console.error('Failed to fetch messages:', error);
@@ -130,14 +164,204 @@ const Contact = () => {
       localStorage.setItem(CHAT_STORAGE_KEY, id);
       setMode('chat');
 
-      setMessagesLoading(true);
-      await fetchMessages(id);
-      setMessagesLoading(false);
+      // 1. Load from IndexedDB cache immediately (offline-friendly)
+      const cached = await getCachedMessages(id);
+      let cachedList = [];
+      if (cached) {
+        setVisitorName(cached.visitorName || '');
+        cachedList = cached.messages || [];
+        setMessages(cachedList);
+      }
+
+      // 2. Fetch fresh data from API if online
+      if (navigator.onLine && !id.startsWith('local-')) {
+        setMessagesLoading(true);
+        await fetchMessages(id);
+        setMessagesLoading(false);
+      }
+
+      // 3. Append offline queued messages for this conversation
+      const queue = await getOfflineQueue();
+      const queuedMsgs = queue.filter((q) => q.conversationId === id);
+      if (queuedMsgs.length > 0) {
+        setMessages((prev) => {
+          const merged = [...prev];
+          queuedMsgs.forEach((q) => {
+            if (!merged.some((m) => m.id === q.tempId)) {
+              merged.push({
+                id: q.tempId,
+                sender: 'visitor',
+                message_text: q.message_text,
+                created_at: q.created_at,
+                status: q.status,
+              });
+            }
+          });
+          return merged;
+        });
+      }
     },
     [fetchMessages]
   );
 
-  // Initial load to retrieve user ID, conversations list, and restore active chat session
+  // Background offline queue synchronizer
+  const syncOfflineQueue = useCallback(async () => {
+    if (isSyncing || !navigator.onLine) return;
+    setIsSyncing(true);
+    setStatus({ type: 'info', message: 'Synchronizing offline messages...' });
+
+    try {
+      const queue = await getOfflineQueue();
+      if (queue.length === 0) {
+        setIsSyncing(false);
+        return;
+      }
+
+      // Sort chronologically so messages are sent in order
+      queue.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const tempToRealConvId = {};
+
+      for (const item of queue) {
+        // Mark status as sending in IndexedDB and UI
+        item.status = 'sending';
+        await updateOfflineMessage(item);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === item.tempId ? { ...m, status: 'sending' } : m))
+        );
+
+        let convId = item.conversationId;
+        if (convId.startsWith('local-')) {
+          convId = tempToRealConvId[convId] || convId;
+        }
+
+        // Case A: Queued new conversation creation
+        if (convId.startsWith('local-')) {
+          const { name, email } = item.extraData || {};
+          const formData = new FormData();
+          formData.append('name', name);
+          formData.append('email', email);
+          formData.append('message', item.message_text);
+          formData.append('userId', getUserId());
+          formData.append('clientMessageId', item.idempotencyId);
+          formData.append('conversationId', item.conversationId.replace('local-', ''));
+
+          try {
+            const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              const realId = data.conversationId;
+              tempToRealConvId[item.conversationId] = realId;
+
+              await removeOfflineMessage(item.tempId);
+              await deleteCachedMessages(item.conversationId);
+
+              if (currentActiveIdRef.current === item.conversationId) {
+                currentActiveIdRef.current = realId;
+                setConversationId(realId);
+                localStorage.setItem(CHAT_STORAGE_KEY, realId);
+                navigate(`/contact/chat/${realId}`, { replace: true });
+              }
+            } else {
+              throw new Error('Sync contact form rejected by server');
+            }
+          } catch (e) {
+            console.error('Failed to sync offline new conversation:', e);
+            item.status = 'failed';
+            item.retryCount = (item.retryCount || 0) + 1;
+            await updateOfflineMessage(item);
+            setMessages((prev) =>
+              prev.map((m) => (m.id === item.tempId ? { ...m, status: 'failed' } : m))
+            );
+            throw e; // Break loop to retry later
+          }
+        }
+        // Case B: Queued follow-up message
+        else {
+          const formData = new FormData();
+          formData.append('message', item.message_text);
+          formData.append('userId', getUserId());
+          formData.append('clientMessageId', item.idempotencyId);
+
+          try {
+            const res = await fetch(`${getApiBaseUrl()}/api/chat/${convId}/messages`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              await removeOfflineMessage(item.tempId);
+
+              // Update UI: change status pending/sending -> sent
+              setMessages((prev) =>
+                prev.map((msg) => (msg.id === item.tempId ? data.chatMessage : msg))
+              );
+            } else {
+              throw new Error('Sync follow-up message rejected by server');
+            }
+          } catch (e) {
+            console.error('Failed to sync offline message:', e);
+            item.status = 'failed';
+            item.retryCount = (item.retryCount || 0) + 1;
+            await updateOfflineMessage(item);
+            setMessages((prev) =>
+              prev.map((m) => (m.id === item.tempId ? { ...m, status: 'failed' } : m))
+            );
+            throw e; // Break loop
+          }
+        }
+      }
+
+      setStatus({ type: 'success', message: 'Synchronization completed!' });
+      await fetchConversationsList();
+      if (currentActiveIdRef.current) {
+        await fetchMessages(currentActiveIdRef.current);
+      }
+    } catch (error) {
+      console.error('Synchronization loop failed:', error);
+      setStatus({ type: 'error', message: 'Sync paused. Some messages failed.' });
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [conversationId, fetchConversationsList, fetchMessages, isSyncing, navigate]);
+
+  const handleRetryMessage = async (tempId) => {
+    if (!navigator.onLine) {
+      setStatus({ type: 'error', message: 'Still offline. Please check your connection.' });
+      return;
+    }
+    await syncOfflineQueue();
+  };
+
+  // Handle browser connectivity listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncOfflineQueue();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Run sync on load if online
+    if (navigator.onLine) {
+      syncOfflineQueue();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [syncOfflineQueue]);
+
+  // Initial load
   useEffect(() => {
     const initChat = async () => {
       await fetchConversationsList();
@@ -155,10 +379,12 @@ const Contact = () => {
 
   // Polling for new admin replies
   useEffect(() => {
-    if (mode !== 'chat' || !conversationId) return;
+    if (mode !== 'chat' || !conversationId || conversationId.startsWith('local-')) return;
 
     const poll = setInterval(() => {
-      fetchMessages(conversationId);
+      if (navigator.onLine) {
+        fetchMessages(conversationId);
+      }
     }, 4000);
 
     return () => clearInterval(poll);
@@ -220,6 +446,7 @@ const Contact = () => {
   const currentUnreadCount = messages.filter((m) => m.sender === 'admin' && !m.read_at).length;
 
   const markAsRead = useCallback(async (id) => {
+    if (id.startsWith('local-') || !navigator.onLine) return;
     try {
       const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/read`, {
         method: 'POST',
@@ -266,6 +493,15 @@ const Contact = () => {
     const file = e.target.files[0];
     if (!file) {
       setAttachment(null);
+      return;
+    }
+    // Block attachments if browser is offline
+    if (!navigator.onLine) {
+      setStatus({
+        type: 'error',
+        message: 'Attachments require internet connectivity. Please upload when online.',
+      });
+      e.target.value = null;
       return;
     }
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -328,10 +564,61 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const message = formData.get('message');
+
+    // Offline new conversation submission
+    if (!navigator.onLine) {
+      setIsSending(true);
+      const tempConvId = `local-${crypto.randomUUID()}`;
+
+      try {
+        const queued = await addOfflineMessage(tempConvId, message, { name, email });
+        const initialMsg = {
+          id: queued.tempId,
+          sender: 'visitor',
+          message_text: message,
+          created_at: queued.created_at,
+          status: 'pending',
+        };
+
+        // Cache local state immediately
+        const localConversations = await getCachedConversations(getUserId());
+        const newLocalConv = {
+          id: tempConvId,
+          userId: getUserId(),
+          visitorName: name,
+          visitorEmail: email,
+          lastMessage: message,
+          updatedAt: new Date().toISOString(),
+        };
+        const updatedConvs = [newLocalConv, ...localConversations];
+        setConversations(updatedConvs);
+        
+        await saveCachedConversations(updatedConvs, getUserId());
+        await saveCachedMessages(tempConvId, [initialMsg], name);
+
+        startChat(tempConvId, name, initialMsg);
+        setStatus({
+          type: 'info',
+          message: 'Offline. Message queued and will sync when connection returns.',
+        });
+        e.target.reset();
+        setAttachment(null);
+      } catch (err) {
+        console.error('Failed to queue new offline conversation:', err);
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
+    // Online submission path
     setStatus({ type: 'info', message: 'Sending...' });
     setIsSending(true);
 
-    const formData = new FormData(e.target);
     formData.delete('attachment');
     if (attachment) {
       formData.append('attachment', attachment);
@@ -346,7 +633,6 @@ const Contact = () => {
 
       if (res.ok) {
         const data = await res.json();
-        const name = formData.get('name');
         startChat(data.conversationId, name, data.chatMessage);
         setStatus({ type: 'success', message: 'Message sent! Stay on this page to see replies.' });
         e.target.reset();
@@ -360,7 +646,37 @@ const Contact = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      setStatus({ type: 'error', message: 'Failed to connect to the server. Ensure the backend is running.' });
+      setStatus({ type: 'error', message: 'Failed to connect to the server. Queueing offline.' });
+
+      // Fallback to queueing offline
+      const tempConvId = `local-${crypto.randomUUID()}`;
+      const queued = await addOfflineMessage(tempConvId, message, { name, email });
+      const initialMsg = {
+        id: queued.tempId,
+        sender: 'visitor',
+        message_text: message,
+        created_at: queued.created_at,
+        status: 'pending',
+      };
+
+      const localConversations = await getCachedConversations(getUserId());
+      const newLocalConv = {
+        id: tempConvId,
+        userId: getUserId(),
+        visitorName: name,
+        visitorEmail: email,
+        lastMessage: message,
+        updatedAt: new Date().toISOString(),
+      };
+      const updatedConvs = [newLocalConv, ...localConversations];
+      setConversations(updatedConvs);
+      
+      await saveCachedConversations(updatedConvs, getUserId());
+      await saveCachedMessages(tempConvId, [initialMsg], name);
+
+      startChat(tempConvId, name, initialMsg);
+      e.target.reset();
+      setAttachment(null);
     } finally {
       setIsSending(false);
     }
@@ -369,9 +685,38 @@ const Contact = () => {
   const sendChatMessage = async () => {
     if (!conversationId || (!chatInput.trim() && !attachment)) return;
 
+    const tempMsgText = chatInput.trim() || '(attachment)';
+
+    // Queue follow-up message when offline
+    if (!navigator.onLine) {
+      setIsSending(true);
+      try {
+        const queued = await addOfflineMessage(conversationId, tempMsgText);
+        const localPendingMsg = {
+          id: queued.tempId,
+          sender: 'visitor',
+          message_text: tempMsgText,
+          created_at: queued.created_at,
+          status: 'pending',
+        };
+        setMessages((prev) => [...prev, localPendingMsg]);
+        setChatInput('');
+        setAttachment(null);
+        if (chatFileInputRef.current) {
+          chatFileInputRef.current.value = '';
+        }
+      } catch (e) {
+        console.error('Failed to queue follow-up message:', e);
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
+    // Online path
     setIsSending(true);
     const formData = new FormData();
-    formData.append('message', chatInput.trim() || '(attachment)');
+    formData.append('message', tempMsgText);
     formData.append('userId', getUserId());
 
     if (attachment) {
@@ -386,7 +731,6 @@ const Contact = () => {
 
       if (res.ok) {
         const data = await res.json();
-        // Check race conditions: discard response if user navigated away
         if (currentActiveIdRef.current === conversationId) {
           setMessages((prev) => [...prev, data.chatMessage]);
           setChatInput('');
@@ -402,7 +746,23 @@ const Contact = () => {
       }
     } catch (error) {
       console.error('Error sending chat message:', error);
-      setStatus({ type: 'error', message: 'Failed to connect to the server.' });
+      setStatus({ type: 'error', message: 'Failed to connect. Queueing offline.' });
+
+      // Fallback queueing
+      const queued = await addOfflineMessage(conversationId, tempMsgText);
+      const localPendingMsg = {
+        id: queued.tempId,
+        sender: 'visitor',
+        message_text: tempMsgText,
+        created_at: queued.created_at,
+        status: 'pending',
+      };
+      setMessages((prev) => [...prev, localPendingMsg]);
+      setChatInput('');
+      setAttachment(null);
+      if (chatFileInputRef.current) {
+        chatFileInputRef.current.value = '';
+      }
     } finally {
       setIsSending(false);
     }
@@ -699,6 +1059,8 @@ const Contact = () => {
               </button>
               <strong>Chat with Amarjeet</strong>
               {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
+              {!isOnline && <span className="chat-status-indicator offline">Offline</span>}
+              {isSyncing && <span className="chat-status-indicator syncing">Syncing...</span>}
             </div>
             <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
               New conversation
@@ -780,7 +1142,13 @@ const Contact = () => {
                         <span>New Messages · {initialUnreadCount}</span>
                       </div>
                     )}
-                    <ChatMessageBubble msg={msg} />
+                    <ChatMessageBubble
+                      msg={
+                        msg.status === 'failed'
+                          ? { ...msg, onRetry: handleRetryMessage }
+                          : msg
+                      }
+                    />
                   </Fragment>
                 ))}
                 <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
@@ -956,6 +1324,37 @@ const Contact = () => {
           flex-direction: column;
           overflow: hidden;
           height: 100%;
+        }
+
+        .chat-status-indicator {
+          font-size: 0.7rem;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 50px;
+          margin-left: 8px;
+          display: inline-flex;
+          align-items: center;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .chat-status-indicator.offline {
+          background-color: rgba(245, 158, 11, 0.1);
+          color: #f59e0b;
+          border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .chat-status-indicator.syncing {
+          background-color: rgba(59, 130, 246, 0.1);
+          color: #3b82f6;
+          border: 1px solid rgba(59, 130, 246, 0.2);
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0% { opacity: 0.6; }
+          50% { opacity: 1; }
+          100% { opacity: 0.6; }
         }
 
         .chat-loading {

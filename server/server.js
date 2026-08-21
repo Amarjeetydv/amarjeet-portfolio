@@ -135,6 +135,10 @@ async function initDb() {
     }
 
     await client.query(`
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS client_message_id UUID UNIQUE;
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS telegram_message_map (
         telegram_message_id BIGINT PRIMARY KEY,
         conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE
@@ -275,12 +279,13 @@ const saveChatMessage = async (client, {
   messageText,
   attachmentName = null,
   attachmentUrl = null,
+  clientMessageId = null,
 }) => {
   const result = await client.query(
-    `INSERT INTO chat_messages (conversation_id, sender, message_text, attachment_name, attachment_url)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at`,
-    [conversationId, sender, messageText, attachmentName, attachmentUrl]
+    `INSERT INTO chat_messages (conversation_id, sender, message_text, attachment_name, attachment_url, client_message_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id`,
+    [conversationId, sender, messageText, attachmentName, attachmentUrl, clientMessageId]
   );
   return result.rows[0];
 };
@@ -368,19 +373,35 @@ const uploadTelegramMedia = async (media) => {
 
 app.post('/api/contact', upload.single('attachment'), async (req, res) => {
   console.log('--- New Contact Form Submission ---');
-  const { name, email, message, userId } = req.body;
+  const { name, email, message, userId, clientMessageId } = req.body;
+  const conversationId = req.body.conversationId || crypto.randomUUID();
 
   if (!name?.trim() || !email?.trim() || !message?.trim()) {
     return res.status(400).json({ message: 'Name, email, and message are required.' });
   }
 
-  const conversationId = crypto.randomUUID();
   let client;
 
   try {
+    client = await pool.connect();
+
+    // Idempotency check: prevent duplicate conversation start messages
+    if (clientMessageId) {
+      const existing = await client.query(
+        'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
+        [clientMessageId]
+      );
+      if (existing.rowCount > 0) {
+        return res.status(200).json({
+          message: 'Message already received',
+          conversationId: existing.rows[0].conversation_id,
+          chatMessage: existing.rows[0],
+        });
+      }
+    }
+
     const { attachmentName, attachmentUrl } = await handleFileUpload(req.file);
 
-    client = await pool.connect();
     await client.query('BEGIN');
 
     await client.query(
@@ -394,6 +415,7 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
       messageText: message.trim(),
       attachmentName,
       attachmentUrl,
+      clientMessageId,
     });
 
     await client.query(
@@ -511,7 +533,7 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
 
 app.post('/api/chat/:conversationId/messages', upload.single('attachment'), async (req, res) => {
   const { conversationId } = req.params;
-  const { message, userId } = req.body;
+  const { message, userId, clientMessageId } = req.body;
 
   if (!message?.trim()) {
     return res.status(400).json({ message: 'Message is required.' });
@@ -523,6 +545,18 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
   let client;
   try {
     client = await pool.connect();
+
+    // Idempotency check: prevent duplicate follow-up messages
+    if (clientMessageId) {
+      const existing = await client.query(
+        'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
+        [clientMessageId]
+      );
+      if (existing.rowCount > 0) {
+        return res.status(200).json({ chatMessage: existing.rows[0] });
+      }
+    }
+
     const conversation = await client.query(
       'SELECT id, visitor_name, visitor_email, user_id FROM conversations WHERE id = $1',
       [conversationId]
@@ -547,6 +581,7 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
       messageText: message.trim(),
       attachmentName,
       attachmentUrl,
+      clientMessageId,
     });
 
     await client.query(
