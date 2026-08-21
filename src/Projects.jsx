@@ -2,6 +2,14 @@ import { FaGithub, FaExternalLinkAlt } from "react-icons/fa";
 
 const myProjects = [
   {
+    name: "StudyPilot AI — Autonomous Study Planner",
+    description: "An AI-powered autonomous study planner that uses a multi-agent Gemini AI architecture to generate personalized study roadmaps, dynamically schedule and reschedule study sessions, track knowledge mastery, generate quizzes, and provide mentor-student collaboration.",
+    repoUrl: "https://github.com/Amarjeetydv/autonomous_study_planner",
+    liveUrl: "https://autonomous-study-planner-client.vercel.app/login",
+    stack: ["React 19", "TypeScript", "Node.js", "Express.js", "MongoDB", "Gemini AI", "Multi-Agent AI", "SSE", "Redux Toolkit", "React Query", "Tailwind CSS", "JWT", "RBAC"],
+    featured: true,
+  },
+  {
     name: "Emergency Response Coordination System (ERCS)",
     description: "A full-stack emergency coordination platform for citizens, responders, and administrators. Citizens report emergencies with location and media; responders manage assignments with real-time Socket.io messaging; admins oversee users, analytics, escalations, and audit logs. Includes JWT auth, role-based dashboards, and Leaflet map integration.",
     repoUrl: "https://github.com/Amarjeetydv/emergency-response-system",
