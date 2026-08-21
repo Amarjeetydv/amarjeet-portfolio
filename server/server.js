@@ -99,6 +99,14 @@ async function initDb() {
       );
     `);
 
+    // Migration updates for user scoping and ordering by activity
+    await client.query(`
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id UUID;
+    `);
+    await client.query(`
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (
         id SERIAL PRIMARY KEY,
@@ -133,7 +141,21 @@ async function initDb() {
       );
     `);
 
-    console.log('Database tables ensured.');
+    // Performance and scoping indexes
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at DESC);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_id ON chat_messages(conversation_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at DESC);
+    `);
+
+    console.log('Database tables ensured and indexes created.');
   } catch (err) {
     console.error('Failed to connect to PostgreSQL database:', err);
   } finally {
@@ -346,7 +368,7 @@ const uploadTelegramMedia = async (media) => {
 
 app.post('/api/contact', upload.single('attachment'), async (req, res) => {
   console.log('--- New Contact Form Submission ---');
-  const { name, email, message } = req.body;
+  const { name, email, message, userId } = req.body;
 
   if (!name?.trim() || !email?.trim() || !message?.trim()) {
     return res.status(400).json({ message: 'Name, email, and message are required.' });
@@ -362,8 +384,8 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
     await client.query('BEGIN');
 
     await client.query(
-      'INSERT INTO conversations (id, visitor_name, visitor_email) VALUES ($1, $2, $3)',
-      [conversationId, name.trim(), email.trim()]
+      'INSERT INTO conversations (id, visitor_name, visitor_email, user_id, updated_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)',
+      [conversationId, name.trim(), email.trim(), userId || null]
     );
 
     const savedMessage = await saveChatMessage(client, {
@@ -408,8 +430,37 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
   }
 });
 
+// New endpoint: fetch all conversations for a user
+app.get('/api/conversations', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ message: 'userId is required' });
+  }
+
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      `SELECT c.id, c.visitor_name, c.visitor_email, c.created_at, c.updated_at,
+              (SELECT message_text FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+              (SELECT created_at FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
+       FROM conversations c
+       WHERE c.user_id = $1
+       ORDER BY c.updated_at DESC`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch user conversations:', error);
+    res.status(500).json({ message: 'Failed to fetch conversations' });
+  } finally {
+    if (client) client.release();
+  }
+});
+
 app.get('/api/chat/:conversationId/messages', async (req, res) => {
   const { conversationId } = req.params;
+  const limit = parseInt(req.query.limit, 10) || 100;
 
   let client;
   try {
@@ -425,10 +476,15 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
 
     const messages = await client.query(
       `SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
-       FROM chat_messages
-       WHERE conversation_id = $1
+       FROM (
+         SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
+         FROM chat_messages
+         WHERE conversation_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2
+       ) sub
        ORDER BY created_at ASC`,
-      [conversationId]
+      [conversationId, limit]
     );
 
     res.json({
@@ -462,6 +518,8 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
     const { attachmentName, attachmentUrl } = await handleFileUpload(req.file);
 
     client = await pool.connect();
+    await client.query('BEGIN');
+
     const savedMessage = await saveChatMessage(client, {
       conversationId,
       sender: 'visitor',
@@ -469,6 +527,13 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
       attachmentName,
       attachmentUrl,
     });
+
+    await client.query(
+      'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [conversationId]
+    );
+
+    await client.query('COMMIT');
 
     notifyNewVisitorMessage({
       conversationId,
@@ -481,6 +546,7 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
 
     res.status(200).json({ chatMessage: savedMessage });
   } catch (error) {
+    if (client) await client.query('ROLLBACK');
     if (error.http_code) {
       res.status(error.http_code || 500).json({ message: `Cloudinary error: ${error.message}` });
     } else {
