@@ -45,20 +45,7 @@ const ChatMessageBubble = memo(function ChatMessageBubble({ msg }) {
           </a>
         </div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem', gap: '1rem' }}>
-        <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
-        {msg.status && (
-          <span className={`chat-bubble-status ${msg.status}`} style={{ fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            {msg.status === 'sending' && <span className="spinner" style={{ width: '10px', height: '10px', borderWidth: '1px' }}></span>}
-            {msg.status === 'pending' || msg.status === 'sending' ? 'Pending' : ''}
-            {msg.status === 'failed' && (
-              <span style={{ color: '#f87171' }}>
-                Failed · <button type="button" onClick={() => msg.onRetry && msg.onRetry(msg.id)} style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: 0, textDecoration: 'underline', font: 'inherit', fontWeight: 600 }}>Retry</button>
-              </span>
-            )}
-          </span>
-        )}
-      </div>
+      <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
     </div>
   );
 });

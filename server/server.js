@@ -441,15 +441,14 @@ app.get('/api/conversations', async (req, res) => {
   try {
     client = await pool.connect();
     const result = await client.query(
-      `SELECT c.id, c.visitor_name, c.visitor_email, c.created_at, c.updated_at,
-              (SELECT message_text FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-              (SELECT created_at FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
+      `SELECT c.id, c.visitor_name as "visitorName", c.visitor_email as "visitorEmail", c.updated_at as "updatedAt",
+              (SELECT message_text FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as "lastMessage"
        FROM conversations c
        WHERE c.user_id = $1
        ORDER BY c.updated_at DESC`,
       [userId]
     );
-    res.json(result.rows);
+    res.json({ conversations: result.rows });
   } catch (error) {
     console.error('Failed to fetch user conversations:', error);
     res.status(500).json({ message: 'Failed to fetch conversations' });
@@ -460,18 +459,28 @@ app.get('/api/conversations', async (req, res) => {
 
 app.get('/api/chat/:conversationId/messages', async (req, res) => {
   const { conversationId } = req.params;
+  const { userId } = req.query;
   const limit = parseInt(req.query.limit, 10) || 100;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'userId is required' });
+  }
 
   let client;
   try {
     client = await pool.connect();
     const conversation = await client.query(
-      'SELECT id, visitor_name, created_at FROM conversations WHERE id = $1',
+      'SELECT id, visitor_name, user_id, created_at FROM conversations WHERE id = $1',
       [conversationId]
     );
 
     if (conversation.rowCount === 0) {
       return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    const dbUserId = conversation.rows[0].user_id;
+    if (dbUserId && dbUserId !== userId) {
+      return res.status(403).json({ message: 'Access denied: Conversation belongs to another user' });
     }
 
     const messages = await client.query(
@@ -502,22 +511,34 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
 
 app.post('/api/chat/:conversationId/messages', upload.single('attachment'), async (req, res) => {
   const { conversationId } = req.params;
-  const { message } = req.body;
+  const { message, userId } = req.body;
 
   if (!message?.trim()) {
     return res.status(400).json({ message: 'Message is required.' });
   }
+  if (!userId) {
+    return res.status(400).json({ message: 'userId is required.' });
+  }
 
   let client;
   try {
-    const conversation = await getConversation(conversationId);
-    if (!conversation) {
+    client = await pool.connect();
+    const conversation = await client.query(
+      'SELECT id, visitor_name, visitor_email, user_id FROM conversations WHERE id = $1',
+      [conversationId]
+    );
+
+    if (conversation.rowCount === 0) {
       return res.status(404).json({ message: 'Conversation not found' });
+    }
+
+    const dbUserId = conversation.rows[0].user_id;
+    if (dbUserId && dbUserId !== userId) {
+      return res.status(403).json({ message: 'Access denied: Conversation belongs to another user' });
     }
 
     const { attachmentName, attachmentUrl } = await handleFileUpload(req.file);
 
-    client = await pool.connect();
     await client.query('BEGIN');
 
     const savedMessage = await saveChatMessage(client, {
@@ -537,8 +558,8 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
 
     notifyNewVisitorMessage({
       conversationId,
-      name: conversation.visitor_name,
-      email: conversation.visitor_email,
+      name: conversation.rows[0].visitor_name,
+      email: conversation.rows[0].visitor_email,
       message: message.trim(),
       attachmentUrl,
       isFollowUp: true,

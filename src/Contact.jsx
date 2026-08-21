@@ -15,16 +15,6 @@ import {
   FaHistory
 } from 'react-icons/fa';
 import { SiLeetcode } from 'react-icons/si';
-import {
-  getCachedConversations,
-  saveCachedConversations,
-  getCachedMessages,
-  saveCachedMessages,
-  getOfflineQueue,
-  addOfflineMessage,
-  removeOfflineMessage,
-  updateOfflineMessageStatus
-} from './utils/indexedDb';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
@@ -52,13 +42,12 @@ const Contact = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSending, setIsSending] = useState(false);
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const currentActiveIdRef = useRef(null);
   const chatFileInputRef = useRef(null);
   const formFileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -89,47 +78,44 @@ const Contact = () => {
 
   const fetchConversationsList = useCallback(async () => {
     const uid = getUserId();
-    if (navigator.onLine) {
-      setConversationsLoading(true);
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/api/conversations?userId=${uid}`);
-        if (res.ok) {
-          const data = await res.json();
-          setConversations(data);
-          await saveCachedConversations(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch online conversations:', error);
-      } finally {
-        setConversationsLoading(false);
+    setConversationsLoading(true);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/conversations?userId=${uid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data.conversations || []);
       }
-    } else {
-      const cached = await getCachedConversations();
-      setConversations(cached);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+    } finally {
+      setConversationsLoading(false);
     }
   }, []);
 
   const fetchMessages = useCallback(async (id) => {
-    if (id.startsWith('temp_conv_')) {
-      const cached = await getCachedMessages(id);
-      if (cached) {
-        setVisitorName(cached.visitorName || '');
-        setMessages(cached.messages || []);
-      }
-      return true;
-    }
-
+    const uid = getUserId();
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/messages`);
-      if (!res.ok) return false;
+      const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/messages?userId=${uid}`);
+      if (!res.ok) {
+        if (res.status === 403) {
+          setStatus({ type: 'error', message: 'Access denied: Conversation belongs to another user.' });
+        }
+        return false;
+      }
 
       const data = await res.json();
+
+      // Race condition protection: Check if the loaded ID matches the currently active ID
+      if (currentActiveIdRef.current !== id) {
+        console.log(`Discarding responses for obsolete conversation ID: ${id}`);
+        return false;
+      }
+
       setVisitorName(data.visitorName || '');
       setMessages((prev) => {
         const next = data.messages || [];
         return messagesAreEqual(prev, next) ? prev : next;
       });
-      await saveCachedMessages(id, data.messages || [], data.visitorName || '');
       return true;
     } catch (error) {
       console.error('Failed to fetch messages:', error);
@@ -139,274 +125,19 @@ const Contact = () => {
 
   const loadActiveChat = useCallback(
     async (id) => {
-      setMode('chat');
+      currentActiveIdRef.current = id;
       setConversationId(id);
       localStorage.setItem(CHAT_STORAGE_KEY, id);
+      setMode('chat');
 
-      const cached = await getCachedMessages(id);
-      let cachedList = [];
-      if (cached) {
-        setVisitorName(cached.visitorName || '');
-        cachedList = cached.messages || [];
-        setMessages(cachedList);
-      }
-
-      if (navigator.onLine && !id.startsWith('temp_conv_')) {
-        setMessagesLoading(true);
-        await fetchMessages(id);
-        setMessagesLoading(false);
-      }
-
-      const queue = await getOfflineQueue();
-      const queuedMsgs = queue.filter((q) => q.conversationId === id);
-      if (queuedMsgs.length > 0) {
-        setMessages((prev) => {
-          const merged = [...prev];
-          queuedMsgs.forEach((q) => {
-            if (!merged.some((m) => m.id === q.tempId)) {
-              merged.push({
-                id: q.tempId,
-                sender: 'visitor',
-                message_text: q.message_text,
-                created_at: q.created_at,
-                attachment_name: q.fileName,
-                attachment_url: q.file ? URL.createObjectURL(q.file) : null,
-                status: q.status,
-              });
-            }
-          });
-          return merged;
-        });
-      }
+      setMessagesLoading(true);
+      await fetchMessages(id);
+      setMessagesLoading(false);
     },
     [fetchMessages]
   );
 
-  const syncOfflineQueue = useCallback(async () => {
-    if (isSyncing || !navigator.onLine) return;
-    setIsSyncing(true);
-    setStatus({ type: 'info', message: 'Synchronizing offline messages...' });
-
-    try {
-      const queue = await getOfflineQueue();
-      if (queue.length === 0) {
-        setIsSyncing(false);
-        return;
-      }
-
-      queue.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-      const tempToRealConvId = {};
-
-      for (const item of queue) {
-        await updateOfflineMessageStatus(item.tempId, { status: 'sending' });
-        
-        let convId = item.conversationId;
-        if (convId.startsWith('temp_conv_')) {
-          convId = tempToRealConvId[convId] || convId;
-        }
-
-        if (convId.startsWith('temp_conv_')) {
-          const { name, email } = item.extraData || {};
-          const formData = new FormData();
-          formData.append('name', name);
-          formData.append('email', email);
-          formData.append('message', item.message_text);
-          formData.append('userId', getUserId());
-          if (item.file) {
-            formData.append('attachment', item.file, item.fileName);
-          }
-
-          try {
-            const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
-              method: 'POST',
-              body: formData,
-            });
-
-            if (res.ok) {
-              const data = await res.json();
-              tempToRealConvId[item.conversationId] = data.conversationId;
-              await removeOfflineMessage(item.tempId);
-
-              if (conversationId === item.conversationId) {
-                setConversationId(data.conversationId);
-                localStorage.setItem(CHAT_STORAGE_KEY, data.conversationId);
-                navigate(`/contact/chat/${data.conversationId}`, { replace: true });
-              }
-            } else {
-              throw new Error('Server rejected sync');
-            }
-          } catch (e) {
-            await updateOfflineMessageStatus(item.tempId, { status: 'failed' });
-            throw e;
-          }
-        } else {
-          const formData = new FormData();
-          formData.append('message', item.message_text);
-          if (item.file) {
-            formData.append('attachment', item.file, item.fileName);
-          }
-
-          try {
-            const res = await fetch(`${getApiBaseUrl()}/api/chat/${convId}/messages`, {
-              method: 'POST',
-              body: formData,
-            });
-
-            if (res.ok) {
-              const data = await res.json();
-              await removeOfflineMessage(item.tempId);
-              setMessages((prev) =>
-                prev.map((msg) => (msg.id === item.tempId ? data.chatMessage : msg))
-              );
-            } else {
-              throw new Error('Server rejected follow-up sync');
-            }
-          } catch (e) {
-            await updateOfflineMessageStatus(item.tempId, { status: 'failed' });
-            throw e;
-          }
-        }
-      }
-
-      setStatus({ type: 'success', message: 'All messages successfully synchronized!' });
-      await fetchConversationsList();
-      if (conversationId) {
-        const activeId = tempToRealConvId[conversationId] || conversationId;
-        await fetchMessages(activeId);
-      }
-    } catch (error) {
-      console.error('Offline sync failed:', error);
-      setStatus({ type: 'error', message: 'Synchronization failed. Will retry when connection returns.' });
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [conversationId, fetchConversationsList, fetchMessages, isSyncing, navigate]);
-
-  const handleRetryMessage = async (tempId) => {
-    if (!navigator.onLine) {
-      setStatus({ type: 'error', message: 'Still offline. Cannot retry yet.' });
-      return;
-    }
-
-    const queue = await getOfflineQueue();
-    const item = queue.find((q) => q.tempId === tempId);
-    if (!item) return;
-
-    setMessages((prev) =>
-      prev.map((m) => (m.id === tempId ? { ...m, status: 'sending' } : m))
-    );
-    await updateOfflineMessageStatus(tempId, { status: 'sending' });
-
-    if (item.conversationId.startsWith('temp_conv_')) {
-      const { name, email } = item.extraData || {};
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('email', email);
-      formData.append('message', item.message_text);
-      formData.append('userId', getUserId());
-      if (item.file) {
-        formData.append('attachment', item.file, item.fileName);
-      }
-
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          await removeOfflineMessage(tempId);
-
-          const localConversations = await getCachedConversations();
-          const updatedConvs = localConversations.map((c) =>
-            c.id === item.conversationId ? { ...c, id: data.conversationId } : c
-          );
-          setConversations(updatedConvs);
-          await saveCachedConversations(updatedConvs);
-
-          const cachedMessagesRecord = await getCachedMessages(item.conversationId);
-          if (cachedMessagesRecord) {
-            const updatedMsgs = cachedMessagesRecord.messages.map((m) =>
-              m.id === tempId ? data.chatMessage : m
-            );
-            await saveCachedMessages(data.conversationId, updatedMsgs, name);
-          }
-
-          if (conversationId === item.conversationId) {
-            setConversationId(data.conversationId);
-            localStorage.setItem(CHAT_STORAGE_KEY, data.conversationId);
-            navigate(`/contact/chat/${data.conversationId}`, { replace: true });
-          }
-          setStatus({ type: 'success', message: 'Message sent!' });
-          fetchConversationsList();
-        } else {
-          throw new Error('Retry failed');
-        }
-      } catch (err) {
-        console.error('Retry failed:', err);
-        await updateOfflineMessageStatus(tempId, { status: 'failed' });
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
-        );
-        setStatus({ type: 'error', message: 'Failed to send message.' });
-      }
-    } else {
-      const formData = new FormData();
-      formData.append('message', item.message_text);
-      if (item.file) {
-        formData.append('attachment', item.file, item.fileName);
-      }
-
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/api/chat/${item.conversationId}/messages`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          await removeOfflineMessage(tempId);
-
-          setMessages((prev) =>
-            prev.map((m) => (m.id === tempId ? data.chatMessage : m))
-          );
-          setStatus({ type: 'success', message: 'Message sent!' });
-          fetchConversationsList();
-        } else {
-          throw new Error('Retry failed');
-        }
-      } catch (err) {
-        console.error('Retry failed:', err);
-        await updateOfflineMessageStatus(tempId, { status: 'failed' });
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
-        );
-        setStatus({ type: 'error', message: 'Failed to send message.' });
-      }
-    }
-  };
-
-  // Handle Online/Offline browser events
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncOfflineQueue();
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [syncOfflineQueue]);
-
-  // Initial load
+  // Initial load to retrieve user ID, conversations list, and restore active chat session
   useEffect(() => {
     const initChat = async () => {
       await fetchConversationsList();
@@ -422,14 +153,12 @@ const Contact = () => {
     initChat();
   }, [routeConversationId, fetchConversationsList, loadActiveChat]);
 
-  // Polling for new admin messages
+  // Polling for new admin replies
   useEffect(() => {
-    if (mode !== 'chat' || !conversationId || conversationId.startsWith('temp_conv_')) return;
+    if (mode !== 'chat' || !conversationId) return;
 
     const poll = setInterval(() => {
-      if (navigator.onLine) {
-        fetchMessages(conversationId);
-      }
+      fetchMessages(conversationId);
     }, 4000);
 
     return () => clearInterval(poll);
@@ -491,7 +220,6 @@ const Contact = () => {
   const currentUnreadCount = messages.filter((m) => m.sender === 'admin' && !m.read_at).length;
 
   const markAsRead = useCallback(async (id) => {
-    if (id.startsWith('temp_conv_') || !navigator.onLine) return;
     try {
       const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/read`, {
         method: 'POST',
@@ -589,6 +317,7 @@ const Contact = () => {
   const startChat = (id, name, initialMessage) => {
     resetScroll();
     setConversationId(id);
+    currentActiveIdRef.current = id;
     setVisitorName(name);
     setMessages([initialMessage]);
     setMode('chat');
@@ -599,61 +328,10 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const message = formData.get('message');
-    const file = attachment;
-
-    if (!isOnline) {
-      setIsSending(true);
-      const tempConvId = `temp_conv_${Date.now()}`;
-
-      try {
-        const queued = await addOfflineMessage(tempConvId, message, file, { name, email });
-        const initialMsg = {
-          id: queued.tempId,
-          sender: 'visitor',
-          message_text: message,
-          created_at: queued.created_at,
-          attachment_name: file ? file.name : null,
-          attachment_url: file ? URL.createObjectURL(file) : null,
-          status: 'pending',
-        };
-
-        const localConversations = await getCachedConversations();
-        const newLocalConv = {
-          id: tempConvId,
-          visitor_name: name,
-          visitor_email: email,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          last_message: message,
-          last_message_time: new Date().toISOString(),
-        };
-        const updatedConvs = [newLocalConv, ...localConversations];
-        setConversations(updatedConvs);
-        await saveCachedConversations(updatedConvs);
-        await saveCachedMessages(tempConvId, [initialMsg], name);
-
-        startChat(tempConvId, name, initialMsg);
-        setStatus({
-          type: 'info',
-          message: 'Offline. Message queued and will sync when connection returns.',
-        });
-        e.target.reset();
-        setAttachment(null);
-      } catch (err) {
-        console.error('Failed to queue new conversation:', err);
-      } finally {
-        setIsSending(false);
-      }
-      return;
-    }
-
     setStatus({ type: 'info', message: 'Sending...' });
     setIsSending(true);
 
+    const formData = new FormData(e.target);
     formData.delete('attachment');
     if (attachment) {
       formData.append('attachment', attachment);
@@ -668,6 +346,7 @@ const Contact = () => {
 
       if (res.ok) {
         const data = await res.json();
+        const name = formData.get('name');
         startChat(data.conversationId, name, data.chatMessage);
         setStatus({ type: 'success', message: 'Message sent! Stay on this page to see replies.' });
         e.target.reset();
@@ -681,38 +360,7 @@ const Contact = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      setStatus({ type: 'error', message: 'Failed to connect to the server. Queueing offline.' });
-
-      const tempConvId = `temp_conv_${Date.now()}`;
-      const queued = await addOfflineMessage(tempConvId, message, file, { name, email });
-      const initialMsg = {
-        id: queued.tempId,
-        sender: 'visitor',
-        message_text: message,
-        created_at: queued.created_at,
-        attachment_name: file ? file.name : null,
-        attachment_url: file ? URL.createObjectURL(file) : null,
-        status: 'pending',
-      };
-
-      const localConversations = await getCachedConversations();
-      const newLocalConv = {
-        id: tempConvId,
-        visitor_name: name,
-        visitor_email: email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        last_message: message,
-        last_message_time: new Date().toISOString(),
-      };
-      const updatedConvs = [newLocalConv, ...localConversations];
-      setConversations(updatedConvs);
-      await saveCachedConversations(updatedConvs);
-      await saveCachedMessages(tempConvId, [initialMsg], name);
-
-      startChat(tempConvId, name, initialMsg);
-      e.target.reset();
-      setAttachment(null);
+      setStatus({ type: 'error', message: 'Failed to connect to the server. Ensure the backend is running.' });
     } finally {
       setIsSending(false);
     }
@@ -721,38 +369,10 @@ const Contact = () => {
   const sendChatMessage = async () => {
     if (!conversationId || (!chatInput.trim() && !attachment)) return;
 
-    const tempMsgText = chatInput.trim() || '(attachment)';
-
-    if (!isOnline) {
-      setIsSending(true);
-      try {
-        const queued = await addOfflineMessage(conversationId, tempMsgText, attachment);
-        const localPendingMsg = {
-          id: queued.tempId,
-          sender: 'visitor',
-          message_text: tempMsgText,
-          created_at: queued.created_at,
-          attachment_name: attachment ? attachment.name : null,
-          attachment_url: attachment ? URL.createObjectURL(attachment) : null,
-          status: 'pending',
-        };
-        setMessages((prev) => [...prev, localPendingMsg]);
-        setChatInput('');
-        setAttachment(null);
-        if (chatFileInputRef.current) {
-          chatFileInputRef.current.value = '';
-        }
-      } catch (e) {
-        console.error('Failed to queue message:', e);
-      } finally {
-        setIsSending(false);
-      }
-      return;
-    }
-
     setIsSending(true);
     const formData = new FormData();
-    formData.append('message', tempMsgText);
+    formData.append('message', chatInput.trim() || '(attachment)');
+    formData.append('userId', getUserId());
 
     if (attachment) {
       formData.append('attachment', attachment);
@@ -766,11 +386,14 @@ const Contact = () => {
 
       if (res.ok) {
         const data = await res.json();
-        setMessages((prev) => [...prev, data.chatMessage]);
-        setChatInput('');
-        setAttachment(null);
-        if (chatFileInputRef.current) {
-          chatFileInputRef.current.value = '';
+        // Check race conditions: discard response if user navigated away
+        if (currentActiveIdRef.current === conversationId) {
+          setMessages((prev) => [...prev, data.chatMessage]);
+          setChatInput('');
+          setAttachment(null);
+          if (chatFileInputRef.current) {
+            chatFileInputRef.current.value = '';
+          }
         }
         fetchConversationsList();
       } else {
@@ -779,24 +402,7 @@ const Contact = () => {
       }
     } catch (error) {
       console.error('Error sending chat message:', error);
-      setStatus({ type: 'error', message: 'Failed to connect to the server. Queueing offline.' });
-
-      const queued = await addOfflineMessage(conversationId, tempMsgText, attachment);
-      const localPendingMsg = {
-        id: queued.tempId,
-        sender: 'visitor',
-        message_text: tempMsgText,
-        created_at: queued.created_at,
-        attachment_name: attachment ? attachment.name : null,
-        attachment_url: attachment ? URL.createObjectURL(attachment) : null,
-        status: 'pending',
-      };
-      setMessages((prev) => [...prev, localPendingMsg]);
-      setChatInput('');
-      setAttachment(null);
-      if (chatFileInputRef.current) {
-        chatFileInputRef.current.value = '';
-      }
+      setStatus({ type: 'error', message: 'Failed to connect to the server.' });
     } finally {
       setIsSending(false);
     }
@@ -812,6 +418,7 @@ const Contact = () => {
     resetScroll();
     setMode('form');
     setConversationId(null);
+    currentActiveIdRef.current = null;
     setMessages([]);
     setChatInput('');
     setAttachment(null);
@@ -970,7 +577,7 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Previous conversations list for active scoping */}
+            {/* Scoped chat history panel in form mode */}
             {conversations.length > 0 && (
               <div className="recent-chats-container">
                 <div className="recent-chats-title">
@@ -995,14 +602,14 @@ const Contact = () => {
                       <div className="chat-history-meta">
                         <span className="chat-history-name">Chat Session</span>
                         <span className="chat-history-time">
-                          {new Date(conv.updated_at || conv.created_at).toLocaleDateString([], {
+                          {new Date(conv.updatedAt || conv.created_at).toLocaleDateString([], {
                             month: 'short',
                             day: 'numeric',
                           })}
                         </span>
                       </div>
-                      {conv.last_message && (
-                        <div className="chat-history-snippet">{conv.last_message}</div>
+                      {conv.lastMessage && (
+                        <div className="chat-history-snippet">{conv.lastMessage}</div>
                       )}
                     </button>
                   ))
@@ -1092,8 +699,6 @@ const Contact = () => {
               </button>
               <strong>Chat with Amarjeet</strong>
               {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
-              {!isOnline && <span className="chat-status-indicator offline">Offline</span>}
-              {isSyncing && <span className="chat-status-indicator syncing">Syncing...</span>}
             </div>
             <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
               New conversation
@@ -1135,14 +740,14 @@ const Contact = () => {
                       <div className="chat-history-meta">
                         <span className="chat-history-name">Chat Session</span>
                         <span className="chat-history-time">
-                          {new Date(conv.updated_at || conv.created_at).toLocaleDateString([], {
+                          {new Date(conv.updatedAt || conv.created_at).toLocaleDateString([], {
                             month: 'short',
                             day: 'numeric',
                           })}
                         </span>
                       </div>
-                      {conv.last_message && (
-                        <div className="chat-history-snippet">{conv.last_message}</div>
+                      {conv.lastMessage && (
+                        <div className="chat-history-snippet">{conv.lastMessage}</div>
                       )}
                     </button>
                   ))
@@ -1175,13 +780,7 @@ const Contact = () => {
                         <span>New Messages · {initialUnreadCount}</span>
                       </div>
                     )}
-                    <ChatMessageBubble
-                      msg={
-                        msg.status === 'failed'
-                          ? { ...msg, onRetry: handleRetryMessage }
-                          : msg
-                      }
-                    />
+                    <ChatMessageBubble msg={msg} />
                   </Fragment>
                 ))}
                 <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
@@ -1357,37 +956,6 @@ const Contact = () => {
           flex-direction: column;
           overflow: hidden;
           height: 100%;
-        }
-
-        .chat-status-indicator {
-          font-size: 0.7rem;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 50px;
-          margin-left: 8px;
-          display: inline-flex;
-          align-items: center;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .chat-status-indicator.offline {
-          background-color: rgba(245, 158, 11, 0.1);
-          color: #f59e0b;
-          border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .chat-status-indicator.syncing {
-          background-color: rgba(59, 130, 246, 0.1);
-          color: #3b82f6;
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-          0% { opacity: 0.6; }
-          50% { opacity: 1; }
-          100% { opacity: 0.6; }
         }
 
         .chat-loading {
