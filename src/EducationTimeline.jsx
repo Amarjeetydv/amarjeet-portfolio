@@ -32,6 +32,30 @@ const educationList = [
 
 const certificationList = [
   {
+    title: "From Zero to Database Developer (SQL & PostgreSQL)",
+    issuer: "Centre for Professional Enhancement, Lovely Professional University",
+    issued: "August 2026",
+    credentialId: "490682",
+    link: "/12516200_PL_&_SQL.PDF",
+    skills: ["SQL", "PostgreSQL", "Database Developer"]
+  },
+  {
+    title: "Certificate of Appreciation for Java Programming",
+    issuer: "neo colab (iamneo – An NIIT Venture)",
+    issued: "June 2026",
+    credentialId: "26aj4ck6dl7cm6C22B71",
+    link: "/Java Certificate_12516200@neocolab.ai (1).pdf",
+    skills: ["Java Programming", "Software Development"]
+  },
+  {
+    title: "Hone Communication and Public Speaking Skills for Successful Career",
+    issuer: "Centre for Professional Enhancement, Lovely Professional University",
+    issued: "May 2026",
+    credentialId: "457541",
+    link: "/12516200_Communication.pdf",
+    skills: ["Communication", "Public Speaking", "Soft Skills"]
+  },
+  {
     title: "WEB-A-THON 2.0 – Certificate of Participation",
     issuer: "ARENA, Lovely Professional University Punjab",
     issued: "February 2026",
@@ -46,6 +70,14 @@ const certificationList = [
     link: "https://credsverse.com/credentials/cc1a04b2-c940-4c58-9ae9-131cada99a59",
     issued: "October 01, 2025",
     type: "Hackathon"
+  },
+  {
+    title: "C++ DSA – Certificate of Completion",
+    issuer: "Apna College",
+    issued: "September 2024",
+    credentialId: "6a7696592ba965692309865a",
+    link: "/certificate-sigma-90-c-dsa-69397ff4e5be317f0100fe76.pdf",
+    skills: ["C++", "Data Structures", "Algorithms"]
   },
   {
     title: "Advance Diploma In Full Stack Developer",
