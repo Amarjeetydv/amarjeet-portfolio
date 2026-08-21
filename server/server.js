@@ -440,6 +440,23 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
     });
   } catch (error) {
     if (client) await client.query('ROLLBACK');
+    if (error.code === '23505' && clientMessageId) {
+      try {
+        const existing = await pool.query(
+          'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
+          [clientMessageId]
+        );
+        if (existing.rowCount > 0) {
+          return res.status(200).json({
+            message: 'Message already received',
+            conversationId: existing.rows[0].conversation_id,
+            chatMessage: existing.rows[0],
+          });
+        }
+      } catch (e) {
+        console.error('Failed to resolve parallel insert:', e);
+      }
+    }
     if (error.http_code) {
       console.error('Cloudinary Error:', error);
       res.status(error.http_code || 500).json({ message: `Cloudinary error: ${error.message}` });
@@ -603,6 +620,19 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
     res.status(200).json({ chatMessage: savedMessage });
   } catch (error) {
     if (client) await client.query('ROLLBACK');
+    if (error.code === '23505' && clientMessageId) {
+      try {
+        const existing = await pool.query(
+          'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
+          [clientMessageId]
+        );
+        if (existing.rowCount > 0) {
+          return res.status(200).json({ chatMessage: existing.rows[0] });
+        }
+      } catch (e) {
+        console.error('Failed to resolve parallel follow-up:', e);
+      }
+    }
     if (error.http_code) {
       res.status(error.http_code || 500).json({ message: `Cloudinary error: ${error.message}` });
     } else {
