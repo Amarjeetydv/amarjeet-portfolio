@@ -10,6 +10,7 @@ import Projects from './Projects.jsx';
 import Skills from './Skills.jsx';
 import EducationPage from './EducationPage.jsx';
 import CertificationsPage from './CertificationsPage.jsx';
+import Patents from './Patents.jsx';
 import Contact from './Contact.jsx';
 import SafeYouTube from './SafeYouTube.jsx';
 import SEO from './SEO.jsx';
@@ -22,6 +23,7 @@ const sections = [
   { id: 'education', path: '/education', label: 'Education' },
   { id: 'certifications', path: '/certifications', label: 'Certifications' },
   { id: 'projects', path: '/projects', label: 'Projects' },
+  { id: 'patents', path: '/patents', label: 'Patents' },
   { id: 'contact', path: '/contact', label: 'Contact' },
   { id: 'learn', path: '/learn', label: 'Learn' },
 ];
@@ -33,6 +35,7 @@ const UnifiedPortfolio = () => (
     <div id="education"><EducationPage /></div>
     <div id="certifications"><CertificationsPage /></div>
     <div id="projects"><Projects /></div>
+    <div id="patents"><Patents /></div>
     <div id="contact"><Contact /></div>
   </div>
 );
@@ -74,6 +77,12 @@ function App() {
         <Route path="projects" element={
           <>
             <SEO {...seoConfig.projects} />
+            <UnifiedPortfolio />
+          </>
+        } />
+        <Route path="patents" element={
+          <>
+            <SEO {...seoConfig.patents} />
             <UnifiedPortfolio />
           </>
         } />
