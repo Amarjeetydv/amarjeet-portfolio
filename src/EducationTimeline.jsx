@@ -3,10 +3,10 @@ import "./EducationTimeline.css";
 
 const educationList = [
   {
-    degree: "Master of Computer Applications (MCA)",
+    degree: "Master of Computer Applications (MCA) — Pursuing",
     institution: "School of Computer Applications, Lovely Professional University, Phagwara, Punjab, India",
     duration: "Jun 2025 – Jun 2027",
-    Score: "8.89 / 10",
+    Score: "8.89 / 10 (Current)",
   },
   {
     degree: "Bachelor of Computer Applications (BCA)",
