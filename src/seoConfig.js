@@ -34,6 +34,16 @@ export const seoConfig = {
     description: "Patent applications and innovations of Amarjeet Yadav in wearable sensor systems and smart energy-saving hostel automation.",
     path: "/patents"
   },
+  honors: {
+    title: "Honors & Awards | Amarjeet Yadav",
+    description: "LeetCode 50 Days Streak Badge, GitHub Pull Shark, and coding achievements of Amarjeet Yadav.",
+    path: "/honors"
+  },
+  scores: {
+    title: "Test Scores | Amarjeet Yadav",
+    description: "Entrance exam percentiles, MAH-MCA CET aptitude test score of Amarjeet Yadav.",
+    path: "/scores"
+  },
   contact: {
     title: "Contact | Amarjeet Yadav – Full Stack Developer",
     description: "Get in touch with Amarjeet Yadav for internships, projects, or collaboration opportunities.",
