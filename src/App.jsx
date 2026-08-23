@@ -7,6 +7,7 @@ import './Theme.css'
 import Layout from './Layout';
 import Home from './Home.jsx';
 import Projects from './Projects.jsx';
+import Experience from './Experience.jsx';
 import Skills from './Skills.jsx';
 import EducationPage from './EducationPage.jsx';
 import CertificationsPage from './CertificationsPage.jsx';
@@ -20,9 +21,10 @@ const sections = [
   { id: 'home', path: '/', label: 'Home' },
   { id: 'about', path: '/about', label: 'About' },
   { id: 'skills', path: '/skills', label: 'Skills' },
+  { id: 'projects', path: '/projects', label: 'Projects' },
+  { id: 'experience', path: '/experience', label: 'Experience' },
   { id: 'education', path: '/education', label: 'Education' },
   { id: 'certifications', path: '/certifications', label: 'Certifications' },
-  { id: 'projects', path: '/projects', label: 'Projects' },
   { id: 'patents', path: '/patents', label: 'Patents' },
   { id: 'contact', path: '/contact', label: 'Contact' },
   { id: 'learn', path: '/learn', label: 'Learn' },
@@ -32,9 +34,10 @@ const UnifiedPortfolio = () => (
   <div className="unified-sections">
     <div id="home"><Home /></div>
     <div id="skills"><Skills /></div>
+    <div id="projects"><Projects /></div>
+    <div id="experience"><Experience /></div>
     <div id="education"><EducationPage /></div>
     <div id="certifications"><CertificationsPage /></div>
-    <div id="projects"><Projects /></div>
     <div id="patents"><Patents /></div>
     <div id="contact"><Contact /></div>
   </div>
@@ -77,6 +80,12 @@ function App() {
         <Route path="projects" element={
           <>
             <SEO {...seoConfig.projects} />
+            <UnifiedPortfolio />
+          </>
+        } />
+        <Route path="experience" element={
+          <>
+            <SEO {...seoConfig.experience} />
             <UnifiedPortfolio />
           </>
         } />

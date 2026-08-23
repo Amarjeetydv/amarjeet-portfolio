@@ -24,6 +24,11 @@ export const seoConfig = {
     description: "Professional certifications and achievements of Amarjeet Yadav related to software development and technology.",
     path: "/certifications"
   },
+  experience: {
+    title: "Experience | Amarjeet Yadav – Full Stack Developer",
+    description: "Professional experience, leadership roles, and academic responsibilities held by Amarjeet Yadav.",
+    path: "/experience"
+  },
   patents: {
     title: "Patents & Innovation | Amarjeet Yadav",
     description: "Patent applications and innovations of Amarjeet Yadav in wearable sensor systems and smart energy-saving hostel automation.",
