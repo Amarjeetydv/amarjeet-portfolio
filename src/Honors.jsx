@@ -13,6 +13,12 @@ const honorsList = [
     issuer: "GitHub",
     date: "April 2026",
     description: "Earned the GitHub Pull Shark achievement by successfully contributing through pull requests and demonstrating practical experience with collaborative software development and Git-based workflows."
+  },
+  {
+    title: "GitHub YOLO Achievement",
+    issuer: "GitHub",
+    date: "April 2026",
+    description: "Earning this badge recognizes agile development practices and quick deployment capabilities within personal or independent project environments on GitHub."
   }
 ];
 
