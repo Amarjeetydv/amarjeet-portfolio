@@ -32,13 +32,6 @@ const myProjects = [
     stack: ["React", "Bootstrap", "Node.js", "Express.js", "MySQL"],
   },
   {
-    name: "Amarjeet Portfolio",
-    description: "My personal portfolio website built with React and Vite. Features a modern, responsive design with sections for About, Skills, Projects, Education, and Contact. Built with modern, clean UI components.",
-    repoUrl: "https://github.com/Amarjeetydv/amarjeet-portfolio",
-    liveUrl: null,
-    stack: ["React", "JavaScript", "CSS", "Vite"],
-  },
-  {
     name: "Cafe Management System",
     description: "A comprehensive cafe management system with frontend and backend functionality. Features user authentication, menu management, order processing, and administrative controls.",
     repoUrl: "https://github.com/Amarjeetydv/cafe-management-system",
