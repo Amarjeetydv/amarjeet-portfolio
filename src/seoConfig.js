@@ -44,6 +44,11 @@ export const seoConfig = {
     description: "Entrance exam percentiles, MAH-MCA CET aptitude test score of Amarjeet Yadav.",
     path: "/scores"
   },
+  scholarship: {
+    title: "Academic Achievements & Scholarships | Amarjeet Yadav",
+    description: "Academic achievements, LPUNEST scholarship, and academic recognition of Amarjeet Yadav.",
+    path: "/scholarship"
+  },
   contact: {
     title: "Contact | Amarjeet Yadav – Full Stack Developer",
     description: "Get in touch with Amarjeet Yadav for internships, projects, or collaboration opportunities.",

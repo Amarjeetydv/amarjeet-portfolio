@@ -303,7 +303,7 @@
 }
 
 /* Tablet & Mobile Media Queries */
-@media (max-width: 1150px) {
+@media (max-width: 1250px) {
   .navbar-desktop-menu {
     display: none;
   }
@@ -318,7 +318,7 @@
 }
 
 /* Desktop Media Query Layout */
-@media (min-width: 1151px) {
+@media (min-width: 1251px) {
   .navbar-logo {
     display: block;
     flex-shrink: 0;

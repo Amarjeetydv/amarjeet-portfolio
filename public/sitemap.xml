@@ -46,6 +46,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://amarjeetyadav.vercel.app/scholarship</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://amarjeetyadav.vercel.app/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

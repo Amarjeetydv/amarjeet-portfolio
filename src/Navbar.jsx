@@ -73,7 +73,7 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
   useEffect(() => {
     if (location.pathname !== '/') return;
 
-    const sectionDomIds = ['hero', 'about', 'skills', 'projects', 'experience', 'education', 'certifications', 'patents', 'honors', 'scores', 'contact'];
+    const sectionDomIds = ['hero', 'about', 'skills', 'projects', 'experience', 'education', 'certifications', 'patents', 'honors', 'scores', 'scholarship', 'contact'];
     
     const observerOptions = {
       root: null,
