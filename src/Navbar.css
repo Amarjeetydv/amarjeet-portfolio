@@ -248,6 +248,7 @@
   width: 80%;
   max-width: 300px;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--surface-color);
   border-left: 1px solid var(--border-color);
   padding: 90px 2rem 2rem;
@@ -255,6 +256,8 @@
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.25);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .navbar-mobile-menu.open {
