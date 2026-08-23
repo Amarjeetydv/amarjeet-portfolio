@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import { FaGithub, FaLinkedin, FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
 import { SiLeetcode } from "react-icons/si";
@@ -12,7 +12,6 @@ const Layout = ({ sections, theme, toggleTheme }) => {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const isHomeRoute = location.pathname === '/';
 
   useEffect(() => {

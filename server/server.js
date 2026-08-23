@@ -290,19 +290,6 @@ const saveChatMessage = async (client, {
   return result.rows[0];
 };
 
-const getConversation = async (conversationId) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(
-      'SELECT id, visitor_name, visitor_email, created_at FROM conversations WHERE id = $1',
-      [conversationId]
-    );
-    return result.rows[0] || null;
-  } finally {
-    if (client) client.release();
-  }
-};
 
 const handleFileUpload = async (file) => {
   if (!file) return { attachmentName: null, attachmentUrl: null };

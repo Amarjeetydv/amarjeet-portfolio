@@ -329,7 +329,7 @@ const Contact = () => {
     }
   }, [conversationId, fetchConversationsList, fetchMessages, isSyncing, navigate]);
 
-  const handleRetryMessage = async (tempId) => {
+  const handleRetryMessage = async () => {
     if (!navigator.onLine) {
       setStatus({ type: 'error', message: 'Still offline. Please check your connection.' });
       return;
@@ -442,8 +442,6 @@ const Contact = () => {
       hasInitializedFirstUnread.current = true;
     }
   }, [messages]);
-
-  const currentUnreadCount = messages.filter((m) => m.sender === 'admin' && !m.read_at).length;
 
   const markAsRead = useCallback(async (id) => {
     if (id.startsWith('local-') || !navigator.onLine) return;

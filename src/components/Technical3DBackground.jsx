@@ -39,7 +39,7 @@ const Technical3DBackground = ({ theme }) => {
     let nodeGeometry, nodeMaterial, nodeTexture, nodePoints;
     let lineMaterial, lineSegments;
     let packetGeometry, packetMaterial, packetPoints;
-    let handleResize, handleMouseMove, handleTouchMove, handleScroll, handleVisibilityChange;
+    let handleResize, handleMouseMove, handleTouchMove, handleScroll;
     let cleanupFn;
 
     try {
