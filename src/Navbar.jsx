@@ -37,7 +37,11 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
     };
 
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 5000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchUnreadCount();
+      }
+    }, 60000);
 
     const handleChatRead = () => {
       setUnreadCount(0);

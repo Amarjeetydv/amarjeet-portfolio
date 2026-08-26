@@ -65,6 +65,9 @@ if (connectionString && connectionString.includes('sslmode=')) {
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 5000,
+  connectionTimeoutMillis: 2000,
 });
 
 async function initDb() {

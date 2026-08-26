@@ -382,10 +382,10 @@ const Contact = () => {
     if (mode !== 'chat' || !conversationId || conversationId.startsWith('local-')) return;
 
     const poll = setInterval(() => {
-      if (navigator.onLine) {
+      if (navigator.onLine && document.visibilityState === 'visible') {
         fetchMessages(conversationId);
       }
-    }, 4000);
+    }, 10000);
 
     return () => clearInterval(poll);
   }, [mode, conversationId, fetchMessages]);
