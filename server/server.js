@@ -172,6 +172,12 @@ async function initDb() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at DESC);
     `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_conv_id_id ON chat_messages(conversation_id, id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_unread ON chat_messages(conversation_id, sender, read_at) WHERE read_at IS NULL;
+    `);
 
     console.log('Database tables ensured and indexes created.');
   } catch (err) {
@@ -532,6 +538,15 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
   const validUserId = sanitizeUuid(req.query?.userId);
   const limit = Math.min(Math.max(parseInt(req.query?.limit, 10) || 100, 1), 200);
 
+  let afterId = null;
+  if (req.query?.afterId !== undefined && req.query?.afterId !== '') {
+    const parsedAfterId = Number(req.query.afterId);
+    if (!Number.isInteger(parsedAfterId) || parsedAfterId < 0) {
+      return res.status(400).json({ message: 'afterId must be a non-negative integer' });
+    }
+    afterId = parsedAfterId;
+  }
+
   if (!validConversationId) {
     return res.status(400).json({ message: 'A valid conversationId UUID is required' });
   }
@@ -556,23 +571,38 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
       return res.status(403).json({ message: 'Access denied: Conversation belongs to another user' });
     }
 
-    const messages = await client.query(
-      `SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
-       FROM (
-         SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
+    let messages;
+    if (afterId !== null && afterId > 0) {
+      // Incremental poll: fetch only messages newer than the last known message ID
+      messages = await client.query(
+        `SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
          FROM chat_messages
-         WHERE conversation_id = $1
-         ORDER BY created_at DESC
-         LIMIT $2
-       ) sub
-       ORDER BY created_at ASC`,
-      [validConversationId, limit]
-    );
+         WHERE conversation_id = $1 AND id > $2
+         ORDER BY id ASC
+         LIMIT $3`,
+        [validConversationId, afterId, limit]
+      );
+    } else {
+      // Initial load: fetch latest messages in ascending order
+      messages = await client.query(
+        `SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
+         FROM (
+           SELECT id, sender, message_text, attachment_name, attachment_url, created_at, read_at
+           FROM chat_messages
+           WHERE conversation_id = $1
+           ORDER BY created_at DESC
+           LIMIT $2
+         ) sub
+         ORDER BY created_at ASC`,
+        [validConversationId, limit]
+      );
+    }
 
     res.json({
       conversationId: validConversationId,
       visitorName: conversation.rows[0].visitor_name,
       messages: messages.rows,
+      isIncremental: Boolean(afterId && afterId > 0),
     });
   } catch (error) {
     console.error('Failed to fetch chat messages:', error.message || error);

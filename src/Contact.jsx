@@ -28,6 +28,14 @@ import {
 } from './utils/indexedDb';
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
+const POLL_INTERVAL_MS = 30000; // 30 seconds
+const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
+
+const chatLog = (message, ...args) => {
+  if (import.meta.env.DEV) {
+    console.log(`[Chat] ${message}`, ...args);
+  }
+};
 
 const generateUuidV4 = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -69,7 +77,8 @@ const Contact = () => {
   const [isSending, setIsSending] = useState(false);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isSyncing, setIsSyncing] = useState(false);
+  // syncState: 'idle' | 'syncing' | 'synced' | 'error' | 'offline'
+  const [syncState, setSyncState] = useState(navigator.onLine ? 'idle' : 'offline');
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -77,6 +86,14 @@ const Contact = () => {
 
   const currentActiveIdRef = useRef(null);
   const lastUserActivityRef = useRef(Date.now());
+  const isSyncingRef = useRef(false);
+  const syncErrorCountRef = useRef(0);
+  const isFetchingMessagesRef = useRef(false);
+  const pollTimerRef = useRef(null);
+  const syncedTimerRef = useRef(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   const chatFileInputRef = useRef(null);
   const formFileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -128,9 +145,10 @@ const Contact = () => {
     }
   }, []);
 
-  const fetchMessages = useCallback(async (id) => {
+  const fetchMessages = useCallback(async (id, options = {}) => {
+    const { incremental = false, isBackground = false } = options;
     const uid = getUserId();
-    
+
     // Local offline temporary conversation loading
     if (id.startsWith('local-')) {
       const cached = await getCachedMessages(id);
@@ -141,11 +159,35 @@ const Contact = () => {
       return true;
     }
 
+    if (isFetchingMessagesRef.current) {
+      chatLog('Fetch skipped — request already in-flight');
+      return false;
+    }
+
+    isFetchingMessagesRef.current = true;
+    if (!incremental && !isBackground) {
+      setSyncState('syncing');
+    }
+
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/chat/${id}/messages?userId=${uid}`);
+      let url = `${getApiBaseUrl()}/api/chat/${id}/messages?userId=${uid}`;
+      if (incremental) {
+        const highestId = messagesRef.current.reduce((max, m) => {
+          const num = typeof m.id === 'number' ? m.id : parseInt(m.id, 10);
+          return !isNaN(num) && num > max ? num : max;
+        }, 0);
+        if (highestId > 0) {
+          url += `&afterId=${highestId}`;
+        }
+      }
+
+      const res = await fetch(url);
       if (!res.ok) {
         if (res.status === 403) {
           setStatus({ type: 'error', message: 'Access denied: Conversation belongs to another user.' });
+        }
+        if (!isBackground) {
+          setSyncState('error');
         }
         return false;
       }
@@ -154,22 +196,55 @@ const Contact = () => {
 
       // Race condition protection: Check if the loaded ID matches the currently active ID
       if (currentActiveIdRef.current !== id) {
-        console.log(`Discarding responses for obsolete conversation ID: ${id}`);
+        chatLog(`Discarding response for obsolete conversation ID: ${id}`);
         return false;
       }
 
-      setVisitorName(data.visitorName || '');
-      setMessages((prev) => {
-        const next = data.messages || [];
-        return messagesAreEqual(prev, next) ? prev : next;
-      });
-      
-      // Save loaded messages to IndexedDB cache
-      await saveCachedMessages(id, data.messages || [], data.visitorName || '');
+      if (data.visitorName) {
+        setVisitorName(data.visitorName);
+      }
+
+      const incoming = data.messages || [];
+
+      if (incremental && data.isIncremental) {
+        if (incoming.length > 0) {
+          chatLog(`Received ${incoming.length} new incremental message(s)`);
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newUnique = incoming.filter((m) => !existingIds.has(m.id));
+            if (newUnique.length === 0) return prev;
+            const merged = [...prev, ...newUnique];
+            saveCachedMessages(id, merged, data.visitorName || '');
+            return merged;
+          });
+          if (!isBackground) {
+            setSyncState('synced');
+            if (syncedTimerRef.current) clearTimeout(syncedTimerRef.current);
+            syncedTimerRef.current = setTimeout(() => setSyncState('idle'), 2500);
+          }
+        } else {
+          chatLog('Incremental sync: No new messages');
+        }
+      } else {
+        setMessages((prev) => {
+          if (messagesAreEqual(prev, incoming)) return prev;
+          return incoming;
+        });
+        await saveCachedMessages(id, incoming, data.visitorName || '');
+        if (!isBackground) {
+          setSyncState('idle');
+        }
+      }
+
       return true;
     } catch (error) {
-      console.error('Failed to fetch messages:', error);
+      chatLog('Failed to fetch messages:', error.message);
+      if (!isBackground) {
+        setSyncState('error');
+      }
       return false;
+    } finally {
+      isFetchingMessagesRef.current = false;
     }
   }, []);
 
@@ -179,8 +254,9 @@ const Contact = () => {
       setConversationId(id);
       localStorage.setItem(CHAT_STORAGE_KEY, id);
       setMode('chat');
+      lastUserActivityRef.current = Date.now();
 
-      // 1. Load from IndexedDB cache immediately (offline-friendly)
+      // 1. Load from IndexedDB cache immediately (offline-friendly, zero layout shift)
       const cached = await getCachedMessages(id);
       let cachedList = [];
       if (cached) {
@@ -191,8 +267,10 @@ const Contact = () => {
 
       // 2. Fetch fresh data from API if online
       if (navigator.onLine && !id.startsWith('local-')) {
-        setMessagesLoading(true);
-        await fetchMessages(id);
+        if (cachedList.length === 0) {
+          setMessagesLoading(true);
+        }
+        await fetchMessages(id, { incremental: false });
         setMessagesLoading(false);
       }
 
@@ -222,14 +300,20 @@ const Contact = () => {
 
   // Background offline queue synchronizer
   const syncOfflineQueue = useCallback(async () => {
-    if (isSyncing || !navigator.onLine) return;
-    setIsSyncing(true);
-    setStatus({ type: 'info', message: 'Synchronizing offline messages...' });
+    if (isSyncingRef.current || !navigator.onLine) {
+      if (!navigator.onLine) setSyncState('offline');
+      return;
+    }
+
+    isSyncingRef.current = true;
+    setSyncState('syncing');
+    chatLog('Starting offline queue synchronization...');
 
     try {
       const queue = await getOfflineQueue();
       if (queue.length === 0) {
-        setIsSyncing(false);
+        isSyncingRef.current = false;
+        setSyncState('idle');
         return;
       }
 
@@ -261,38 +345,27 @@ const Contact = () => {
           formData.append('clientMessageId', item.idempotencyId);
           formData.append('conversationId', item.conversationId.replace('local-', ''));
 
-          try {
-            const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
-              method: 'POST',
-              body: formData,
-            });
+          const res = await fetch(`${getApiBaseUrl()}/api/contact`, {
+            method: 'POST',
+            body: formData,
+          });
 
-            if (res.ok) {
-              const data = await res.json();
-              const realId = data.conversationId;
-              tempToRealConvId[item.conversationId] = realId;
+          if (res.ok) {
+            const data = await res.json();
+            const realId = data.conversationId;
+            tempToRealConvId[item.conversationId] = realId;
 
-              await removeOfflineMessage(item.tempId);
-              await deleteCachedMessages(item.conversationId);
+            await removeOfflineMessage(item.tempId);
+            await deleteCachedMessages(item.conversationId);
 
-              if (currentActiveIdRef.current === item.conversationId) {
-                currentActiveIdRef.current = realId;
-                setConversationId(realId);
-                localStorage.setItem(CHAT_STORAGE_KEY, realId);
-                navigate(`/contact/chat/${realId}`, { replace: true });
-              }
-            } else {
-              throw new Error('Sync contact form rejected by server');
+            if (currentActiveIdRef.current === item.conversationId) {
+              currentActiveIdRef.current = realId;
+              setConversationId(realId);
+              localStorage.setItem(CHAT_STORAGE_KEY, realId);
+              navigate(`/contact/chat/${realId}`, { replace: true });
             }
-          } catch (e) {
-            console.error('Failed to sync offline new conversation:', e);
-            item.status = 'failed';
-            item.retryCount = (item.retryCount || 0) + 1;
-            await updateOfflineMessage(item);
-            setMessages((prev) =>
-              prev.map((m) => (m.id === item.tempId ? { ...m, status: 'failed' } : m))
-            );
-            throw e; // Break loop to retry later
+          } else {
+            throw new Error('Sync contact form rejected by server');
           }
         }
         // Case B: Queued follow-up message
@@ -302,48 +375,51 @@ const Contact = () => {
           formData.append('userId', getUserId());
           formData.append('clientMessageId', item.idempotencyId);
 
-          try {
-            const res = await fetch(`${getApiBaseUrl()}/api/chat/${convId}/messages`, {
-              method: 'POST',
-              body: formData,
-            });
+          const res = await fetch(`${getApiBaseUrl()}/api/chat/${convId}/messages`, {
+            method: 'POST',
+            body: formData,
+          });
 
-            if (res.ok) {
-              const data = await res.json();
-              await removeOfflineMessage(item.tempId);
+          if (res.ok) {
+            const data = await res.json();
+            await removeOfflineMessage(item.tempId);
 
-              // Update UI: change status pending/sending -> sent
-              setMessages((prev) =>
-                prev.map((msg) => (msg.id === item.tempId ? data.chatMessage : msg))
-              );
-            } else {
-              throw new Error('Sync follow-up message rejected by server');
-            }
-          } catch (e) {
-            console.error('Failed to sync offline message:', e);
-            item.status = 'failed';
-            item.retryCount = (item.retryCount || 0) + 1;
-            await updateOfflineMessage(item);
             setMessages((prev) =>
-              prev.map((m) => (m.id === item.tempId ? { ...m, status: 'failed' } : m))
+              prev.map((msg) => (msg.id === item.tempId ? data.chatMessage : msg))
             );
-            throw e; // Break loop
+          } else {
+            throw new Error('Sync follow-up message rejected by server');
           }
         }
       }
 
-      setStatus({ type: 'success', message: 'Synchronization completed!' });
+      syncErrorCountRef.current = 0;
+      setSyncState('synced');
+      if (syncedTimerRef.current) clearTimeout(syncedTimerRef.current);
+      syncedTimerRef.current = setTimeout(() => setSyncState('idle'), 2500);
+
       await fetchConversationsList();
       if (currentActiveIdRef.current) {
-        await fetchMessages(currentActiveIdRef.current);
+        await fetchMessages(currentActiveIdRef.current, { incremental: true });
       }
     } catch (error) {
-      console.error('Synchronization loop failed:', error);
-      setStatus({ type: 'error', message: 'Sync paused. Some messages failed.' });
+      chatLog('Synchronization loop failed:', error.message);
+      syncErrorCountRef.current += 1;
+      setSyncState('error');
+
+      // Exponential backoff retry (max 4 attempts: 5s, 15s, 30s, 60s)
+      if (syncErrorCountRef.current <= 4 && navigator.onLine) {
+        const delays = [5000, 15000, 30000, 60000];
+        const nextDelay = delays[syncErrorCountRef.current - 1] || 60000;
+        chatLog(`Scheduling sync retry in ${nextDelay / 1000}s (attempt ${syncErrorCountRef.current}/4)`);
+        setTimeout(() => {
+          syncOfflineQueue();
+        }, nextDelay);
+      }
     } finally {
-      setIsSyncing(false);
+      isSyncingRef.current = false;
     }
-  }, [fetchConversationsList, fetchMessages, isSyncing, navigate]);
+  }, [fetchConversationsList, fetchMessages, navigate]);
 
   const handleRetryMessage = async () => {
     if (!navigator.onLine) {
@@ -357,16 +433,17 @@ const Contact = () => {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
+      setSyncState('idle');
       syncOfflineQueue();
     };
     const handleOffline = () => {
       setIsOnline(false);
+      setSyncState('offline');
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Run sync on load if online
     if (navigator.onLine) {
       syncOfflineQueue();
     }
@@ -393,63 +470,81 @@ const Contact = () => {
     initChat();
   }, [routeConversationId, fetchConversationsList, loadActiveChat]);
 
-  // Adaptive polling for new admin replies (with backoff to allow Neon scale-to-zero)
+  // Strict 30-second recursive polling with 5-minute inactivity cut-off & visibility pause
   useEffect(() => {
-    if (mode !== 'chat' || !conversationId || conversationId.startsWith('local-')) return;
+    if (mode !== 'chat' || !conversationId || conversationId.startsWith('local-')) {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      return;
+    }
 
-    let timerId = null;
-    let isCancelled = false;
+    let isMounted = true;
 
-    const poll = async () => {
-      if (isCancelled) return;
+    const scheduleNext = (delayMs = POLL_INTERVAL_MS) => {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      if (!isMounted) return;
+      pollTimerRef.current = setTimeout(runPoll, delayMs);
+    };
 
-      if (navigator.onLine && document.visibilityState === 'visible') {
-        const idleDuration = Date.now() - lastUserActivityRef.current;
+    const runPoll = async () => {
+      if (!isMounted) return;
 
-        // Stop polling after 10 minutes of inactivity to let Neon auto-suspend
-        if (idleDuration > 10 * 60 * 1000) {
-          return;
-        }
+      if (document.visibilityState !== 'visible') {
+        chatLog('Poll skipped — tab is hidden');
+        return;
+      }
 
-        await fetchMessages(conversationId);
+      const elapsed = Date.now() - lastUserActivityRef.current;
+      if (elapsed > INACTIVITY_LIMIT_MS) {
+        chatLog('Poll stopped — user inactive for > 5 minutes');
+        return;
+      }
 
-        // Adaptive intervals: Active (<2m) = 8s, Idle (2-5m) = 25s, Long Idle (5-10m) = 60s
-        let nextInterval = 8000;
-        if (idleDuration > 5 * 60 * 1000) {
-          nextInterval = 60000;
-        } else if (idleDuration > 2 * 60 * 1000) {
-          nextInterval = 25000;
-        }
+      if (navigator.onLine && currentActiveIdRef.current === conversationId) {
+        await fetchMessages(conversationId, { incremental: true, isBackground: true });
+      }
 
-        if (!isCancelled) {
-          timerId = setTimeout(poll, nextInterval);
-        }
-      } else {
-        if (!isCancelled) {
-          timerId = setTimeout(poll, 15000);
-        }
+      if (isMounted) {
+        scheduleNext(POLL_INTERVAL_MS);
       }
     };
 
-    timerId = setTimeout(poll, 8000);
+    scheduleNext(POLL_INTERVAL_MS);
 
-    const onUserActivity = () => {
+    const onActivity = () => {
+      const wasInactive = Date.now() - lastUserActivityRef.current > INACTIVITY_LIMIT_MS;
       lastUserActivityRef.current = Date.now();
-      if (!timerId && !isCancelled) {
-        timerId = setTimeout(poll, 1000);
+
+      if (wasInactive && document.visibilityState === 'visible') {
+        chatLog('User became active again — triggering immediate sync');
+        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+        runPoll();
       }
     };
 
-    window.addEventListener('keydown', onUserActivity, { passive: true });
-    window.addEventListener('click', onUserActivity, { passive: true });
-    window.addEventListener('visibilitychange', onUserActivity);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        chatLog('Tab became visible — performing one sync and resuming polling');
+        lastUserActivityRef.current = Date.now();
+        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+        runPoll();
+      } else {
+        chatLog('Tab hidden — stopping poll timer immediately');
+        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      }
+    };
+
+    window.addEventListener('keydown', onActivity, { passive: true });
+    window.addEventListener('click', onActivity, { passive: true });
+    window.addEventListener('touchstart', onActivity, { passive: true });
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      isCancelled = true;
-      if (timerId) clearTimeout(timerId);
-      window.removeEventListener('keydown', onUserActivity);
-      window.removeEventListener('click', onUserActivity);
-      window.removeEventListener('visibilitychange', onUserActivity);
+      isMounted = false;
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('click', onActivity);
+      window.removeEventListener('touchstart', onActivity);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [mode, conversationId, fetchMessages]);
 
@@ -1121,7 +1216,15 @@ const Contact = () => {
               <strong>Chat with Amarjeet</strong>
               {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
               {!isOnline && <span className="chat-status-indicator offline">Offline</span>}
-              {isSyncing && <span className="chat-status-indicator syncing">Syncing...</span>}
+              {isOnline && syncState === 'syncing' && (
+                <span className="chat-status-indicator syncing">Syncing...</span>
+              )}
+              {isOnline && syncState === 'synced' && (
+                <span className="chat-status-indicator synced">✓ Synced</span>
+              )}
+              {isOnline && syncState === 'error' && (
+                <span className="chat-status-indicator error">⚠ Unable to sync</span>
+              )}
             </div>
             <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
               New conversation
@@ -1186,7 +1289,7 @@ const Contact = () => {
                 aria-live="polite"
                 aria-relevant="additions"
               >
-                {messagesLoading && (
+                {messagesLoading && messages.length === 0 && (
                   <div className="chat-loading">
                     <span className="spinner"></span> Loading messages...
                   </div>
@@ -1410,6 +1513,19 @@ const Contact = () => {
           color: #3b82f6;
           border: 1px solid rgba(59, 130, 246, 0.2);
           animation: pulse 1.5s infinite;
+        }
+
+        .chat-status-indicator.synced {
+          background-color: rgba(34, 197, 94, 0.1);
+          color: #22c55e;
+          border: 1px solid rgba(34, 197, 94, 0.2);
+          transition: all 0.3s ease;
+        }
+
+        .chat-status-indicator.error {
+          background-color: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         @keyframes pulse {
