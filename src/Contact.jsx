@@ -29,12 +29,27 @@ import {
 
 const CHAT_STORAGE_KEY = 'portfolio_chat_conversation_id';
 
+const generateUuidV4 = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // Fallback if randomUUID fails
+    }
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const getUserId = () => {
   let storedUserId = localStorage.getItem('portfolio_chat_user_id');
-  if (!storedUserId) {
-    storedUserId = self.crypto?.randomUUID
-      ? self.crypto.randomUUID()
-      : 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  if (!storedUserId || !UUID_REGEX.test(storedUserId.trim())) {
+    storedUserId = generateUuidV4();
     localStorage.setItem('portfolio_chat_user_id', storedUserId);
   }
   return storedUserId;
@@ -61,6 +76,7 @@ const Contact = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const currentActiveIdRef = useRef(null);
+  const lastUserActivityRef = useRef(Date.now());
   const chatFileInputRef = useRef(null);
   const formFileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -327,7 +343,7 @@ const Contact = () => {
     } finally {
       setIsSyncing(false);
     }
-  }, [conversationId, fetchConversationsList, fetchMessages, isSyncing, navigate]);
+  }, [fetchConversationsList, fetchMessages, isSyncing, navigate]);
 
   const handleRetryMessage = async () => {
     if (!navigator.onLine) {
@@ -377,17 +393,64 @@ const Contact = () => {
     initChat();
   }, [routeConversationId, fetchConversationsList, loadActiveChat]);
 
-  // Polling for new admin replies
+  // Adaptive polling for new admin replies (with backoff to allow Neon scale-to-zero)
   useEffect(() => {
     if (mode !== 'chat' || !conversationId || conversationId.startsWith('local-')) return;
 
-    const poll = setInterval(() => {
-      if (navigator.onLine && document.visibilityState === 'visible') {
-        fetchMessages(conversationId);
-      }
-    }, 10000);
+    let timerId = null;
+    let isCancelled = false;
 
-    return () => clearInterval(poll);
+    const poll = async () => {
+      if (isCancelled) return;
+
+      if (navigator.onLine && document.visibilityState === 'visible') {
+        const idleDuration = Date.now() - lastUserActivityRef.current;
+
+        // Stop polling after 10 minutes of inactivity to let Neon auto-suspend
+        if (idleDuration > 10 * 60 * 1000) {
+          return;
+        }
+
+        await fetchMessages(conversationId);
+
+        // Adaptive intervals: Active (<2m) = 8s, Idle (2-5m) = 25s, Long Idle (5-10m) = 60s
+        let nextInterval = 8000;
+        if (idleDuration > 5 * 60 * 1000) {
+          nextInterval = 60000;
+        } else if (idleDuration > 2 * 60 * 1000) {
+          nextInterval = 25000;
+        }
+
+        if (!isCancelled) {
+          timerId = setTimeout(poll, nextInterval);
+        }
+      } else {
+        if (!isCancelled) {
+          timerId = setTimeout(poll, 15000);
+        }
+      }
+    };
+
+    timerId = setTimeout(poll, 8000);
+
+    const onUserActivity = () => {
+      lastUserActivityRef.current = Date.now();
+      if (!timerId && !isCancelled) {
+        timerId = setTimeout(poll, 1000);
+      }
+    };
+
+    window.addEventListener('keydown', onUserActivity, { passive: true });
+    window.addEventListener('click', onUserActivity, { passive: true });
+    window.addEventListener('visibilitychange', onUserActivity);
+
+    return () => {
+      isCancelled = true;
+      if (timerId) clearTimeout(timerId);
+      window.removeEventListener('keydown', onUserActivity);
+      window.removeEventListener('click', onUserActivity);
+      window.removeEventListener('visibilitychange', onUserActivity);
+    };
   }, [mode, conversationId, fetchMessages]);
 
   useEffect(() => {

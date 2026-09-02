@@ -19,12 +19,19 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    let lastFetched = 0;
+    const fetchUnreadCount = async (force = false) => {
       const storedId = localStorage.getItem('portfolio_chat_conversation_id');
-      if (!storedId) {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!storedId || !UUID_REGEX.test(storedId.trim())) {
         setUnreadCount(0);
         return;
       }
+      const now = Date.now();
+      if (!force && now - lastFetched < 120000) {
+        return;
+      }
+      lastFetched = now;
       try {
         const res = await fetch(`${getApiBaseUrl()}/api/chat/${storedId}/unread-count`);
         if (res.ok) {
@@ -36,21 +43,25 @@ const Navbar = ({ sections, theme, toggleTheme }) => {
       }
     };
 
-    fetchUnreadCount();
-    const interval = setInterval(() => {
+    fetchUnreadCount(true);
+
+    const handleFocus = () => {
       if (document.visibilityState === 'visible') {
-        fetchUnreadCount();
+        fetchUnreadCount(false);
       }
-    }, 60000);
+    };
 
     const handleChatRead = () => {
       setUnreadCount(0);
     };
 
+    window.addEventListener('visibilitychange', handleFocus);
+    window.addEventListener('focus', handleFocus);
     window.addEventListener('portfolio_chat_read', handleChatRead);
 
     return () => {
-      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleFocus);
+      window.removeEventListener('focus', handleFocus);
       window.removeEventListener('portfolio_chat_read', handleChatRead);
     };
   }, []);

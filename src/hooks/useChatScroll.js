@@ -172,7 +172,7 @@ export function useChatScroll(messages, options = {}) {
       // If user is scrolled up and a message arrives from another user, increment unread count
       setUnreadCount((count) => count + incomingFromOthers.length);
     }
-  }, [messages]);
+  }, [messages, unreadSeparatorRef]);
 
   return {
     containerRef,

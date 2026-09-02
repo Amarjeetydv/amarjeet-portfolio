@@ -66,9 +66,20 @@ const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
   max: 10,
-  idleTimeoutMillis: 5000,
-  connectionTimeoutMillis: 2000,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
 });
+
+pool.on('error', (err) => {
+  console.error('Unexpected idle client error on PostgreSQL pool:', err.message);
+});
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isValidUuid = (val) => typeof val === 'string' && UUID_REGEX.test(val.trim());
+const sanitizeUuid = (val) => (isValidUuid(val) ? val.trim() : null);
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isValidEmail = (val) => typeof val === 'string' && val.trim().length <= 255 && EMAIL_REGEX.test(val.trim());
 
 async function initDb() {
   let client;
@@ -363,12 +374,36 @@ const uploadTelegramMedia = async (media) => {
 
 app.post('/api/contact', upload.single('attachment'), async (req, res) => {
   console.log('--- New Contact Form Submission ---');
-  const { name, email, message, userId, clientMessageId } = req.body;
-  const conversationId = req.body.conversationId || crypto.randomUUID();
+  const { name, email, message, userId, clientMessageId } = req.body || {};
 
-  if (!name?.trim() || !email?.trim() || !message?.trim()) {
-    return res.status(400).json({ message: 'Name, email, and message are required.' });
+  const trimmedName = typeof name === 'string' ? name.trim() : '';
+  const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+  const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+
+  if (!trimmedName) {
+    return res.status(400).json({ message: 'Name is required.' });
   }
+  if (trimmedName.length > 255) {
+    return res.status(400).json({ message: 'Name must not exceed 255 characters.' });
+  }
+
+  if (!trimmedEmail) {
+    return res.status(400).json({ message: 'Email is required.' });
+  }
+  if (!isValidEmail(trimmedEmail)) {
+    return res.status(400).json({ message: 'Please provide a valid email address.' });
+  }
+
+  if (!trimmedMessage) {
+    return res.status(400).json({ message: 'Message is required.' });
+  }
+  if (trimmedMessage.length > 5000) {
+    return res.status(400).json({ message: 'Message must not exceed 5000 characters.' });
+  }
+
+  const validUserId = sanitizeUuid(userId);
+  const validConversationId = sanitizeUuid(req.body?.conversationId) || crypto.randomUUID();
+  const validClientMessageId = sanitizeUuid(clientMessageId);
 
   let client;
 
@@ -376,10 +411,10 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
     client = await pool.connect();
 
     // Idempotency check: prevent duplicate conversation start messages
-    if (clientMessageId) {
+    if (validClientMessageId) {
       const existing = await client.query(
         'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
-        [clientMessageId]
+        [validClientMessageId]
       );
       if (existing.rowCount > 0) {
         return res.status(200).json({
@@ -396,45 +431,51 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
 
     await client.query(
       'INSERT INTO conversations (id, visitor_name, visitor_email, user_id, updated_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)',
-      [conversationId, name.trim(), email.trim(), userId || null]
+      [validConversationId, trimmedName, trimmedEmail, validUserId]
     );
 
     const savedMessage = await saveChatMessage(client, {
-      conversationId,
+      conversationId: validConversationId,
       sender: 'visitor',
-      messageText: message.trim(),
+      messageText: trimmedMessage,
       attachmentName,
       attachmentUrl,
-      clientMessageId,
+      clientMessageId: validClientMessageId,
     });
 
     await client.query(
       'INSERT INTO contact_messages (name, email, message, attachment_name, attachment_url) VALUES ($1, $2, $3, $4, $5)',
-      [name.trim(), email.trim(), message.trim(), attachmentName, attachmentUrl]
+      [trimmedName, trimmedEmail, trimmedMessage, attachmentName, attachmentUrl]
     );
 
     await client.query('COMMIT');
 
     notifyNewVisitorMessage({
-      conversationId,
-      name: name.trim(),
-      email: email.trim(),
-      message: message.trim(),
+      conversationId: validConversationId,
+      name: trimmedName,
+      email: trimmedEmail,
+      message: trimmedMessage,
       attachmentUrl,
-    });
+    }).catch((err) => console.error('Background notification error:', err.message));
 
     res.status(200).json({
       message: 'Message received successfully',
-      conversationId,
+      conversationId: validConversationId,
       chatMessage: savedMessage,
     });
   } catch (error) {
-    if (client) await client.query('ROLLBACK');
-    if (error.code === '23505' && clientMessageId) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackErr) {
+        console.error('Failed to rollback transaction:', rollbackErr.message);
+      }
+    }
+    if (error.code === '23505' && validClientMessageId) {
       try {
         const existing = await pool.query(
           'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
-          [clientMessageId]
+          [validClientMessageId]
         );
         if (existing.rowCount > 0) {
           return res.status(200).json({
@@ -444,26 +485,26 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
           });
         }
       } catch (e) {
-        console.error('Failed to resolve parallel insert:', e);
+        console.error('Failed to resolve parallel insert:', e.message);
       }
     }
     if (error.http_code) {
-      console.error('Cloudinary Error:', error);
+      console.error('Cloudinary Error:', error.message);
       res.status(error.http_code || 500).json({ message: `Cloudinary error: ${error.message}` });
     } else {
-      console.error('Database/Server Error:', error);
-      res.status(500).json({ message: 'Failed to save message' });
+      console.error('Database/Server Error:', error.message || error);
+      res.status(500).json({ message: 'Failed to save message. Please try again later.' });
     }
   } finally {
     if (client) client.release();
   }
 });
 
-// New endpoint: fetch all conversations for a user
+// Endpoint: fetch all conversations for a user
 app.get('/api/conversations', async (req, res) => {
-  const { userId } = req.query;
-  if (!userId) {
-    return res.status(400).json({ message: 'userId is required' });
+  const validUserId = sanitizeUuid(req.query?.userId);
+  if (!validUserId) {
+    return res.status(400).json({ message: 'A valid userId UUID is required' });
   }
 
   let client;
@@ -475,11 +516,11 @@ app.get('/api/conversations', async (req, res) => {
        FROM conversations c
        WHERE c.user_id = $1
        ORDER BY c.updated_at DESC`,
-      [userId]
+      [validUserId]
     );
     res.json({ conversations: result.rows });
   } catch (error) {
-    console.error('Failed to fetch user conversations:', error);
+    console.error('Failed to fetch user conversations:', error.message || error);
     res.status(500).json({ message: 'Failed to fetch conversations' });
   } finally {
     if (client) client.release();
@@ -487,12 +528,15 @@ app.get('/api/conversations', async (req, res) => {
 });
 
 app.get('/api/chat/:conversationId/messages', async (req, res) => {
-  const { conversationId } = req.params;
-  const { userId } = req.query;
-  const limit = parseInt(req.query.limit, 10) || 100;
+  const validConversationId = sanitizeUuid(req.params?.conversationId);
+  const validUserId = sanitizeUuid(req.query?.userId);
+  const limit = Math.min(Math.max(parseInt(req.query?.limit, 10) || 100, 1), 200);
 
-  if (!userId) {
-    return res.status(400).json({ message: 'userId is required' });
+  if (!validConversationId) {
+    return res.status(400).json({ message: 'A valid conversationId UUID is required' });
+  }
+  if (!validUserId) {
+    return res.status(400).json({ message: 'A valid userId UUID is required' });
   }
 
   let client;
@@ -500,7 +544,7 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
     client = await pool.connect();
     const conversation = await client.query(
       'SELECT id, visitor_name, user_id, created_at FROM conversations WHERE id = $1',
-      [conversationId]
+      [validConversationId]
     );
 
     if (conversation.rowCount === 0) {
@@ -508,7 +552,7 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
     }
 
     const dbUserId = conversation.rows[0].user_id;
-    if (dbUserId && dbUserId !== userId) {
+    if (dbUserId && dbUserId !== validUserId) {
       return res.status(403).json({ message: 'Access denied: Conversation belongs to another user' });
     }
 
@@ -522,16 +566,16 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
          LIMIT $2
        ) sub
        ORDER BY created_at ASC`,
-      [conversationId, limit]
+      [validConversationId, limit]
     );
 
     res.json({
-      conversationId,
+      conversationId: validConversationId,
       visitorName: conversation.rows[0].visitor_name,
       messages: messages.rows,
     });
   } catch (error) {
-    console.error('Failed to fetch chat messages:', error);
+    console.error('Failed to fetch chat messages:', error.message || error);
     res.status(500).json({ message: 'Failed to fetch messages' });
   } finally {
     if (client) client.release();
@@ -539,14 +583,24 @@ app.get('/api/chat/:conversationId/messages', async (req, res) => {
 });
 
 app.post('/api/chat/:conversationId/messages', upload.single('attachment'), async (req, res) => {
-  const { conversationId } = req.params;
-  const { message, userId, clientMessageId } = req.body;
+  const validConversationId = sanitizeUuid(req.params?.conversationId);
+  const { message, userId, clientMessageId } = req.body || {};
+  const validUserId = sanitizeUuid(userId);
+  const validClientMessageId = sanitizeUuid(clientMessageId);
 
-  if (!message?.trim()) {
-    return res.status(400).json({ message: 'Message is required.' });
+  const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+
+  if (!validConversationId) {
+    return res.status(400).json({ message: 'A valid conversationId UUID is required.' });
   }
-  if (!userId) {
-    return res.status(400).json({ message: 'userId is required.' });
+  if (!trimmedMessage && !req.file) {
+    return res.status(400).json({ message: 'Message or attachment is required.' });
+  }
+  if (trimmedMessage.length > 5000) {
+    return res.status(400).json({ message: 'Message must not exceed 5000 characters.' });
+  }
+  if (!validUserId) {
+    return res.status(400).json({ message: 'A valid userId UUID is required.' });
   }
 
   let client;
@@ -554,10 +608,10 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
     client = await pool.connect();
 
     // Idempotency check: prevent duplicate follow-up messages
-    if (clientMessageId) {
+    if (validClientMessageId) {
       const existing = await client.query(
         'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
-        [clientMessageId]
+        [validClientMessageId]
       );
       if (existing.rowCount > 0) {
         return res.status(200).json({ chatMessage: existing.rows[0] });
@@ -566,7 +620,7 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
 
     const conversation = await client.query(
       'SELECT id, visitor_name, visitor_email, user_id FROM conversations WHERE id = $1',
-      [conversationId]
+      [validConversationId]
     );
 
     if (conversation.rowCount === 0) {
@@ -574,7 +628,7 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
     }
 
     const dbUserId = conversation.rows[0].user_id;
-    if (dbUserId && dbUserId !== userId) {
+    if (dbUserId && dbUserId !== validUserId) {
       return res.status(403).json({ message: 'Access denied: Conversation belongs to another user' });
     }
 
@@ -583,50 +637,56 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
     await client.query('BEGIN');
 
     const savedMessage = await saveChatMessage(client, {
-      conversationId,
+      conversationId: validConversationId,
       sender: 'visitor',
-      messageText: message.trim(),
+      messageText: trimmedMessage || (attachmentName ? '(attachment)' : ''),
       attachmentName,
       attachmentUrl,
-      clientMessageId,
+      clientMessageId: validClientMessageId,
     });
 
     await client.query(
       'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
-      [conversationId]
+      [validConversationId]
     );
 
     await client.query('COMMIT');
 
     notifyNewVisitorMessage({
-      conversationId,
+      conversationId: validConversationId,
       name: conversation.rows[0].visitor_name,
       email: conversation.rows[0].visitor_email,
-      message: message.trim(),
+      message: trimmedMessage || '(attachment)',
       attachmentUrl,
       isFollowUp: true,
-    });
+    }).catch((err) => console.error('Background notification error:', err.message));
 
     res.status(200).json({ chatMessage: savedMessage });
   } catch (error) {
-    if (client) await client.query('ROLLBACK');
-    if (error.code === '23505' && clientMessageId) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackErr) {
+        console.error('Failed to rollback transaction:', rollbackErr.message);
+      }
+    }
+    if (error.code === '23505' && validClientMessageId) {
       try {
         const existing = await pool.query(
           'SELECT id, conversation_id, sender, message_text, attachment_name, attachment_url, created_at, client_message_id FROM chat_messages WHERE client_message_id = $1',
-          [clientMessageId]
+          [validClientMessageId]
         );
         if (existing.rowCount > 0) {
           return res.status(200).json({ chatMessage: existing.rows[0] });
         }
       } catch (e) {
-        console.error('Failed to resolve parallel follow-up:', e);
+        console.error('Failed to resolve parallel follow-up:', e.message);
       }
     }
     if (error.http_code) {
       res.status(error.http_code || 500).json({ message: `Cloudinary error: ${error.message}` });
     } else {
-      console.error('Failed to save follow-up message:', error);
+      console.error('Failed to save follow-up message:', error.message || error);
       res.status(500).json({ message: 'Failed to send message' });
     }
   } finally {
@@ -635,13 +695,17 @@ app.post('/api/chat/:conversationId/messages', upload.single('attachment'), asyn
 });
 
 app.get('/api/chat/:conversationId/unread-count', async (req, res) => {
-  const { conversationId } = req.params;
+  const validConversationId = sanitizeUuid(req.params?.conversationId);
+  if (!validConversationId) {
+    return res.status(400).json({ message: 'A valid conversationId UUID is required' });
+  }
+
   let client;
   try {
     client = await pool.connect();
     const conversation = await client.query(
       'SELECT id FROM conversations WHERE id = $1',
-      [conversationId]
+      [validConversationId]
     );
 
     if (conversation.rowCount === 0) {
@@ -652,14 +716,14 @@ app.get('/api/chat/:conversationId/unread-count', async (req, res) => {
       `SELECT COUNT(*)::int AS unread_count 
        FROM chat_messages 
        WHERE conversation_id = $1 AND sender = 'admin' AND read_at IS NULL`,
-      [conversationId]
+      [validConversationId]
     );
     res.json({
-      conversationId,
+      conversationId: validConversationId,
       unreadCount: result.rows[0]?.unread_count || 0,
     });
   } catch (error) {
-    console.error('Failed to fetch unread count:', error);
+    console.error('Failed to fetch unread count:', error.message || error);
     res.status(500).json({ message: 'Failed to fetch unread count' });
   } finally {
     if (client) client.release();
@@ -667,13 +731,17 @@ app.get('/api/chat/:conversationId/unread-count', async (req, res) => {
 });
 
 app.post('/api/chat/:conversationId/read', async (req, res) => {
-  const { conversationId } = req.params;
+  const validConversationId = sanitizeUuid(req.params?.conversationId);
+  if (!validConversationId) {
+    return res.status(400).json({ message: 'A valid conversationId UUID is required' });
+  }
+
   let client;
   try {
     client = await pool.connect();
     const conversation = await client.query(
       'SELECT id FROM conversations WHERE id = $1',
-      [conversationId]
+      [validConversationId]
     );
 
     if (conversation.rowCount === 0) {
@@ -685,15 +753,15 @@ app.post('/api/chat/:conversationId/read', async (req, res) => {
        SET read_at = CURRENT_TIMESTAMP 
        WHERE conversation_id = $1 AND sender = 'admin' AND read_at IS NULL
        RETURNING id`,
-      [conversationId]
+      [validConversationId]
     );
     res.json({
-      conversationId,
+      conversationId: validConversationId,
       success: true,
       markedReadCount: result.rowCount,
     });
   } catch (error) {
-    console.error('Failed to mark messages as read:', error);
+    console.error('Failed to mark messages as read:', error.message || error);
     res.status(500).json({ message: 'Failed to mark messages as read' });
   } finally {
     if (client) client.release();
