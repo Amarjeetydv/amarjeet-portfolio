@@ -83,6 +83,8 @@ const Contact = () => {
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // mobileView: 'chat' | 'list'
+  const [mobileView, setMobileView] = useState('chat');
 
   const currentActiveIdRef = useRef(null);
   const lastUserActivityRef = useRef(Date.now());
@@ -254,6 +256,7 @@ const Contact = () => {
       setConversationId(id);
       localStorage.setItem(CHAT_STORAGE_KEY, id);
       setMode('chat');
+      setMobileView('chat');
       lastUserActivityRef.current = Date.now();
 
       // 1. Load from IndexedDB cache immediately (offline-friendly, zero layout shift)
@@ -713,6 +716,7 @@ const Contact = () => {
     setVisitorName(name);
     setMessages([initialMessage]);
     setMode('chat');
+    setMobileView('chat');
     localStorage.setItem(CHAT_STORAGE_KEY, id);
     navigate(`/contact/chat/${id}`, { replace: true });
     fetchConversationsList();
@@ -933,6 +937,7 @@ const Contact = () => {
     localStorage.removeItem(CHAT_STORAGE_KEY);
     resetScroll();
     setMode('form');
+    setMobileView('chat');
     setConversationId(null);
     currentActiveIdRef.current = null;
     setMessages([]);
@@ -941,9 +946,20 @@ const Contact = () => {
     navigate('/contact', { replace: true });
   };
 
+  const handleMobileBack = () => {
+    setMobileView('list');
+    fetchConversationsList();
+  };
+
+  const handleMobileOpenForm = () => {
+    handleNewConversation();
+  };
+
   return (
     <section
-      className="my-work-section w-full max-w-full overflow-hidden px-4 box-border"
+      className={`my-work-section w-full max-w-full overflow-hidden px-4 box-border ${
+        mode === 'chat' ? 'chat-mode-active' : ''
+      }`}
       id="contact"
       style={{
         width: '100%',
@@ -1202,68 +1218,66 @@ const Contact = () => {
           </div>
         </div>
       ) : (
-        <div className="chat-container" ref={chatContainerRef}>
-          <div className="chat-header">
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+        <div
+          className={`chat-container ${
+            mobileView === 'list' ? 'mobile-view-list' : 'mobile-view-chat'
+          }`}
+          ref={chatContainerRef}
+        >
+          {/* 1. Mobile Conversations List Screen (Visible on mobile when mobileView === 'list') */}
+          <div className="mobile-conversations-screen">
+            <div className="chat-header">
               <button
                 type="button"
-                className="chat-history-sidebar-toggle"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                aria-label="Toggle chat history"
+                className="mobile-chat-back-to-form-btn"
+                onClick={handleMobileOpenForm}
+                aria-label="Back to contact form"
               >
-                History
+                ← Contact Form
               </button>
-              <strong>Chat with Amarjeet</strong>
-              {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
-              {!isOnline && <span className="chat-status-indicator offline">Offline</span>}
-              {isOnline && syncState === 'syncing' && (
-                <span className="chat-status-indicator syncing">Syncing...</span>
-              )}
-              {isOnline && syncState === 'synced' && (
-                <span className="chat-status-indicator synced">✓ Synced</span>
-              )}
-              {isOnline && syncState === 'error' && (
-                <span className="chat-status-indicator error">⚠ Unable to sync</span>
-              )}
+              <strong className="mobile-chat-screen-title">Conversations</strong>
+              <button
+                type="button"
+                className="chat-new-btn"
+                onClick={handleMobileOpenForm}
+                aria-label="Start new conversation"
+              >
+                + New
+              </button>
             </div>
-            <button type="button" className="chat-new-btn" onClick={handleNewConversation}>
-              New conversation
-            </button>
-          </div>
 
-          <div className="chat-body-wrapper">
-            <aside className={`chat-sidebar ${isSidebarOpen ? 'open' : ''}`}>
-              <div className="chat-sidebar-header">
-                <span>Conversations</span>
-              </div>
-              <div className="chat-history-list">
-                {conversationsLoading ? (
-                  <div className="chat-loading">
-                    <span className="spinner"></span>
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <p
-                    style={{
-                      padding: '1rem',
-                      color: 'var(--text-muted-color)',
-                      fontSize: '0.85rem',
-                      textAlign: 'center',
-                    }}
+            <div className="mobile-conversations-body">
+              {conversationsLoading ? (
+                <div className="chat-loading">
+                  <span className="spinner"></span> Loading conversations...
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="chat-empty-conversations">
+                  <p>No previous conversations found.</p>
+                  <button
+                    type="button"
+                    className="mobile-start-new-chat-btn"
+                    onClick={handleMobileOpenForm}
                   >
-                    No previous chats
-                  </p>
-                ) : (
-                  conversations.map((conv) => (
+                    Send a New Message
+                  </button>
+                </div>
+              ) : (
+                <div className="mobile-chat-history-list">
+                  {conversations.map((conv) => (
                     <button
                       key={conv.id}
                       type="button"
-                      className={`chat-history-item ${conversationId === conv.id ? 'active' : ''}`}
+                      className={`mobile-chat-history-card ${
+                        conversationId === conv.id ? 'active' : ''
+                      }`}
                       onClick={() => {
                         loadActiveChat(conv.id);
+                        setMobileView('chat');
                         navigate(`/contact/chat/${conv.id}`);
                       }}
                     >
-                      <div className="chat-history-meta">
+                      <div className="chat-history-card-header">
                         <span className="chat-history-name">Chat Session</span>
                         <span className="chat-history-time">
                           {new Date(conv.updatedAt || conv.created_at).toLocaleDateString([], {
@@ -1276,97 +1290,207 @@ const Contact = () => {
                         <div className="chat-history-snippet">{conv.lastMessage}</div>
                       )}
                     </button>
-                  ))
-                )}
-              </div>
-            </aside>
-
-            <div className="chat-main">
-              <div
-                className="chat-body"
-                ref={messagesContainerRef}
-                role="log"
-                aria-live="polite"
-                aria-relevant="additions"
-              >
-                {messagesLoading && messages.length === 0 && (
-                  <div className="chat-loading">
-                    <span className="spinner"></span> Loading messages...
+                  ))}
+                  <div className="mobile-history-footer">
+                    <button
+                      type="button"
+                      className="mobile-start-new-chat-btn"
+                      onClick={handleMobileOpenForm}
+                    >
+                      + Start New Conversation
+                    </button>
                   </div>
-                )}
-                {messages.length === 0 && !messagesLoading && (
-                  <p className="chat-empty">
-                    No messages yet. Send a message to start the conversation.
-                  </p>
-                )}
-                {messages.map((msg) => (
-                  <Fragment key={msg.id}>
-                    {msg.id === sessionFirstUnreadId && (
-                      <div className="chat-unread-separator" ref={unreadSeparatorRef}>
-                        <span>New Messages · {initialUnreadCount}</span>
-                      </div>
-                    )}
-                    <ChatMessageBubble
-                      msg={
-                        msg.status === 'failed'
-                          ? { ...msg, onRetry: handleRetryMessage }
-                          : msg
-                      }
-                    />
-                  </Fragment>
-                ))}
-                <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
-              </div>
+                </div>
+              )}
+            </div>
+          </div>
 
-              {!isNearBottom && (
+          {/* 2. Active Chat Screen (Full screen on mobile when mobileView === 'chat', split view on desktop) */}
+          <div className="mobile-active-chat-screen">
+            <div className="chat-header">
+              <div className="chat-header-main-group">
                 <button
                   type="button"
-                  className="chat-new-messages-btn"
-                  onClick={() => scrollToBottom('smooth')}
-                  aria-label={`${unreadCount} new message${
-                    unreadCount === 1 ? '' : 's'
-                  }. Scroll to latest.`}
+                  className="mobile-chat-back-btn"
+                  onClick={handleMobileBack}
+                  aria-label="Back to conversations list"
                 >
-                  <span className="chat-new-messages-icon" aria-hidden="true">
-                    ↓
-                  </span>
-                  {unreadCount > 0 && <span className="chat-unread-badge">{unreadCount}</span>}
+                  <span className="mobile-back-arrow">←</span>
+                  <span className="mobile-back-label">Chats</span>
                 </button>
-              )}
-
-              <form className="chat-input-form" onSubmit={handleChatSubmit}>
-                {renderPendingAttachment()}
-                <textarea
-                  ref={textareaRef}
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  rows={1}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      sendChatMessage();
-                    }
-                  }}
-                />
-                <div className="chat-input-actions">
-                  <label className="chat-file-label">
-                    📎 Attach
-                    <input
-                      ref={chatFileInputRef}
-                      type="file"
-                      onChange={handleFileChange}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={isSending || (!chatInput.trim() && !attachment)}
-                  >
-                    {isSending ? 'Sending...' : 'Send'}
-                  </button>
+                <button
+                  type="button"
+                  className="chat-history-sidebar-toggle"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  aria-label="Toggle chat history"
+                >
+                  History
+                </button>
+                <div className="chat-title-container">
+                  <strong>Chat with Amarjeet</strong>
+                  {visitorName && <span className="chat-visitor-name"> · {visitorName}</span>}
                 </div>
-              </form>
+                {!isOnline && <span className="chat-status-indicator offline">Offline</span>}
+                {isOnline && syncState === 'syncing' && (
+                  <span className="chat-status-indicator syncing">Syncing...</span>
+                )}
+                {isOnline && syncState === 'synced' && (
+                  <span className="chat-status-indicator synced">✓ Synced</span>
+                )}
+                {isOnline && syncState === 'error' && (
+                  <span className="chat-status-indicator error">⚠ Sync error</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="chat-new-btn"
+                onClick={handleNewConversation}
+                aria-label="Start new conversation"
+              >
+                New conversation
+              </button>
+            </div>
+
+            <div className="chat-body-wrapper">
+              <aside className={`chat-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+                <div className="chat-sidebar-header">
+                  <span>Conversations</span>
+                </div>
+                <div className="chat-history-list">
+                  {conversationsLoading ? (
+                    <div className="chat-loading">
+                      <span className="spinner"></span>
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <p
+                      style={{
+                        padding: '1rem',
+                        color: 'var(--text-muted-color)',
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                      }}
+                    >
+                      No previous chats
+                    </p>
+                  ) : (
+                    conversations.map((conv) => (
+                      <button
+                        key={conv.id}
+                        type="button"
+                        className={`chat-history-item ${
+                          conversationId === conv.id ? 'active' : ''
+                        }`}
+                        onClick={() => {
+                          loadActiveChat(conv.id);
+                          navigate(`/contact/chat/${conv.id}`);
+                        }}
+                      >
+                        <div className="chat-history-meta">
+                          <span className="chat-history-name">Chat Session</span>
+                          <span className="chat-history-time">
+                            {new Date(conv.updatedAt || conv.created_at).toLocaleDateString([], {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        {conv.lastMessage && (
+                          <div className="chat-history-snippet">{conv.lastMessage}</div>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </aside>
+
+              <div className="chat-main">
+                <div
+                  className="chat-body"
+                  ref={messagesContainerRef}
+                  role="log"
+                  aria-live="polite"
+                  aria-relevant="additions"
+                >
+                  {messagesLoading && messages.length === 0 && (
+                    <div className="chat-loading">
+                      <span className="spinner"></span> Loading messages...
+                    </div>
+                  )}
+                  {messages.length === 0 && !messagesLoading && (
+                    <p className="chat-empty">
+                      No messages yet. Send a message to start the conversation.
+                    </p>
+                  )}
+                  {messages.map((msg) => (
+                    <Fragment key={msg.id}>
+                      {msg.id === sessionFirstUnreadId && (
+                        <div className="chat-unread-separator" ref={unreadSeparatorRef}>
+                          <span>New Messages · {initialUnreadCount}</span>
+                        </div>
+                      )}
+                      <ChatMessageBubble
+                        msg={
+                          msg.status === 'failed'
+                            ? { ...msg, onRetry: handleRetryMessage }
+                            : msg
+                        }
+                      />
+                    </Fragment>
+                  ))}
+                  <div ref={messagesEndRef} className="chat-messages-end" aria-hidden="true" />
+                </div>
+
+                {!isNearBottom && (
+                  <button
+                    type="button"
+                    className="chat-new-messages-btn"
+                    onClick={() => scrollToBottom('smooth')}
+                    aria-label={`${unreadCount} new message${
+                      unreadCount === 1 ? '' : 's'
+                    }. Scroll to latest.`}
+                  >
+                    <span className="chat-new-messages-icon" aria-hidden="true">
+                      ↓
+                    </span>
+                    {unreadCount > 0 && <span className="chat-unread-badge">{unreadCount}</span>}
+                  </button>
+                )}
+
+                <form className="chat-input-form" onSubmit={handleChatSubmit}>
+                  {renderPendingAttachment()}
+                  <textarea
+                    ref={textareaRef}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Type a message..."
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendChatMessage();
+                      }
+                    }}
+                  />
+                  <div className="chat-input-actions">
+                    <label className="chat-file-label" aria-label="Attach file">
+                      📎 <span className="chat-file-label-text">Attach</span>
+                      <input
+                        ref={chatFileInputRef}
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={isSending || (!chatInput.trim() && !attachment)}
+                      aria-label="Send message"
+                    >
+                      {isSending ? 'Sending...' : 'Send'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -1395,233 +1519,6 @@ const Contact = () => {
           animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* --- Split Layout Chat Wrapper --- */
-        .chat-body-wrapper {
-          display: flex;
-          flex: 1;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .chat-sidebar {
-          width: 260px;
-          border-right: 1px solid var(--glass-border);
-          display: flex;
-          flex-direction: column;
-          background-color: rgba(255, 255, 255, 0.015);
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          z-index: 10;
-        }
-
-        .chat-sidebar-header {
-          padding: 1rem;
-          border-bottom: 1px solid var(--glass-border);
-          font-weight: 700;
-          font-size: 0.95rem;
-          color: var(--text-color);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .chat-history-list {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0.5rem;
-        }
-
-        .chat-history-item {
-          width: 100%;
-          padding: 0.85rem;
-          border-radius: 8px;
-          background: transparent;
-          border: none;
-          text-align: left;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          margin-bottom: 0.25rem;
-          color: var(--text-color);
-        }
-
-        .chat-history-item:hover {
-          background-color: rgba(255, 255, 255, 0.04);
-        }
-
-        .chat-history-item.active {
-          background-color: rgba(6, 182, 212, 0.08);
-          border: 1px solid rgba(6, 182, 212, 0.15);
-        }
-
-        .chat-history-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.82rem;
-          width: 100%;
-        }
-
-        .chat-history-name {
-          font-weight: 600;
-          color: var(--text-color);
-        }
-
-        .chat-history-time {
-          color: var(--text-muted-color);
-          font-size: 0.72rem;
-        }
-
-        .chat-history-snippet {
-          font-size: 0.8rem;
-          color: var(--text-muted-color);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 100%;
-        }
-
-        .chat-main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          height: 100%;
-        }
-
-        .chat-status-indicator {
-          font-size: 0.7rem;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 50px;
-          margin-left: 8px;
-          display: inline-flex;
-          align-items: center;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .chat-status-indicator.offline {
-          background-color: rgba(245, 158, 11, 0.1);
-          color: #f59e0b;
-          border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .chat-status-indicator.syncing {
-          background-color: rgba(59, 130, 246, 0.1);
-          color: #3b82f6;
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          animation: pulse 1.5s infinite;
-        }
-
-        .chat-status-indicator.synced {
-          background-color: rgba(34, 197, 94, 0.1);
-          color: #22c55e;
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          transition: all 0.3s ease;
-        }
-
-        .chat-status-indicator.error {
-          background-color: rgba(239, 68, 68, 0.1);
-          color: #ef4444;
-          border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        @keyframes pulse {
-          0% { opacity: 0.6; }
-          50% { opacity: 1; }
-          100% { opacity: 0.6; }
-        }
-
-        .chat-loading {
-          padding: 2rem;
-          text-align: center;
-          color: var(--text-muted-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          font-size: 0.9rem;
-        }
-
-        .chat-history-sidebar-toggle {
-          background-color: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--glass-border);
-          color: var(--text-muted-color);
-          padding: 6px 14px;
-          border-radius: 50px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 0.8rem;
-          transition: all 0.25s ease;
-          display: inline-flex;
-          align-items: center;
-          height: 32px;
-        }
-
-        .chat-history-sidebar-toggle:hover {
-          background-color: var(--primary-color);
-          color: white;
-          border-color: var(--primary-color);
-        }
-
-        .recent-chats-container {
-          margin-top: 1.5rem;
-          padding-top: 1.5rem;
-          border-top: 1px solid var(--glass-border);
-          text-align: left;
-        }
-
-        .recent-chats-title {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: var(--text-color);
-          margin-bottom: 0.75rem;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          display: flex;
-          align-items: center;
-        }
-
-        .recent-chat-card {
-          width: 100%;
-          border: 1px solid var(--glass-border);
-          border-radius: var(--border-radius);
-          background-color: rgba(255, 255, 255, 0.015);
-          padding: 0.85rem 1rem;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          margin-bottom: 0.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          color: var(--text-color);
-        }
-
-        .recent-chat-card:hover {
-          transform: translateY(-2px);
-          border-color: var(--primary-color);
-          background-color: rgba(255, 255, 255, 0.03);
-        }
-
-        @media (max-width: 768px) {
-          .chat-sidebar {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 220px;
-            transform: translateX(-100%);
-            background-color: #0f172a; /* Solid background on mobile overlay */
-            box-shadow: 10px 0 25px rgba(0, 0, 0, 0.5);
-            display: flex;
-          }
-
-          .chat-sidebar.open {
-            transform: translateX(0);
-          }
-        }
       `}</style>
     </section>
   );
