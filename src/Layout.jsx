@@ -27,7 +27,7 @@ const Layout = ({ sections, theme, toggleTheme }) => {
   // On route change, scroll smoothly to the target section or top
   useEffect(() => {
     const path = location.pathname;
-    
+
     if (path.startsWith('/contact/chat') || path === '/learn') {
       window.scrollTo(0, 0);
       return;
@@ -39,7 +39,7 @@ const Layout = ({ sections, theme, toggleTheme }) => {
     }
 
     const sectionId = path.substring(1); // e.g. 'projects', 'skills'
-    
+
     // Use a tiny timeout to ensure DOM has rendered
     const timer = setTimeout(() => {
       const element = document.getElementById(sectionId);
@@ -81,45 +81,85 @@ const Layout = ({ sections, theme, toggleTheme }) => {
         <Outlet />
       </main>
       <footer className="site-footer-redesigned">
-        <div className="footer-main-container">
-          <div className="footer-column footer-brand-col">
-            <h3>Amarjeet Yadav</h3>
-            <p className="footer-brand-tagline">
-              MCA Student & Software Engineer. Building scalable web platforms and robust backend API architectures.
-            </p>
-          </div>
-          
-          <div className="footer-column footer-links-col">
-            <h4>Quick Links</h4>
-            <ul>
-              {sections.map(section => (
-                <li key={section.id}>
-                  <Link to={section.path}>{section.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="footer-column footer-contact-col">
-            <h4>Contact Info</h4>
-            <p>📧 <a href="mailto:amarjeetyadav043590@gmail.com">amarjeetyadav043590@gmail.com</a></p>
-            <p>📞 <a href="tel:+919305917283">+91 93059 17283</a></p>
-            <div className="footer-social-icons">
-              <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FaGithub /></a>
-              <a href="https://linkedin.com/in/amarjeet-yadav-978820291" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FaLinkedin /></a>
-              <a href="https://www.facebook.com/profile.php?id=100083695459596" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebook /></a>
-              <a href="https://x.com/YadavPrade66061?t=YaB_XMLECI7jmVnaloxduQ&s=09" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
-              <a href="https://www.instagram.com/_amarjeet_30/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
-              <a href="https://leetcode.com/u/Amarjeet__Yadav/" target="_blank" rel="noopener noreferrer" aria-label="LeetCode"><SiLeetcode /></a>
+        <div className="footer-inner-container">
+          <div className="footer-main-grid">
+            <div className="footer-column footer-brand-col">
+              <h3 className="footer-brand-name">Amarjeet Yadav</h3>
+              <p className="footer-brand-subtitle">
+                Software Engineer & Full Stack Developer
+              </p>
+              <p className="footer-brand-tagline">
+                MCA Student & Computer Science Educator. Passionate about building high-performance web applications, scalable backend architectures, and intelligent digital systems.
+              </p>
+              <div className="footer-social-icons">
+                <a href="https://github.com/Amarjeetydv" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FaGithub /></a>
+                <a href="https://linkedin.com/in/amarjeet-yadav-978820291" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FaLinkedin /></a>
+                <a href="https://leetcode.com/u/Amarjeet__Yadav/" target="_blank" rel="noopener noreferrer" aria-label="LeetCode"><SiLeetcode /></a>
+                <a href="https://x.com/YadavPrade66061?t=YaB_XMLECI7jmVnaloxduQ&s=09" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
+                <a href="https://www.instagram.com/_amarjeet_30/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
+                <a href="https://www.facebook.com/profile.php?id=100083695459596" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebook /></a>
+              </div>
+            </div>
+
+            <div className="footer-column footer-links-col">
+              <h4 className="footer-col-title">Quick Navigation</h4>
+              <ul className="footer-links-grid">
+                {sections.map(section => (
+                  <li key={section.id}>
+                    <Link to={section.path}>{section.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="footer-column footer-contact-col">
+              <h4 className="footer-col-title">Get In Touch</h4>
+              <div className="footer-contact-items">
+                <a href="mailto:amarjeetyadav043590@gmail.com" className="footer-contact-link">
+                  <span className="footer-contact-icon">📧</span>
+                  <span>amarjeetyadav043590@gmail.com</span>
+                </a>
+                <a href="tel:+919305917283" className="footer-contact-link">
+                  <span className="footer-contact-icon">📞</span>
+                  <span>+91 93059 17283</span>
+                </a>
+              </div>
+              <div className="footer-status-pill">
+                <span className="footer-status-dot"></span>
+                <span>Open for Software Engineering opportunities</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="footer-bottom-bar">
-          <p>© {new Date().getFullYear()} Amarjeet Yadav. All Rights Reserved.</p>
+
+          <div className="footer-bottom-bar">
+            <p className="footer-copyright">© {new Date().getFullYear()} Amarjeet Yadav. All Rights Reserved.</p>
+            <p className="footer-built-with">Crafted with React & Modern Web Technologies</p>
+          </div>
         </div>
       </footer>
-      {showBackToTop && (<button type="button" className="back-to-top-btn" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Back to top">&uarr;</button>)}
+      {showBackToTop && (
+        <button 
+          type="button" 
+          className="back-to-top-btn" 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+          aria-label="Back to top"
+        >
+          <svg
+            className="back-to-top-arrow-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 19V5M5 12L12 5L19 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
     </>
   );
 };

@@ -20,6 +20,14 @@
   --font-family: 'Poppins', 'Inter', sans-serif;
   --spacing-unit: 1.25rem;
   --border-radius: 16px;
+
+  /* Shared Mobile Responsive Card Standards */
+  --mobile-card-padding: 1.15rem 1rem;
+  --mobile-card-padding-sm: 0.95rem 0.85rem;
+  --mobile-card-radius: 14px;
+  --mobile-card-radius-sm: 12px;
+  --mobile-grid-gap: 1.25rem;
+  --mobile-grid-gap-sm: 1rem;
 }
 
 [data-theme="light"] {

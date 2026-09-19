@@ -9,8 +9,8 @@ const Scholarship = () => {
         Scholarships, recognition of academic potential, and entrance exam achievements.
       </p>
       
-      <div className="cert-grid" style={{ marginTop: '2.5rem', justifyContent: 'center' }}>
-        <article className="cert-card" style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div className="cert-grid" style={{ marginTop: '2.5rem' }}>
+        <article className="cert-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div className="cert-content">
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '1.25rem' }}>
               <img 

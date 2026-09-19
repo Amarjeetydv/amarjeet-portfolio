@@ -2,6 +2,9 @@
 .patents-section {
   padding: calc(var(--spacing-unit) * 3) 0;
   border-top: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .patents-grid {
@@ -9,6 +12,8 @@
   grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
   gap: calc(var(--spacing-unit) * 1.5);
   margin-top: 2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .patent-card {
@@ -22,6 +27,11 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .patent-card:hover {
@@ -44,6 +54,8 @@
   margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .patent-title {
@@ -54,6 +66,8 @@
   font-weight: 700;
   line-height: 1.45;
   letter-spacing: -0.2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .patent-description {
@@ -62,6 +76,8 @@
   line-height: 1.6;
   margin: 0.75rem 0 1.25rem 0;
   flex-grow: 1;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .patent-meta-container {
@@ -72,14 +88,26 @@
   border-top: 1px solid var(--glass-border);
   border-bottom: 1px solid var(--glass-border);
   margin-bottom: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .patent-meta-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   font-size: 0.85rem;
   color: var(--text-muted-color);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  width: 100%;
+}
+
+.patent-meta-item span {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .patent-meta-icon {
@@ -87,6 +115,7 @@
   font-size: 0.9rem;
   flex-shrink: 0;
   width: 14px;
+  margin-top: 2px;
 }
 
 .patent-meta-label {
@@ -99,6 +128,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .patent-tag {
@@ -109,35 +140,82 @@
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
+  .patents-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .patents-grid {
-    grid-template-columns: 1fr;
-    gap: calc(var(--spacing-unit) * 1.25);
-    margin-top: 1.5rem;
+    grid-template-columns: 1fr !important;
+    gap: var(--mobile-grid-gap, 1.25rem) !important;
+    margin-top: 1.5rem !important;
+    width: 100% !important;
   }
 
   .patent-card {
-    padding: 1.5rem;
+    padding: var(--mobile-card-padding, 1.15rem 1rem) !important;
+    border-radius: var(--mobile-card-radius, 14px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .patent-title {
-    font-size: 1.15rem;
+    font-size: 1.15rem !important;
+    line-height: 1.35 !important;
   }
 
   .patent-description {
-    font-size: 0.88rem;
-    margin: 0.5rem 0 1rem 0;
+    font-size: 0.88rem !important;
+    margin: 0.5rem 0 1rem 0 !important;
   }
 
   .patent-meta-item {
-    font-size: 0.8rem;
-    align-items: flex-start;
+    font-size: 0.82rem !important;
+    align-items: flex-start !important;
   }
 
-  .patent-meta-icon {
-    margin-top: 2px;
+  .patent-tag {
+    font-size: 0.74rem !important;
+    padding: 3px 8px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .patents-grid {
+    gap: var(--mobile-grid-gap-sm, 1rem) !important;
+    margin-top: 1.25rem !important;
+  }
+
+  .patent-card {
+    padding: var(--mobile-card-padding-sm, 0.95rem 0.85rem) !important;
+    border-radius: var(--mobile-card-radius-sm, 12px) !important;
+  }
+
+  .patent-title {
+    font-size: 1.05rem !important;
+  }
+
+  .patent-description {
+    font-size: 0.85rem !important;
+  }
+
+  .patent-meta-item {
+    font-size: 0.8rem !important;
+  }
+
+  .patent-tag {
+    font-size: 0.72rem !important;
+    padding: 2px 7px !important;
   }
 }

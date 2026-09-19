@@ -118,8 +118,8 @@ const Experience = () => {
                   )}
                   {item.roleType && (
                     <span className="exp-type-badge">
-                      <FaUsers aria-hidden="true" style={{ marginRight: '4px', fontSize: '0.75rem' }} />
-                      {item.roleType}
+                      <FaUsers aria-hidden="true" style={{ marginRight: '4px', fontSize: '0.75rem', flexShrink: 0, marginTop: '2px' }} />
+                      <span>{item.roleType}</span>
                     </span>
                   )}
                 </div>
